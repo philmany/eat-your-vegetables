@@ -46,12 +46,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Russo+One&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#1F2A44; --white:#F7F7F2; --green:#7ED957; --green-s:#3E8E4F; --orange:#FF8A2B; --orange-s:#B9531A;
-  --corn:#FFC93C; --corn-s:#D69A1E; --tomato:#F2493B; --beet:#8E3B8F; --mint:#9FF0D0;
+  --navy:#1A2030; --white:#F5EFDC; --green:#6CC24A; --green-s:#3A7A2E; --orange:#F28A2A; --orange-s:#A84E14;
+  --corn:#F2B51E; --corn-s:#C8861A; --tomato:#D9412F; --beet:#AD1550; --mint:#9FF5C8; --forest:#1F3226;
   --display:"Black Ops One","Russo One",Impact,sans-serif; --ui:"Russo One",Impact,sans-serif; --num:"Teko","Russo One",Impact,sans-serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden;background:#9FF0D0;font-family:var(--ui);color:var(--white);user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#1F3226;font-family:var(--ui);color:var(--white);user-select:none;-webkit-user-select:none}
 canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .hidden{display:none!important}
 
@@ -73,7 +73,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #title h1 span{display:block;color:var(--orange);font-size:.62em}
 #title .tag{font-family:var(--num);font-size:28px;letter-spacing:4px;color:var(--navy);background:var(--white);padding:2px 18px 0;
   clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);margin-bottom:18px}
-.panel{background:rgba(31,42,68,.94);padding:28px 36px;clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
+.panel{background:rgba(26,32,48,.94);padding:28px 36px;clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
   max-width:min(760px,92vw)}
 .panel h2{font-family:var(--display);color:var(--corn);margin:0 0 14px;font-size:38px;letter-spacing:2px}
 .controls-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;font-size:17px}
@@ -116,29 +116,29 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #hearts{display:flex;gap:3px;margin-top:8px}
 #hearts svg{width:28px;height:24px;filter:drop-shadow(0 2px 0 var(--navy))}
 .elabel{font-family:var(--ui);font-variant:small-caps;letter-spacing:3px;font-size:14px;margin-top:6px;text-shadow:0 2px 0 var(--navy)}
-#energy svg{width:240px;height:48px;display:block;filter:drop-shadow(0 0 6px rgba(255,176,102,.55)) drop-shadow(0 3px 0 rgba(31,42,68,.8))}
+#energy svg{width:240px;height:48px;display:block;filter:drop-shadow(0 0 6px rgba(255,176,102,.55)) drop-shadow(0 3px 0 rgba(26,32,48,.8))}
 #hud-tc{position:absolute;left:50%;top:12px;transform:translateX(-50%);text-align:center}
 .slabel{font-family:var(--display);font-size:18px;letter-spacing:4px;text-shadow:0 3px 0 var(--navy)}
 .scounters{display:flex;gap:14px;margin-top:4px}
-.sc{background:rgba(31,42,68,.82);padding:4px 14px 8px;min-width:200px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);border-bottom:5px solid var(--team);transition:box-shadow .3s}
+.sc{background:rgba(26,32,48,.82);padding:4px 14px 8px;min-width:200px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);border-bottom:5px solid var(--team);transition:box-shadow .3s}
 .sc .num{font-family:var(--num);font-size:38px;line-height:1;color:var(--team);font-weight:700}
 .sc .num small{font-size:24px;color:var(--white)}
 .sc .icons{display:flex;gap:3px;justify-content:center}
-.sc .icons i{width:10px;height:13px;background:#3A4560;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:block}
-.sc .icons i.on{background:var(--corn);box-shadow:0 0 6px var(--corn)}
+.sc .icons i{width:10px;height:13px;background:#343A4C;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;display:block}
+.sc .icons i.on{background:var(--mint);box-shadow:0 0 6px var(--mint)}
 .sc .bonus{font-family:var(--num);font-size:17px;letter-spacing:2px;color:var(--corn);line-height:1.1}
 .sc.lead{filter:drop-shadow(0 0 10px var(--team))}
 .sc.flash{animation:flash .18s 6 alternate}
-@keyframes flash{to{background:var(--corn)}}
+@keyframes flash{to{background:var(--mint)}}
 #hud-tr{position:absolute;right:22px;top:10px;text-align:right}
 #timer{font-family:var(--num);font-size:76px;line-height:.85;font-weight:700;color:#fff;text-shadow:0 4px 0 var(--navy),0 8px 14px rgba(0,0,0,.4)}
 #timer.urgent{color:var(--tomato);animation:pulse .5s infinite alternate}
 @keyframes pulse{to{transform:scale(1.12)}}
 #round-label{font-family:var(--display);font-size:20px;letter-spacing:3px;text-shadow:0 3px 0 var(--navy)}
 #wins{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
-#wins i{width:14px;height:14px;transform:rotate(45deg);background:#3A4560;display:block;border:2px solid var(--navy)}
+#wins i{width:14px;height:14px;transform:rotate(45deg);background:#343A4C;display:block;border:2px solid var(--navy)}
 #wins i.g{background:var(--green)} #wins i.o{background:var(--orange)}
-#hud-bc{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px;background:rgba(31,42,68,.82);
+#hud-bc{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px;background:rgba(26,32,48,.82);
   padding:10px 18px 10px;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 100%,0 100%)}
 .sp{position:relative;width:64px}
 .sp img{width:64px;height:64px;border-radius:50%;display:block;border:4px solid var(--team);background:var(--navy)}
@@ -147,8 +147,8 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .sp .hb{height:7px;background:#11182A;margin-top:5px;overflow:hidden}
 .sp .hb b{display:block;height:100%;width:100%;background:#4CD964}
 .sp .cd{position:absolute;left:0;top:0;width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-size:40px;font-weight:700;text-shadow:0 3px 0 var(--navy)}
-.sp .sd{position:absolute;right:-4px;top:-4px;width:16px;height:20px;background:var(--corn);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
-  box-shadow:0 0 10px var(--corn);opacity:0}
+.sp .sd{position:absolute;right:-4px;top:-4px;width:16px;height:20px;background:var(--mint);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+  box-shadow:0 0 10px var(--mint);opacity:0}
 .sp .sd.on{animation:blink .15s infinite alternate}
 @keyframes blink{from{opacity:1}to{opacity:.2}}
 .sp .bf{position:absolute;left:-4px;top:-4px;font-family:var(--num);font-size:16px;color:var(--navy);background:var(--corn);padding:0 4px;line-height:1.2;display:none}
@@ -175,7 +175,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
   text-shadow:0 2px 0 var(--navy);opacity:.9}
 /* ---------- Achievements ---------- */
 #toasts{position:fixed;right:18px;bottom:20px;display:flex;flex-direction:column-reverse;gap:10px;z-index:40;pointer-events:none;max-width:calc(100vw - 36px)}
-.toast{background:rgba(31,42,68,.96);border-left:8px solid var(--corn);padding:8px 18px 10px 14px;min-width:260px;max-width:340px;
+.toast{background:rgba(26,32,48,.96);border-left:8px solid var(--corn);padding:8px 18px 10px 14px;min-width:260px;max-width:340px;
   clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);animation:toastIn .45s cubic-bezier(.2,1.5,.4,1)}
 .toast.out{animation:toastOut .35s forwards}
 .toast .k{font-family:var(--num);font-size:17px;letter-spacing:3px;color:var(--corn);line-height:1}
@@ -194,7 +194,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .ach .w{font-family:var(--num);font-size:15px;letter-spacing:2px;color:var(--wc,var(--mint));line-height:1}
 #ach-sum{font-family:var(--num);font-size:24px;letter-spacing:3px;color:var(--white);margin:-6px 0 12px}
 #res-new{font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--corn);text-align:center;max-width:90vw}
-#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:30px;color:var(--navy);z-index:50;background:#9FF0D0}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:30px;color:var(--navy);z-index:50;background:#1F3226;color:var(--white)}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
 </head>
@@ -305,12 +305,14 @@ import * as THREE from 'three';
    SECTION 1 — CONFIG & DATA
    ===================================================================== */
 const PAL = {
-  sprout:0x7ED957, sproutS:0x3E8E4F, loam:0x8A5A3C, loamS:0x5C3A28, loamD:0x6E4630, pebble:0xC9C3D6, pebbleS:0x9C94AE,
-  pond:0x2BB3B1, mint:0x9FF0D0, carrot:0xFF8A2B, carrotS:0xB9531A, tomato:0xF2493B, beet:0x8E3B8F, beetS:0x5B2361,
-  corn:0xFFC93C, cornS:0xD69A1E, navy:0x1F2A44, white:0xF7F7F2, grass:0x63C94B, grassD:0x4FAF3F, wood:0xC28A55, woodS:0x8A5A34,
-  leaf:0x3FA34D, hedge:0x2E9B45, hedgeS:0x1F7A36, celery:0xA6E36F, celeryS:0x6DBA45, dark:0x2B3142
+  // Earthy storybook palette, sampled from Philman's mockup (Nov 17 2026)
+  sprout:0x8DB33A, sproutS:0x4E7A2A, loam:0x7B4832, loamS:0x4B2B22, loamD:0x60392B, pebble:0xA3A196, pebbleS:0x7C7B72,
+  sand:0xBA8F48, sandS:0x9C7438, pond:0x2F6E6A, mint:0x9FF5C8, carrot:0xE86B17, carrotS:0xA9460F, tomato:0xD9412F, beet:0xAD1550, beetS:0x6E0F36,
+  corn:0xF2B51E, cornS:0xC8861A, navy:0x1A2030, white:0xF5EFDC, grass:0x6C8637, grassD:0x385A2F, wood:0x865234, woodS:0x5E3A28,
+  leaf:0x4E7A2A, hedge:0x56702F, hedgeS:0x3A5A28, hedgeT:0x82A32E, celery:0xA6CC45, celeryS:0x6F9430, dark:0x2A2730, forest:0x1F3226,
+  seed:0x9FF5C8, seedGlow:0x4FE0A0, outline:0x1C1512
 };
-const TEAM_HEX = [0x7ED957, 0xFF8A2B];
+const TEAM_HEX = [0x6CC24A, 0xF28A2A];
 const TEAM_NAME = ['GREEN TEAM', 'ORANGE TEAM'];
 const TEAM_CSS = ['var(--green)', 'var(--orange)'];
 const FIXED_DT = 1/60, HALF = 8, N = 16;
@@ -371,12 +373,27 @@ const BOX=(w,h,d)=>G(`b${w},${h},${d}`,()=>new THREE.BoxGeometry(w,h,d));
 const CYL=(rt,rb,h,s=8,open=false)=>G(`c${rt},${rb},${h},${s},${open}`,()=>new THREE.CylinderGeometry(rt,rb,h,s,1,open));
 const CONE=(r,h,s=6)=>G(`k${r},${h},${s}`,()=>new THREE.ConeGeometry(r,h,s));
 const ICO=(r,d=0)=>G(`i${r},${d}`,()=>new THREE.IcosahedronGeometry(r,d));
-// Every material is a flat-shaded Lambert with a solid colour. No textures anywhere.
+// Every material is a flat-shaded toon (cel) material with a solid colour. No image textures anywhere:
+// the only "texture" is a 3-texel light ramp generated in code, which gives the banded cel-shaded light steps.
+const TOON_RAMP=(()=>{ const t=new THREE.DataTexture(new Uint8Array([110,110,110,255, 190,190,190,255, 255,255,255,255]),3,1);
+  t.minFilter=t.magFilter=THREE.NearestFilter; t.generateMipmaps=false; t.needsUpdate=true; return t; })();
+const toonMat=o=>new THREE.MeshToonMaterial({gradientMap:TOON_RAMP, ...o});
 function mat(color, o={}){
   const k=color+'|'+JSON.stringify(o);
   let m=matCache.get(k);
-  if(!m){ m=new THREE.MeshLambertMaterial({color, flatShading:true, ...o}); matCache.set(k,m); }
+  if(!m){ m=toonMat({color, ...o}); matCache.set(k,m); }
   return m;
+}
+// Light ink outlines (inverted hull): a back-face shell around each sizeable part, a fixed thickness in world units.
+const OUTLINE_MAT=new THREE.MeshBasicMaterial({color:PAL.outline, side:THREE.BackSide});
+const _bs=new THREE.Vector3();
+function addOutlines(root, t=0.024, min=0.07){
+  const list=[]; root.traverse(o=>{ if(o.isMesh && o.castShadow && !o.userData.ol && !o.material.transparent) list.push(o); });
+  for(const o of list){ const g=o.geometry; if(!g.boundingBox) g.computeBoundingBox(); g.boundingBox.getSize(_bs);
+    if(Math.max(_bs.x,_bs.y,_bs.z)<min) continue;
+    const ol=new THREE.Mesh(g,OUTLINE_MAT); ol.userData.ol=1; ol.castShadow=false; ol.receiveShadow=false;
+    ol.scale.set(1+2*t/Math.max(_bs.x,0.01), 1+2*t/Math.max(_bs.y,0.01), 1+2*t/Math.max(_bs.z,0.01)); o.add(ol); }
+  return root;
 }
 function M(geo,color,x=0,y=0,z=0,parent=null,shadow=true,o){
   const m=new THREE.Mesh(geo, typeof color==='number'?mat(color,o):color);
@@ -404,7 +421,7 @@ const canvas=$('c');
 const renderer=new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-const scene=new THREE.Scene(); scene.background=new THREE.Color(PAL.mint);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(PAL.forest);
 const camera=new THREE.OrthographicCamera(-1,1,1,-1,0.1,200);
 const CAM_OFF=new V3(12,16.97,12); // 45° down, 45° around Y
 let VIEW=11.5;
@@ -412,8 +429,8 @@ function updateCam(){ const a=innerWidth/innerHeight; camera.left=-VIEW*a/2; cam
 function setView(v){ if(VIEW!==v){ VIEW=v; updateCam(); } }
 function resize(){ renderer.setSize(innerWidth,innerHeight,false); updateCam(); }
 addEventListener('resize',resize);
-const hemi=new THREE.HemisphereLight(0xBDE7FF, 0x7A9E50, 1.35); scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xFFF3D6, 2.5); sun.position.set(-5,16,10); sun.castShadow=true;
+const hemi=new THREE.HemisphereLight(0xD8E6C8, 0x4A3A22, 1.25); scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xFFE6B8, 2.6); sun.position.set(-5,16,10); sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-15,right:15,top:15,bottom:-15,near:1,far:50});
 sun.shadow.bias=-0.0006; sun.shadow.normalBias=0.03; scene.add(sun); scene.add(sun.target);
 
@@ -580,7 +597,7 @@ function makeWeapon(key){
     M(BOX(0.06,0.06,0.1),PAL.woodS,0,0,-0.1,f,false); // grip
     g.rotation.x=0.35;
   }
-  return g;
+  return addOutlines(g,0.014,0.1);
 }
 function buildCharacter(key){
   const d=CHARS[key], fur=d.fur;
@@ -667,15 +684,16 @@ function buildCharacter(key){
     limb(armL,grey,pink); limb(armR,grey,pink);
     M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legL); M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legR);
   }
+  addOutlines(root);
   return P;
 }
 function makeHedgeModel(parent, x, z, player=false){
   const g=new THREE.Group(); g.position.set(x,0,z); parent.add(g);
   const h=player?0.75:0.95, col=player?PAL.sproutS:PAL.hedge;
   M(BOX(0.92,h,0.92),col,0,h/2,0,g);
-  for(const [a,b] of [[-0.25,-0.25],[0.25,-0.2],[-0.2,0.25],[0.22,0.24],[0,0]]) M(ICO(0.24,0),player?PAL.sprout:PAL.leaf,a,h+0.02,b,g);
+  for(const [a,b] of [[-0.25,-0.25],[0.25,-0.2],[-0.2,0.25],[0.22,0.24],[0,0]]) M(ICO(0.24,0),player?PAL.sprout:PAL.hedgeT,a,h+0.02,b,g);
   if(player){ M(BOX(0.94,0.08,0.94),PAL.woodS,0,0.04,0,g); for(const s of [-1,1]) M(ICO(0.07,0),PAL.tomato,s*0.3,h*0.7,0.47,g,false); }
-  return g;
+  return addOutlines(g,0.02,0.2);
 }
 
 /* =====================================================================
@@ -696,7 +714,7 @@ class Arena {
     M(BOX(60,0.4,60),PAL.grassD,0,-0.21,0,R,false);
     M(BOX(16.4,0.2,16.4),PAL.grass,0,-0.1,0,R,false);
     // pond outside the fence, just for the view
-    M(CYL(3.2,3.2,0.06,10),PAL.pond,-12,0.0,4,R,false); M(CYL(2.3,2.3,0.07,9),0x48C9C4,-12.3,0.01,4.2,R,false);
+    M(CYL(3.2,3.2,0.06,10),PAL.pond,-12,0.0,4,R,false); M(CYL(2.3,2.3,0.07,9),0x3E8580,-12.3,0.01,4.2,R,false);
     for(let k=0;k<4;k++){ const l=M(CYL(0.35,0.35,0.04,7),PAL.sprout,-12+rand(-1.8,1.8),0.06,4+rand(-1.8,1.8),R,false); }
     // tilled dirt rows (instanced base + ridges), stone path slabs (instanced)
     const dirtRows=[], stones=[];
@@ -705,9 +723,11 @@ class Arena {
     const ridge=new THREE.InstancedMesh(BOX(15.8,0.08,0.2),mat(PAL.loamD),dirtRows.length*2);
     dirtRows.forEach((j,k)=>{ base.setMatrixAt(k,tr(0,0.08,tileC(j))); ridge.setMatrixAt(k*2,tr(0,0.19,tileC(j)-0.2)); ridge.setMatrixAt(k*2+1,tr(0,0.19,tileC(j)+0.2)); });
     base.receiveShadow=ridge.receiveShadow=true; ridge.castShadow=true; R.add(base,ridge);
-    const slabs=new THREE.InstancedMesh(BOX(0.86,0.06,0.82),mat(0xFFFFFF),stones.length*N); let k=0; const c=new THREE.Color();
-    for(const j of stones) for(let i=0;i<N;i++){ slabs.setMatrixAt(k,tr(tileC(i)+rand(-0.03,0.03),0.03,tileC(j)+rand(-0.03,0.03),rand(-0.08,0.08)));
-      slabs.setColorAt(k,c.setHex((i+j)%2?PAL.pebble:0xB9B2C9)); k++; }
+    const bed=new THREE.InstancedMesh(BOX(16,0.04,0.98),mat(PAL.sand),stones.length);
+    stones.forEach((j,k)=>bed.setMatrixAt(k,tr(0,0.02,tileC(j)))); bed.receiveShadow=true; R.add(bed);
+    const slabs=new THREE.InstancedMesh(BOX(0.74,0.06,0.7),mat(0xFFFFFF),stones.length*N); let k=0; const c=new THREE.Color();
+    for(const j of stones) for(let i=0;i<N;i++){ slabs.setMatrixAt(k,tr(tileC(i)+rand(-0.05,0.05),0.045,tileC(j)+rand(-0.05,0.05),rand(-0.18,0.18),rand(0.85,1.05)));
+      slabs.setColorAt(k,c.setHex((i+j)%2?PAL.pebble:0x8F8E84)); k++; }
     slabs.receiveShadow=true; R.add(slabs);
     // decorative seedlings along the ridges (instanced, two parts)
     const sprouts=[]; for(const j of dirtRows) for(let i=0;i<N;i++){ if(PLOTS.some(p=>p[0]===i&&p[1]===j)) continue; if(Math.random()<0.55) sprouts.push(tr(tileC(i)+rand(-0.3,0.3),0.2,tileC(j)+(Math.random()<0.5?-0.2:0.2),rand(0,6),rand(0.7,1.1))); }
@@ -726,7 +746,7 @@ class Arena {
   }
   sunflowerParts(h=1.8){ return [pm(CYL(0.045,0.06,h,5),PAL.sproutS,0,h/2,0), pm(BOX(0.28,0.03,0.14),PAL.leaf,0.14,h*0.45,0,0,0,0.4),
     pm(BOX(0.28,0.03,0.14),PAL.leaf,-0.14,h*0.62,0,0,0,-0.4), pm(CYL(0.36,0.36,0.06,9),PAL.corn,0,h+0.05,0.06,1.25,0,0),
-    pm(CYL(0.18,0.18,0.08,7),PAL.loamS,0,h+0.07,0.1,1.25,0,0), pm(CYL(0.3,0.36,0.05,9),PAL.cornS,0,h+0.03,0.02,1.25,0,0)]; }
+    pm(CYL(0.18,0.18,0.08,7),0x4A2614,0,h+0.07,0.1,1.25,0,0), pm(CYL(0.3,0.36,0.05,9),PAL.cornS,0,h+0.03,0.02,1.25,0,0)]; }
   buildCover(){
     const flowers=[];
     for(const [i,j,t] of STATIC_COVER){ this.blocked[j][i]=1; const x=tileC(i), z=tileC(j);
@@ -741,7 +761,7 @@ class Arena {
     for(let k=-8;k<=8;k+=1.1){ hedges.push(tr(k,0,9.2,0,rand(0.8,1.1)), tr(9.2,0,k,0,rand(0.8,1.1))); }
     for(let n=0;n<14;n++){ const a=rand(0,6.28), r=rand(11,16); flowers.push(tr(Math.cos(a)*r,0,Math.sin(a)*r,rand(0,6),rand(1,1.4))); }
     instanceParts(this.sunflowerParts(1.8),flowers,this.root);
-    instanceParts([pm(BOX(1.0,0.8,0.9),PAL.hedge,0,0.4,0), pm(ICO(0.32,0),PAL.leaf,-0.2,0.82,0), pm(ICO(0.3,0),PAL.hedgeS,0.25,0.78,0.1)],hedges,this.root);
+    instanceParts([pm(BOX(1.0,0.8,0.9),PAL.hedgeS,0,0.4,0), pm(ICO(0.32,0),PAL.hedge,-0.2,0.82,0), pm(ICO(0.3,0),PAL.hedgeT,0.25,0.78,0.1)],hedges,this.root);
   }
   buildPlots(){
     for(const [i,j,type] of PLOTS){
@@ -774,9 +794,9 @@ class Arena {
     const R=this.root;
     M(CYL(1.0,1.1,0.12,10),PAL.pebbleS,0,0.06,0,R,false); M(CYL(0.8,0.8,0.14,10),PAL.pebble,0,0.07,0,R,false);
     for(let k=0;k<6;k++){ const a=k/6*Math.PI*2; M(BOX(0.18,0.3,0.18),PAL.pebbleS,Math.cos(a)*1.0,0.15,Math.sin(a)*1.0,R); }
-    this.seedLight=new THREE.PointLight(0xFFD86B,6,5,1.5); this.seedLight.position.set(0,1.0,0); R.add(this.seedLight);
+    this.seedLight=new THREE.PointLight(0x8FF5C0,6,5,1.5); this.seedLight.position.set(0,1.0,0); R.add(this.seedLight);
     this.cluster=new THREE.Group(); R.add(this.cluster);
-    this.clusterMat=new THREE.MeshLambertMaterial({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.8,flatShading:true});
+    this.clusterMat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.8});
     for(let k=0;k<5;k++){ const m=new THREE.Mesh(ICO(0.09,0),this.clusterMat); m.scale.set(1,1.4,1); m.userData.a=k/5*Math.PI*2; this.cluster.add(m); }
   }
   resetForRound(){
@@ -919,7 +939,7 @@ class FX {
 class SeedSystem {
   constructor(game){
     this.game=game; this.max=90; this.seeds=[];
-    this.mat=new THREE.MeshLambertMaterial({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.9,flatShading:true});
+    this.mat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.9});
     this.im=new THREE.InstancedMesh(ICO(0.12,0),this.mat,this.max); this.im.castShadow=true; this.im.frustumCulled=false; scene.add(this.im);
     this.reset();
   }
@@ -1459,7 +1479,7 @@ class Game {
   }
   makePortraits(){ // render each critter's head with a tiny second renderer → data URL (no image files)
     const out={}; const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true}); r.setSize(192,192); r.setPixelRatio(1);
-    const sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xBDE7FF,0x7A9E50,1.6)); const dl=new THREE.DirectionalLight(0xFFF3D6,2.6); dl.position.set(-2,3,4); sc.add(dl);
+    const sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xD8E6C8,0x4A3A22,1.5)); const dl=new THREE.DirectionalLight(0xFFE6B8,2.7); dl.position.set(-2,3,4); sc.add(dl);
     const cam=new THREE.OrthographicCamera(-0.55,0.55,0.55,-0.55,0.1,20);
     for(const k of CHAR_ORDER){ const P=buildCharacter(k); P.rig.rotation.y=0.35; sc.add(P.root); P.root.updateMatrixWorld(true);
       const hp=new V3(); P.head.getWorldPosition(hp); if(k==='goose'){ cam.position.set(hp.x+2.0,hp.y+0.3,hp.z+1.0); cam.lookAt(hp.x,hp.y-0.22,hp.z-0.05); } else { cam.position.set(hp.x+0.9,hp.y+0.25,hp.z+2.2); cam.lookAt(hp.x,hp.y+(k==='rabbit'?0.12:0),hp.z); }
@@ -1549,7 +1569,7 @@ class Game {
   seedSurge(team){
     this.bonus[team]++; this.seeds.pool[team]=0;
     for(const c of this.chars) if(c.team===team){ c.buffT=BUFF_TIME; this.fx.burst(new V3(c.pos.x,0.8,c.pos.z),[PAL.corn,PAL.white],16,4,4); }
-    audio.play('fanfare'); this.hud.flashSeeds(team); this.hud.showBanner(`<span style="color:${team?'#FF8A2B':'#7ED957'}">${TEAM_NAME[team]}</span> SEED SURGE!<small>+SPEED · +ATTACK SPEED · 10s</small>`,2);
+    audio.play('fanfare'); this.hud.flashSeeds(team); this.hud.showBanner(`<span style="color:${team?'#F28A2A':'#6CC24A'}">${TEAM_NAME[team]}</span> SEED SURGE!<small>+SPEED · +ATTACK SPEED · 10s</small>`,2);
   }
   tryPickup(c){
     const p=this.arena.ripePlotNear(c.pos.x,c.pos.z);
@@ -1571,7 +1591,7 @@ class Game {
     if(b[0]!==b[1]){ w=b[0]>b[1]?0:1; why='MOST SEED SURGES'; } else if(pl[0]!==pl[1]){ w=pl[0]>pl[1]?0:1; why='MORE SEEDS HELD'; } else if(k[0]!==k[1]){ w=k[0]>k[1]?0:1; why='MORE KNOCKOUTS'; }
     if(w>=0) this.wins[w]++; this.hud.renderWins();
     this.state='roundEnd'; this.endT=3.2; this.weapons.clear();
-    this.hud.showBanner(w<0?'DRAW ROUND<small>DEAD EVEN</small>':`<span style="color:${w?'#FF8A2B':'#7ED957'}">${TEAM_NAME[w]}</span> TAKES ROUND ${this.round}<small>${why}</small>`,3);
+    this.hud.showBanner(w<0?'DRAW ROUND<small>DEAD EVEN</small>':`<span style="color:${w?'#F28A2A':'#6CC24A'}">${TEAM_NAME[w]}</span> TAKES ROUND ${this.round}<small>${why}</small>`,3);
     audio.play(w===this.player.team?'win':'ko');
   }
   afterRound(){
@@ -1581,7 +1601,7 @@ class Game {
   showResults(){
     this.state='results'; this.hud.show(false); this.showScreen('results');
     let w=this.wins[0]>this.wins[1]?0:this.wins[1]>this.wins[0]?1:-1;
-    const banner=$('res-banner'); banner.textContent=w<0?'DRAW!':TEAM_NAME[w]+' WINS!'; banner.style.color=w<0?'#FFC93C':w?'#FF8A2B':'#7ED957';
+    const banner=$('res-banner'); banner.textContent=w<0?'DRAW!':TEAM_NAME[w]+' WINS!'; banner.style.color=w<0?'#FFC93C':w?'#F28A2A':'#6CC24A';
     setText($('res-sub'),w<0?'NOBODY EATS TONIGHT':(w===this.player.team?'YOU WIN! ':'YOU LOSE. ')+this.wins[0]+' – '+this.wins[1]+' ROUNDS');
     let h='<tr><th></th><th>KNOCKOUTS</th><th>SEEDS</th><th>HEDGES</th><th>DAMAGE</th><th>BLOCKED</th></tr>';
     for(const c of this.chars) h+=`<tr style="--team:${TEAM_CSS[c.team]}"><td><img src="${this.portraits[c.key]}" alt="">${c.def.name}${c.isPlayer?' <span style="color:#FFC93C">(YOU)</span>':''}</td><td>${c.stats.ko}</td><td>${c.stats.seeds}</td><td>${c.stats.hedges}</td><td>${c.stats.dmg}</td><td>${c.stats.blocked}</td></tr>`;
