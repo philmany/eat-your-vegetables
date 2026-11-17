@@ -27,6 +27,14 @@
   15. Difficulty tunes reaction delay, aim error, aggression, attack pacing, dodge chance, special use, shot leading,
       seed greed and focus-fire. Easy is sloppy and brawly; Hard dodges often, leads shots and plays the objective.
   16. Seeds collected (results stat) counts every pickup, including re-collecting dropped seeds.
+  17. Balance pass (Nov 17): each magic seed picked up heals the collector half a heart (5 HP). Carrot Kunai
+      damage +30% (6 -> 7.8 before rounding). The minimap was removed from the HUD.
+  18. PUMPKIN SHIELD (tank weapon, grows in two new plots): basic = short shield bash with big knockback.
+      Passive: hits from the front take 60% less damage, from behind 20% less; carrier moves 8% slower.
+      Special BULWARK (35 Energy): 3 s of 75% damage reduction, a dome that eats enemy projectiles,
+      allies inside it take 50% less damage, and nearby AI enemies are drawn to attack the carrier (taunt).
+  19. Achievements: earned by the human player only, saved in localStorage (fails silently if blocked).
+      KO credit goes to the weapon that landed the final hit (a projectile keeps the weapon it was thrown with).
 -->
 <html lang="en">
 <head>
@@ -89,8 +97,9 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 @keyframes pop{from{transform:skewX(-8deg) scale(2.2);opacity:0}to{transform:skewX(-8deg) scale(1);opacity:1}}
 #results .banner{font-family:var(--display);font-size:clamp(46px,7vw,90px);transform:skewX(-8deg);text-shadow:0 6px 0 var(--navy)}
 table.stats{border-collapse:collapse;font-size:18px;margin:8px 0 6px;min-width:520px}
-table.stats th{font-family:var(--num);font-size:22px;color:var(--corn);font-weight:600;letter-spacing:2px;padding:4px 14px;text-align:center}
-table.stats td{padding:6px 14px;text-align:center;border-top:2px solid rgba(255,255,255,.08)}
+table.stats th{font-family:var(--num);font-size:22px;color:var(--corn);font-weight:600;letter-spacing:2px;padding:4px 10px;text-align:center}
+#results .panel{overflow-x:auto}
+table.stats td{padding:6px 10px;text-align:center;border-top:2px solid rgba(255,255,255,.08)}
 table.stats td:first-child{text-align:left}
 table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;margin-right:8px;border:3px solid var(--team)}
 
@@ -129,8 +138,6 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #wins{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
 #wins i{width:14px;height:14px;transform:rotate(45deg);background:#3A4560;display:block;border:2px solid var(--navy)}
 #wins i.g{background:var(--green)} #wins i.o{background:var(--orange)}
-#hud-br{position:absolute;right:20px;bottom:20px}
-#minimap{width:190px;height:190px;border-radius:50%;display:block;border:6px solid var(--navy);box-shadow:0 6px 0 rgba(31,42,68,.6)}
 #hud-bc{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px;background:rgba(31,42,68,.82);
   padding:10px 18px 10px;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 100%,0 100%)}
 .sp{position:relative;width:64px}
@@ -154,6 +161,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .fl.dmg{color:#fff}
 .fl.big{color:var(--tomato);font-size:44px}
 .fl.seed{color:var(--corn)}
+.fl.heal{color:#7CF08A;font-size:26px}
 .fl.info{color:var(--mint);font-size:26px}
 .fl.honk{font-family:var(--display);font-size:24px;color:var(--navy);background:var(--white);padding:6px 10px 4px;text-shadow:none;
   clip-path:polygon(0 0,100% 0,100% 78%,30% 78%,14% 100%,16% 78%,0 78%);padding-bottom:12px}
@@ -165,6 +173,27 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #mute{position:fixed;right:22px;top:132px;font-family:var(--num);font-size:18px;letter-spacing:2px;color:var(--white);text-shadow:0 2px 0 var(--navy);z-index:11}
 #hint{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--white);
   text-shadow:0 2px 0 var(--navy);opacity:.9}
+/* ---------- Achievements ---------- */
+#toasts{position:fixed;right:18px;bottom:20px;display:flex;flex-direction:column-reverse;gap:10px;z-index:40;pointer-events:none;max-width:calc(100vw - 36px)}
+.toast{background:rgba(31,42,68,.96);border-left:8px solid var(--corn);padding:8px 18px 10px 14px;min-width:260px;max-width:340px;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);animation:toastIn .45s cubic-bezier(.2,1.5,.4,1)}
+.toast.out{animation:toastOut .35s forwards}
+.toast .k{font-family:var(--num);font-size:17px;letter-spacing:3px;color:var(--corn);line-height:1}
+.toast .n{font-family:var(--display);font-size:24px;line-height:1.1;color:var(--white)}
+.toast .d{font-size:13px;color:#C9CFDD;line-height:1.25}
+@keyframes toastIn{from{transform:translateX(120%)}to{transform:none}}
+@keyframes toastOut{to{transform:translateX(120%);opacity:0}}
+#ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-height:min(58vh,560px);overflow:auto;padding-right:4px;width:min(720px,84vw)}
+.ach{background:#2A3757;padding:8px 12px 10px;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);border-bottom:5px solid var(--wc,#3A4560)}
+.ach.locked{opacity:.55;filter:grayscale(.7)}
+.ach .n{font-family:var(--display);font-size:19px;line-height:1.1;color:var(--corn)}
+.ach.locked .n{color:#C9CFDD}
+.ach .d{font-size:13px;color:#C9CFDD;line-height:1.25;margin-top:2px;font-family:var(--ui)}
+.ach .bar{height:6px;background:#11182A;margin-top:6px}
+.ach .bar b{display:block;height:100%;background:var(--wc,var(--corn))}
+.ach .w{font-family:var(--num);font-size:15px;letter-spacing:2px;color:var(--wc,var(--mint));line-height:1}
+#ach-sum{font-family:var(--num);font-size:24px;letter-spacing:3px;color:var(--white);margin:-6px 0 12px}
+#res-new{font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--corn);text-align:center;max-width:90vw}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:30px;color:var(--navy);z-index:50;background:#9FF0D0}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
@@ -202,8 +231,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
       <div class="sc" id="sc1" style="--team:var(--orange)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div></div>
     </div>
   </div>
-  <div id="hud-tr"><div id="timer">3:00</div><div id="round-label">ROUND 1</div><div id="wins"></div></div>
-  <div id="hud-br"><canvas id="minimap" width="200" height="200"></canvas></div>
+  <div id="hud-tr"><div id="timer">2:30</div><div id="round-label">ROUND 1</div><div id="wins"></div></div>
   <div id="hud-bc"></div>
   <div id="hint"></div>
   <div id="banner"></div>
@@ -211,6 +239,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 <div id="mute" class="hidden">MUTED (M)</div>
 <div id="fps" class="hidden"></div>
 <div id="splash" class="hidden"><div></div></div>
+<div id="toasts"></div>
 
 <!-- ================= SCREENS ================= -->
 <div id="title" class="screen hidden">
@@ -219,6 +248,15 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
   <button class="btn" id="btn-play">Play</button>
   <button class="btn green" id="btn-diff">Difficulty: Normal</button>
   <button class="btn ghost" id="btn-controls">Controls</button>
+  <button class="btn ghost" id="btn-ach">Achievements</button>
+</div>
+<div id="achievements" class="screen dim hidden">
+  <div class="panel">
+    <h2>ACHIEVEMENTS</h2>
+    <div id="ach-sum"></div>
+    <div id="ach-grid"></div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="btn-ach-back">Back</button></div>
+  </div>
 </div>
 <div id="controls" class="screen dim hidden">
   <div class="panel">
@@ -233,7 +271,8 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
       <b>SPACE</b><span>Dodge roll (brief invulnerability, 1.5 s cooldown)</span>
       <b>ESC</b><span>Pause</span>
       <b>M</b><span>Mute / unmute</span>
-      <b>GOAL</b><span>Grab magic seeds. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
+      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
+      <b>PUMPKIN</b><span>Pumpkin Shield (tank): blocks most damage from the front. Bulwark special shields you and nearby allies and eats enemy shots.</span>
     </div>
     <div class="row" style="margin-top:20px"><button class="btn" id="btn-controls-back">Back</button></div>
   </div>
@@ -255,7 +294,8 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
   <div class="banner" id="res-banner">GREEN TEAM WINS!</div>
   <div id="res-sub" style="font-family:var(--num);font-size:26px;letter-spacing:3px"></div>
   <div class="panel"><table class="stats" id="res-table"></table></div>
-  <div class="row"><button class="btn" id="btn-rematch">Rematch</button><button class="btn ghost" id="btn-res-title">Title</button></div>
+  <div id="res-new"></div>
+  <div class="row"><button class="btn" id="btn-rematch">Rematch</button><button class="btn green" id="btn-res-ach">Achievements</button><button class="btn ghost" id="btn-res-title">Title</button></div>
 </div>
 
 <script type="module">
@@ -274,19 +314,22 @@ const TEAM_HEX = [0x7ED957, 0xFF8A2B];
 const TEAM_NAME = ['GREEN TEAM', 'ORANGE TEAM'];
 const TEAM_CSS = ['var(--green)', 'var(--orange)'];
 const FIXED_DT = 1/60, HALF = 8, N = 16;
-const MAX_HP = 80, RESPAWN = 4, ROUND_TIME = 180, SEED_GOAL = 12, BUFF_TIME = 10, HEDGE_COST = 20;
+const MAX_HP = 80, RESPAWN = 4, ROUND_TIME = 150, SEED_GOAL = 12, BUFF_TIME = 10, HEDGE_COST = 20;
 const BASE_SPEED = 4.4, CHAR_R = 0.32;
 
 const WEAPONS = {
   sword:{ name:'CARROT SWORD', kind:'melee', dmg:10, cd:0.42, range:1.65, arc:Math.PI*0.8, knock:3, windup:0.07, anim:0.3,
           spName:'LUNGE SLASH', spCost:30, aiRange:1.2, veg:'carrot' },
-  kunai:{ name:'CARROT KUNAI', kind:'proj', dmg:6, cd:0.26, speed:15, life:0.6, knock:1.2, anim:0.18,
+  kunai:{ name:'CARROT KUNAI', kind:'proj', dmg:7.8, cd:0.26, speed:15, life:0.6, knock:1.2, anim:0.18,
           spName:'KUNAI FAN', spCost:25, aiRange:5, veg:'carrot' },
   flail:{ name:'BEET FLAIL', kind:'melee', dmg:18, cd:0.95, range:1.9, arc:Math.PI*0.95, knock:7, windup:0.3, anim:0.55,
           spName:'360 SPIN', spCost:40, aiRange:1.4, veg:'beet' },
   staff:{ name:'CELERY STAFF', kind:'proj', dmg:9, cd:0.55, speed:9.5, life:1.0, knock:1.6, anim:0.3,
           spName:'SLOW FIELD', spCost:35, aiRange:5.5, veg:'celery' },
+  shield:{ name:'PUMPKIN SHIELD', kind:'melee', dmg:8, cd:0.6, range:1.35, arc:Math.PI*0.7, knock:6.5, windup:0.1, anim:0.32,
+          spName:'BULWARK', spCost:35, aiRange:1.1, veg:'pumpkin' },
 };
+const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5;
 const CHARS = {
   rabbit:{ name:'RABBIT', team:0, weapon:'sword', blurb:'Knighted by the Radish Council. Takes it far too seriously.', fur:0xEDE3D3 },
   raccoon:{ name:'RACCOON', team:0, weapon:'kunai', blurb:'Steals your snacks, then your seeds. Never apologizes.', fur:0x9A96A6 },
@@ -307,7 +350,7 @@ const STATIC_COVER = [ // [i, j, type]  point-symmetric about the centre
 ];
 const PLOTS = [
   [5,1,'sword'],[10,14,'sword'],[10,2,'kunai'],[5,13,'kunai'],[2,4,'flail'],[13,11,'flail'],
-  [13,5,'staff'],[2,10,'staff'],[8,5,'sword'],[7,10,'sword']
+  [13,5,'staff'],[2,10,'staff'],[8,5,'sword'],[7,10,'sword'],[4,5,'shield'],[11,10,'shield']
 ];
 const SPAWNS = [[[-6.5,-7.0],[-7.0,-5.8]], [[6.5,7.0],[7.0,5.8]]];
 
@@ -433,6 +476,9 @@ class Audio {
       case 'click': this.tone(880,0.05,'square',0.08); break;
       case 'win': [523,659,784,1046,784,1046].forEach((f,i)=>this.tone(f,0.25,'square',0.1,null,i*0.13)); break;
       case 'slow': this.tone(200,0.6,'triangle',0.15,90); this.noise(0.5,'lowpass',500,200,0.2); break;
+      case 'block': this.tone(240,0.07,'square',0.12,170); this.noise(0.09,'bandpass',1400,600,0.35,2); break;
+      case 'bulwark': this.tone(130,0.5,'triangle',0.24,260); this.tone(195,0.5,'sine',0.12,390,0.05); this.noise(0.4,'lowpass',700,200,0.3); break;
+      case 'achieve': [784,988,1175,1568].forEach((f,i)=>this.tone(f,0.18,'triangle',0.13,null,i*0.07)); this.tone(2093,0.4,'sine',0.07,null,0.3); break;
     }
   }
   honk(d){ // nasal sawtooth through two formant filters with a falling pitch
@@ -524,6 +570,15 @@ function makeWeapon(key){
     for(const a of [-0.6,0,0.6]){ const l=M(CONE(0.07,0.24,4),PAL.leaf,Math.sin(a)*0.06,0,0.85,g); l.rotation.x=Math.PI/2; l.rotation.z=a; }
     const orb=M(ICO(0.07,0),PAL.mint,0,0,0.95,g,false,{emissive:0x5fe8b8,emissiveIntensity:0.8});
     g.rotation.x=-1.15;
+  } else if(key==='shield'){ // a thick pumpkin slice held face-out, ribs and stem on top
+    const f=new THREE.Group(); f.position.set(0.12,0.08,0.2); g.add(f);
+    const d=M(CYL(0.3,0.3,0.12,10),PAL.carrot,0,0,0,f); d.rotation.x=Math.PI/2; d.scale.set(1,1,0.9);
+    const rim=M(CYL(0.24,0.24,0.14,10),PAL.carrotS,0,0,-0.01,f,false); rim.rotation.x=Math.PI/2;
+    for(const x of [-0.15,0,0.15]){ M(BOX(0.035,0.5-Math.abs(x)*1.2,0.04),PAL.carrotS,x,0,0.065,f,false); }
+    M(CYL(0.035,0.05,0.14,5),PAL.woodS,0,0.33,0,f);
+    const lf=M(BOX(0.16,0.02,0.1),PAL.leaf,0.09,0.31,0,f,false); lf.rotation.z=-0.4;
+    M(BOX(0.06,0.06,0.1),PAL.woodS,0,0,-0.1,f,false); // grip
+    g.rotation.x=0.35;
   }
   return g;
 }
@@ -709,6 +764,9 @@ class Arena {
     if(type==='sword'){ M(CYL(0.13*s,0.11*s,0.12*s,8),PAL.carrot,0,0.06,0,g); for(let k=0;k<5;k++) leaf(0,0,0.42,k*1.25); }
     else if(type==='kunai'){ for(const o of [-0.12,0.12]){ M(CYL(0.08*s,0.07*s,0.1*s,7),PAL.carrot,o*s,0.05,0,g); for(let k=0;k<3;k++) leaf(o,0,0.3,k*2.1+o); } }
     else if(type==='flail'){ M(ICO(0.17*s,0),PAL.beet,0,0.09*s,0,g); for(let k=0;k<4;k++){ leaf(0,0,0.32,k*1.57+0.4,PAL.beetS); M(BOX(0.13*s,0.02,0.2*s),PAL.leaf,Math.sin(k*1.57+0.4)*0.14*s,0.34*s,Math.cos(k*1.57+0.4)*0.14*s,g).rotation.y=k*1.57+0.4; } }
+    else if(type==='shield'){ const pk=M(ICO(0.2*s,1),PAL.carrot,0,0.14*s,0,g); pk.scale.set(1.15,0.75,1.15);
+      for(let k=0;k<6;k++){ const a=k/6*Math.PI*2, r=M(BOX(0.04*s,0.24*s,0.06*s),PAL.carrotS,Math.cos(a)*0.215*s,0.14*s,Math.sin(a)*0.215*s,g,false); r.rotation.y=-a; }
+      M(CYL(0.03*s,0.045*s,0.14*s,5),PAL.woodS,0,0.33*s,0,g); for(let k=0;k<3;k++) leaf(0.12,0,0.22,k*2.1,PAL.leaf); }
     else { for(let k=0;k<5;k++){ const a=k*1.25, h=0.5*s; const c=M(CYL(0.035*s,0.045*s,h,5),PAL.celery,Math.cos(a)*0.06*s,h/2,Math.sin(a)*0.06*s,g); c.rotation.set(Math.sin(a)*0.15,0,Math.cos(a)*0.15);
       const l=M(ICO(0.07*s,0),PAL.leaf,Math.cos(a)*0.1*s,h+0.02,Math.sin(a)*0.1*s,g); } }
   }
@@ -891,6 +949,7 @@ class SeedSystem {
   }
   collect(c,k){
     const s=this.seeds[k]; this.seeds.splice(k,1); this.pool[c.team]++; c.stats.seeds++;
+    if(c.hp<MAX_HP){ c.hp=Math.min(MAX_HP,c.hp+HEAL_PER_SEED); this.game.fx.float('+'+HEAL_PER_SEED+' HP',new V3(c.pos.x,1.7,c.pos.z),'heal',0.7); }
     this.game.fx.float('+1',new V3(s.x,1.3,s.z),'seed',0.8); this.game.fx.burst(new V3(s.x,s.y,s.z),[PAL.corn,PAL.white],4,1.5,1.5,0.6);
     audio.play('seed');
     if(this.pool[c.team]>=SEED_GOAL) this.game.seedSurge(c.team);
@@ -920,6 +979,11 @@ class Character {
     M(CYL(0.55,0.62,1.5,12,true),PAL.corn,0,0.75,0,this.aura,false,{transparent:true,opacity:0.28,emissive:0xFFC93C,emissiveIntensity:0.9,side:THREE.DoubleSide,depthWrite:false});
     M(CYL(0.66,0.66,0.04,14),PAL.corn,0,0.03,0,this.aura,false,{transparent:true,opacity:0.6,emissive:0xFFC93C,emissiveIntensity:1,depthWrite:false});
     this.aura.visible=false;
+    // Bulwark dome (Pumpkin Shield special)
+    this.dome=new THREE.Group(); this.m.root.add(this.dome);
+    M(G('dome',()=>new THREE.SphereGeometry(BULWARK_R,14,6,0,Math.PI*2,0,Math.PI/2)),PAL.carrot,0,0,0,this.dome,false,{transparent:true,opacity:0.2,emissive:0xFF8A2B,emissiveIntensity:0.5,side:THREE.DoubleSide,depthWrite:false});
+    M(CYL(BULWARK_R,BULWARK_R,0.04,20),PAL.corn,0,0.04,0,this.dome,false,{transparent:true,opacity:0.45,emissive:0xFFC93C,emissiveIntensity:0.7,depthWrite:false});
+    this.dome.visible=false;
     this.stars=new THREE.Group(); this.stars.position.y=1.45; this.m.root.add(this.stars);
     for(let k=0;k<3;k++){ const s=M(ICO(0.08,0),PAL.corn,Math.cos(k*2.1)*0.3,0,Math.sin(k*2.1)*0.3,this.stars,false,{emissive:0xFFC93C,emissiveIntensity:0.7}); }
     this.stars.visible=false;
@@ -927,24 +991,24 @@ class Character {
     this.pos=new V3(); this.vel=new V3(); this.kb=new V3(); this.facing=0;
     this.hedges=[]; this.resetStats(); this.resetState();
   }
-  resetStats(){ this.stats={ko:0,seeds:0,hedges:0,deaths:0,dmg:0}; }
+  resetStats(){ this.stats={ko:0,seeds:0,hedges:0,deaths:0,dmg:0,blocked:0}; }
   resetState(){
     this.hp=MAX_HP; this.energy=30; this.ko=false; this.respawnT=0; this.invuln=0; this.atkCd=0; this.atkAnim=0; this.atkKind=null;
     this.pending=null; this.dodgeCd=0; this.dodgeT=0; this.dodgeDir=new V3(); this.lungeT=0; this.lungeHit=null; this.spinT=0; this.spinTick=0;
     this.slowT=0; this.buffT=0; this.flinch=0; this.popT=1; this.dropFlash=0; this.hurtRanged=0; this.lastAttacker=null; this.phase=0;
-    this.honkT=0; this.squash=0; this.respawnGrace=false; this.vel.set(0,0,0); this.kb.set(0,0,0); this.setWeapon(this.sig);
+    this.honkT=0; this.squash=0; this.bulwarkT=0; this.respawnGrace=false; this.vel.set(0,0,0); this.kb.set(0,0,0); this.setWeapon(this.sig);
     this.m.rig.rotation.set(0,0,0); this.m.root.scale.set(1,1,1);
   }
   spawnAt(x,z){ this.pos.set(x,this.game.arena.heightAt(x,z),z); this.facing=this.team===0?Math.PI*0.25:-Math.PI*0.75; this.syncModel(); }
   setWeapon(key,uses=Infinity){
-    this.weapon=key; this.durability=key===this.sig?Infinity:uses;
+    this.weapon=key; this.durability=key===this.sig?Infinity:uses; this.bulwarkT=0;
     for(const w of this.weaponMeshes) w.parent.remove(w); this.weaponMeshes=[];
     const a=makeWeapon(key); this.m.handR.add(a); this.weaponMeshes.push(a);
     if(key==='kunai'){ const b=makeWeapon(key); this.m.handL.add(b); this.weaponMeshes.push(b); }
   }
   get W(){ return WEAPONS[this.weapon]; }
   get dmgMul(){ return this.weapon===this.sig?1.1:1; }
-  get speed(){ let s=BASE_SPEED; if(this.buffT>0) s*=1.35; if(this.slowT>0) s*=0.5; if(this.spinT>0) s*=0.65; if(this.pending) s*=0.55; return s; }
+  get speed(){ let s=BASE_SPEED; if(this.buffT>0) s*=1.35; if(this.slowT>0) s*=0.5; if(this.spinT>0) s*=0.65; if(this.pending) s*=0.55; if(this.weapon==='shield') s*=0.92; if(this.bulwarkT>0) s*=0.6; return s; }
   get cdMul(){ return this.buffT>0?0.65:1; }
   get alive(){ return !this.ko; }
   useDurability(){
@@ -956,7 +1020,7 @@ class Character {
     const g=this.game;
     // timers
     this.invuln-=dt; this.atkCd-=dt; this.dodgeCd-=dt; this.slowT-=dt; this.flinch-=dt; this.dropFlash-=dt; this.hurtRanged-=dt; this.honkT-=dt;
-    if(this.buffT>0) this.buffT-=dt; if(this.atkAnim>0) this.atkAnim-=dt; if(this.popT<1) this.popT=Math.min(1,this.popT+dt*2.5); if(this.squash>0) this.squash-=dt;
+    if(this.buffT>0) this.buffT-=dt; if(this.bulwarkT>0) this.bulwarkT-=dt; if(this.atkAnim>0) this.atkAnim-=dt; if(this.popT<1) this.popT=Math.min(1,this.popT+dt*2.5); if(this.squash>0) this.squash-=dt;
     if(this.ko){ this.respawnT-=dt; if(this.respawnT<=0) g.respawn(this); this.animate(dt); return; }
     // slow fields
     for(const f of g.arena.fields) if(f.team!==this.team && dist2(f.x,f.z,this.pos.x,this.pos.z)<4) this.slowT=0.25;
@@ -999,12 +1063,14 @@ class Character {
     let armR=-0.35, armL=-0.2, armRz=0, legA=0;
     if(moving){ legA=Math.sin(this.phase)*0.7; rz=Math.sin(this.phase)*0.13; y+=Math.abs(Math.sin(this.phase))*0.07; armL=-0.2-Math.sin(this.phase)*0.5; }
     else { y+=Math.sin(t*3+this.team)*0.02; sy=1+Math.sin(t*3+this.team)*0.025; sx=sz=1-Math.sin(t*3+this.team)*0.015; }
+    if(this.weapon==='shield' && !this.ko){ armR=this.bulwarkT>0?-1.55:-1.15; if(this.bulwarkT>0){ sy*=0.93; sx*=1.04; sz*=1.04; } }
     // attack poses
     if(this.atkAnim>0 && this.atkKind){ const p=1-this.atkAnim/this.atkDur;
       if(this.atkKind==='sword'){ armR=-1.35; ry=p<0.25?lerp(0,1.1,p/0.25):lerp(1.1,-1.2,Math.min(1,(p-0.25)/0.35)); }
       else if(this.atkKind==='flail'){ const w=this.W.windup/this.atkDur; armR=p<w?lerp(-0.35,-2.7,p/w):lerp(-2.7,0.5,Math.min(1,(p-w)/0.25)); rx=p<w?-0.15:0.2; }
       else if(this.atkKind==='kunai'){ armR=p<0.3?-2.2:lerp(-2.2,-1.0,(p-0.3)/0.7); armL=p<0.3?-1.8:-0.6; }
       else if(this.atkKind==='staff'){ armR=p<0.4?lerp(-0.35,-2.0,p/0.4):-1.6; }
+      else if(this.atkKind==='shield' && this.bulwarkT<=0){ armR=p<0.3?-0.9:lerp(-1.75,-1.15,(p-0.3)/0.7); rx=p<0.3?-0.12:0.22; }
       if(p<0.3){ sy*=1.08; sx*=0.95; } }
     if(this.spinT>0){ ry=t*22; armR=-1.5; armL=-1.5; }
     if(this.lungeT>0){ rx=0.35; armR=-1.5; sz=1.25; sx=0.85; }
@@ -1023,6 +1089,7 @@ class Character {
     const pp=this.popT; const ps=pp<1?(pp<0.6?pp/0.6*1.25:1.25-(pp-0.6)/0.4*0.25):1; m.root.scale.setScalar(Math.max(0.001,ps));
     this.stars.visible=this.ko; if(this.ko){ this.stars.rotation.y=t*5; this.stars.position.y=0.65; }
     this.aura.visible=this.buffT>0 && !this.ko; if(this.aura.visible){ const s=1+Math.sin(t*10)*0.06; this.aura.scale.set(s,1,s); this.aura.rotation.y=t*2; }
+    this.dome.visible=this.bulwarkT>0 && !this.ko; if(this.dome.visible){ const k=this.bulwarkT<0.4?this.bulwarkT/0.4:Math.min(1,(BULWARK_TIME-this.bulwarkT)*6); this.dome.scale.setScalar(Math.max(0.01,k)); this.dome.rotation.y=-this.facing+t; }
     this.marker.visible=this.isPlayer && !this.ko; if(this.marker.visible) this.marker.position.y=1.75+Math.sin(t*5)*0.06;
     this.ring.visible=!this.ko;
     // invulnerability blink
@@ -1053,6 +1120,8 @@ class Weapon {
     if(c.weapon==='sword'){ c.lungeT=0.22; c.lungeHit=new Set(); c.invuln=Math.max(c.invuln,0.15); audio.play('swing'); }
     else if(c.weapon==='kunai'){ for(const o of [-0.26,0,0.26]) this.fire(c,c.facing+o,'kunai'); audio.play('throw'); }
     else if(c.weapon==='flail'){ c.spinT=1.5; c.spinTick=0; }
+    else if(c.weapon==='shield'){ c.bulwarkT=BULWARK_TIME; audio.play('bulwark'); g.shake(0.08); c.squash=0.15;
+      g.fx.float('BULWARK!',new V3(c.pos.x,1.9,c.pos.z),'info',0.9); g.fx.burst(new V3(c.pos.x,0.5,c.pos.z),[PAL.carrot,PAL.corn,PAL.leaf],14,4,2); }
     else if(c.weapon==='staff'){ let tx=target?target.x:c.pos.x+Math.sin(c.facing)*4, tz=target?target.z:c.pos.z+Math.cos(c.facing)*4;
       const dx=tx-c.pos.x, dz=tz-c.pos.z, L=Math.hypot(dx,dz); if(L>7){ tx=c.pos.x+dx/L*7; tz=c.pos.z+dz/L*7; }
       tx=clamp(tx,-7.5,7.5); tz=clamp(tz,-7.5,7.5); g.arena.addSlowField(tx,tz,c.team); audio.play('slow');
@@ -1070,7 +1139,7 @@ class Weapon {
     return hit;
   }
   slashFX(c,W){ const fx=Math.sin(c.facing), fz=Math.cos(c.facing);
-    this.game.fx.burst(new V3(c.pos.x+fx*1.0,0.6,c.pos.z+fz*1.0),c.weapon==='flail'?[PAL.beet,PAL.beetS,PAL.leaf]:[PAL.carrot,PAL.white],c.weapon==='flail'?8:4,2.5,1.5,0.7);
+    this.game.fx.burst(new V3(c.pos.x+fx*1.0,0.6,c.pos.z+fz*1.0),c.weapon==='flail'?[PAL.beet,PAL.beetS,PAL.leaf]:c.weapon==='shield'?[PAL.carrot,PAL.carrotS,PAL.corn]:[PAL.carrot,PAL.white],c.weapon==='flail'?8:4,2.5,1.5,0.7);
     if(c.weapon==='flail'){ this.game.shake(0.12); c.squash=0.15; } }
   fire(c,a,type){
     const W=WEAPONS[type], fx=Math.sin(a), fz=Math.cos(a);
@@ -1082,12 +1151,14 @@ class Weapon {
   update(dt){
     const g=this.game;
     for(let k=this.proj.length-1;k>=0;k--){ const p=this.proj[k]; p.life-=dt; let dead=p.life<=0;
+      for(const e of g.chars){ if(dead) break; if(e.team===p.owner.team||e.ko||e.bulwarkT<=0) continue; if(dist2(e.pos.x,e.pos.z,p.x,p.z)<BULWARK_R*BULWARK_R){ dead=true;
+          g.fx.burst(new V3(p.x,0.7,p.z),[PAL.carrot,PAL.corn,PAL.white],6,2.5); audio.play('block'); } }
       const steps=2; for(let s=0;s<steps&&!dead;s++){ p.x+=p.vx*dt/steps; p.z+=p.vz*dt/steps;
         const i=tileOf(p.x), j=tileOf(p.z);
         if(g.arena.isBlocked(i,j)){ dead=true; const h=g.arena.hedgeAt(i,j); if(h) g.arena.damageHedge(h);
           g.fx.burst(new V3(p.x,0.6,p.z),p.type==='kunai'?[PAL.carrot,PAL.carrotS]:[PAL.celery,PAL.mint],5,2); audio.play('crunch'); break; }
         for(const e of g.chars){ if(e.team===p.owner.team||e.ko) continue; if(dist2(e.pos.x,e.pos.z,p.x,p.z)<0.3){
-          const l=Math.hypot(p.vx,p.vz); g.damage(e,p.dmg,p.owner,new V3(p.vx/l,0,p.vz/l),p.knock,true); dead=true; break; } } }
+          const l=Math.hypot(p.vx,p.vz); g.damage(e,p.dmg,p.owner,new V3(p.vx/l,0,p.vz/l),p.knock,true,p.type); dead=true; break; } } }
       p.mesh.position.x=p.x; p.mesh.position.z=p.z; if(p.type==='kunai') p.mesh.children[0].rotation.z+=dt*30; else p.mesh.rotation.x+=dt*10;
       if(dead){ scene.remove(p.mesh); this.proj.splice(k,1); } }
   }
@@ -1128,7 +1199,7 @@ class Player {
     return it;
   }
 }
-// Simple, readable state machine: seek_seeds, seek_veg, attack, retreat, place_hedge.
+// Simple, readable state machine: seek_seeds, seek_veg, attack, retreat, place_hedge, guard (Pumpkin Shield tank).
 class AIController {
   constructor(game,c,diff){ this.game=game; this.c=c; this.p=DIFF[diff]; this.diff=diff; this.reset(); }
   reset(){ this.state='seek_seeds'; this.think=rand(0,0.3); this.path=null; this.pathT=0; this.pathKey=-1; this.pi=0; this.target=null; this.goal=null;
@@ -1160,8 +1231,17 @@ class AIController {
       case 'place_hedge': {
         const a=this.hedgeFrom; if(!a || a.ko){ this.state='attack'; break; } const ang=Math.atan2(a.pos.x-c.pos.x,a.pos.z-c.pos.z); it.aim=ang;
         if(Math.abs(angDiff(c.facing,ang))<0.25){ it.hedge=true; this.state='attack'; this.think=0.3; } break; }
+      case 'guard': { // tank: stand between a hurt ally and their attacker
+        const a=this.guardAlly; if(!a || a.ko || !T){ this.think=0; break; }
+        const vx=T.pos.x-a.pos.x, vz=T.pos.z-a.pos.z, l=Math.hypot(vx,vz)||1, k=Math.min(1.1,l*0.5);
+        this.moveTo(it,a.pos.x+vx/l*k,a.pos.z+vz/l*k); this.fight(it,T,ed,false); if(it.aim===null) it.aim=Math.atan2(T.pos.x-c.pos.x,T.pos.z-c.pos.z); break; }
       default: { if(T) this.fight(it,T,ed,true); else this.think=0; }
     }
+    // tank: raise Bulwark when under fire, or when a teammate nearby is in trouble
+    if(c.weapon==='shield' && c.bulwarkT<=0 && c.energy>=WEAPONS.shield.spCost && !it.special){
+      const ally=g.chars.find(a=>a!==c && a.team===c.team && !a.ko && a.hp<MAX_HP*0.6 && dist2(a.pos.x,a.pos.z,c.pos.x,c.pos.z)<BULWARK_R*BULWARK_R);
+      const pressed=c.hurtRanged>0 || (T && ed<2.2 && c.hp<MAX_HP*0.75) || (ally && T && ed<4);
+      if(pressed && Math.random()<p.special*dt*4){ it.special=true; it.target=null; } }
     // unstick: if trying to move but not moving, re-path and jitter sideways
     if(Math.hypot(it.mx,it.mz)>0.5){ if(c.pos.distanceTo(this.lastPos)<0.02) this.stuckT+=dt; else this.stuckT=0; } else this.stuckT=0;
     this.lastPos.copy(c.pos);
@@ -1172,12 +1252,17 @@ class AIController {
   }
   decide(){
     const c=this.c, g=this.game, p=this.p, en=this.enemies(); let best=null,bs=1e9;
-    for(const e of en){ const d=Math.hypot(e.pos.x-c.pos.x,e.pos.z-c.pos.z); const s=d-(1-e.hp/MAX_HP)*4*(1+p.focus)-(g.seeds.pool[e.team]>4?1.5+p.focus:0); if(s<bs){bs=s;best=e;} }
+    for(const e of en){ const d=Math.hypot(e.pos.x-c.pos.x,e.pos.z-c.pos.z); const s=d-(1-e.hp/MAX_HP)*4*(1+p.focus)-(g.seeds.pool[e.team]>4?1.5+p.focus:0)-(e.bulwarkT>0&&d<6?6:0); if(s<bs){bs=s;best=e;} }
     this.target=best; const ed=best?Math.hypot(best.pos.x-c.pos.x,best.pos.z-c.pos.z):1e9;
     const hpF=c.hp/MAX_HP;
     if(c.hurtRanged>0 && c.energy>=HEDGE_COST+5 && this.hedgeCd<=0 && c.lastAttacker && !c.lastAttacker.ko && Math.random()<p.hedge){
       this.state='place_hedge'; this.hedgeFrom=c.lastAttacker; this.hedgeCd=7; return; }
     if(hpF<0.3 && ed<4.5 && Math.random()>p.aggr*0.4){ this.state='retreat'; return; }
+    if(c.weapon==='shield' && hpF>0.35){ // tank duty: peel for the most threatened teammate
+      let ga=null, gt=null, gs=1e9;
+      for(const a of g.chars){ if(a===c||a.team!==c.team||a.ko||a.hp>MAX_HP*0.65) continue;
+        for(const e of en){ const d=Math.hypot(e.pos.x-a.pos.x,e.pos.z-a.pos.z); if(d<4.5 && d+a.hp/20<gs){ gs=d+a.hp/20; ga=a; gt=e; } } }
+      if(ga && dist2(ga.pos.x,ga.pos.z,c.pos.x,c.pos.z)<100){ this.state='guard'; this.guardAlly=ga; this.target=gt; return; } }
     const seed=g.seeds.nearest(c.pos.x,c.pos.z,en), sd=seed?Math.hypot(seed.x-c.pos.x,seed.z-c.pos.z):1e9;
     // Aggression sets how far away a fight is worth taking; greed (higher on Hard) prefers seeds over brawling.
     const fightR=1.5+p.aggr*3.5+(g.seeds.pool[1-c.team]>=6?2.5:0);
@@ -1203,7 +1288,7 @@ class AIController {
     }
     const inRange=ranged?(ed<8 && see):(ed<W.range+0.15);
     if(inRange && Math.abs(angDiff(c.facing,aim))<0.45 && this.atkWait<=0 && c.atkCd<=0){
-      if(c.energy>=W.spCost && Math.random()<p.special*0.35 && (c.weapon!=='sword'||ed<3.2)){ it.special=true; it.target=new V3(T.pos.x,0,T.pos.z); }
+      if(c.energy>=W.spCost && Math.random()<p.special*0.35 && (c.weapon!=='sword'||ed<3.2) && (c.weapon!=='shield'||c.hp<MAX_HP*0.8)){ it.special=true; it.target=new V3(T.pos.x,0,T.pos.z); }
       else it.attack=true;
       this.atkWait=p.atkDelay*rand(0.6,1.4); }
   }
@@ -1230,6 +1315,71 @@ class AIController {
 }
 
 /* =====================================================================
+   SECTION 12b — ACHIEVEMENTS (player knockouts, saved in localStorage)
+   ===================================================================== */
+const WEAPON_ORDER=['sword','kunai','flail','staff','shield'];
+const WEAPON_CSS={sword:'#FF8A2B',kunai:'#FFB066',flail:'#B65AB7',staff:'#A6E36F',shield:'#F2A03D'};
+const ACH_TIERS={ // [goal, name, blurb] for 1, 10 and 25 knockouts with each weapon
+  sword: [[1,'CARROT KNIGHT','Knighted on the spot.'],[10,'ROOT OF ALL EVIL','A sharp orange reputation.'],[25,'SIR LANCE-A-LOT','The Radish Council salutes you.']],
+  kunai: [[1,'BABY CARROT NINJA','Small, fast, rude.'],[10,'CARROT TOP SECRET','Nobody saw it coming.'],[25,'SHADOW OF THE PATCH','Thrown things, landed.']],
+  flail: [[1,'BEET DROP','Wait for it...'],[10,'BEET DOWN','Absolutely tenderized.'],[25,"CAN'T BEET THIS",'Stop. Beet time.']],
+  staff: [[1,'STALK TALK','Celery says hello.'],[10,'STALK MARKET','Your stock is rising.'],[25,'GRAND CELERIAN','Archmage of the crudité platter.']],
+  shield:[[1,'SQUASHED IT','Bonked with a gourd.'],[10,'GOURD OF HONOUR','The best offence is a pumpkin.'],[25,'PUMPKIN SPICE WALL','Seasonal. Unstoppable.']],
+};
+const ACH=[
+  {id:'first', name:'FIRST BITE', desc:'Get your first knockout.', goal:1, prog:s=>s.total},
+  {id:'ko50', name:'COMPOST HEAP', desc:'50 lifetime knockouts.', goal:50, prog:s=>s.total},
+  {id:'ko150', name:'GARDEN LEGEND', desc:'150 lifetime knockouts.', goal:150, prog:s=>s.total},
+  ...WEAPON_ORDER.flatMap(w=>ACH_TIERS[w].map(([n,name,b])=>({id:w+n, name, w, goal:n, prog:s=>s.kos[w]||0,
+    desc:(n===1?'First knockout with the ':n+' knockouts with the ')+WEAPONS[w].name.toLowerCase().replace(/\b\w/g,m=>m.toUpperCase())+'. '+b}))),
+  {id:'double', name:'DOUBLE HELPING', desc:'Two knockouts within 6 seconds.'},
+  {id:'five', name:'FIVE-A-DAY', desc:'Five knockouts in one match.'},
+  {id:'salad', name:'SALAD SPINNER', desc:'Knockouts with 3 different weapons in one match.'},
+  {id:'harvest', name:'FULL HARVEST', desc:'At least one knockout with every weapon.', goal:5, prog:s=>WEAPON_ORDER.filter(w=>s.kos[w]>0).length},
+  {id:'revenge', name:'SERVED COLD', desc:'Knock out the critter who last knocked you out.'},
+  {id:'clean', name:'CLEAN PLATE', desc:'Win a match with 3+ knockouts and without getting knocked out.'},
+];
+class Achievements {
+  constructor(){ this.key='eyv-achievements-v1'; this.s={total:0,kos:{},got:{}};
+    try{ const raw=localStorage.getItem(this.key); if(raw){ const d=JSON.parse(raw); if(d&&typeof d==='object') this.s={total:d.total|0,kos:d.kos||{},got:d.got||{}}; } }catch(e){}
+    this.toastEl=$('toasts'); this.newThisMatch=[]; this.startMatch(); }
+  save(){ try{ localStorage.setItem(this.key,JSON.stringify(this.s)); }catch(e){} }
+  startMatch(){ this.m={kos:0,weapons:new Set(),times:[],nemesis:null,deaths:0}; this.newThisMatch=[]; }
+  unlock(id){ if(this.s.got[id]) return; const a=ACH.find(x=>x.id===id); if(!a) return; this.s.got[id]=Date.now(); this.newThisMatch.push(a.name); this.toast(a); }
+  checkProgress(){ for(const a of ACH) if(a.goal && !this.s.got[a.id] && a.prog(this.s)>=a.goal) this.unlock(a.id); }
+  onKO(victim,src,wtype,game){
+    if(victim===game.player){ this.m.deaths++; this.m.nemesis=src; return; }
+    if(src!==game.player) return;
+    const w=WEAPONS[wtype]?wtype:src.weapon, t=game.time;
+    this.s.total++; this.s.kos[w]=(this.s.kos[w]||0)+1; this.m.kos++; this.m.weapons.add(w);
+    this.m.times=this.m.times.filter(x=>t-x<6); this.m.times.push(t);
+    if(this.m.times.length>=2) this.unlock('double');
+    if(this.m.kos>=5) this.unlock('five');
+    if(this.m.weapons.size>=3) this.unlock('salad');
+    if(this.m.nemesis===victim){ this.unlock('revenge'); this.m.nemesis=null; }
+    this.checkProgress(); this.save();
+  }
+  onMatchEnd(won){ if(won && this.m.deaths===0 && this.m.kos>=3) this.unlock('clean'); this.save(); }
+  toast(a){
+    audio.play('achieve'); const el=document.createElement('div'); el.className='toast';
+    el.innerHTML=`<div class="k">ACHIEVEMENT UNLOCKED</div><div class="n"></div><div class="d"></div>`;
+    el.querySelector('.n').textContent=a.name; el.querySelector('.d').textContent=a.desc; if(a.w) el.style.borderLeftColor=WEAPON_CSS[a.w];
+    this.toastEl.appendChild(el); while(this.toastEl.children.length>3) this.toastEl.firstChild.remove();
+    setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),400); },3800);
+  }
+  render(){
+    const got=ACH.filter(a=>this.s.got[a.id]).length;
+    $('ach-sum').textContent=`${got} / ${ACH.length} UNLOCKED · ${this.s.total} LIFETIME KNOCKOUTS`;
+    const grid=$('ach-grid'); grid.innerHTML='';
+    for(const a of ACH){ const d=document.createElement('div'), on=!!this.s.got[a.id]; d.className='ach'+(on?'':' locked'); if(a.w) d.style.setProperty('--wc',WEAPON_CSS[a.w]);
+      const pr=a.goal?Math.min(a.goal,a.prog(this.s)):0;
+      d.innerHTML=`<div class="w">${a.w?WEAPONS[a.w].name:'GENERAL'}</div><div class="n"></div><div class="d"></div>`+(a.goal>1?`<div class="bar"><b style="width:${pr/a.goal*100}%"></b></div>`:'');
+      d.querySelector('.n').textContent=(on?'★ ':'')+a.name; d.querySelector('.d').textContent=a.desc+(a.goal>1&&!on?` (${pr}/${a.goal})`:'');
+      grid.appendChild(d); }
+  }
+}
+
+/* =====================================================================
    SECTION 13 — HUD (HTML/CSS overlay)
    ===================================================================== */
 function heartSVG(state){ // 7×6 pixel heart; state 0 empty, 1 half, 2 full
@@ -1244,7 +1394,6 @@ class HUD {
     for(let k=0;k<8;k++){ const s=document.createElement('span'); s.innerHTML=heartSVG(2); this.hearts.appendChild(s); this.hState.push(2); }
     this.sc=[$('sc0'),$('sc1')].map(el=>{ const ic=el.querySelector('.icons'); const icons=[]; for(let k=0;k<12;k++){ const i=document.createElement('i'); ic.appendChild(i); icons.push(i); }
       return {el,num:el.querySelector('.num span'),icons,bonus:el.querySelector('.bonus'),last:-1}; });
-    this.mm=$('minimap'); this.mctx=this.mm.getContext('2d'); this.mmBg=this.buildMinimapBg(); this.mmT=0;
     this.timer=$('timer'); this.roundLabel=$('round-label'); this.banner=$('banner'); this.bannerT=0;
     this.fill=$('energy-fill'); this.fillHi=$('energy-fill-hi');
   }
@@ -1290,27 +1439,6 @@ class HUD {
     // hint
     const near=g.arena.ripePlotNear(pl.pos.x,pl.pos.z); setText($('hint'),!pl.ko&&near?'[E] PICK UP '+WEAPONS[near.type].name:pl.ko?'KNOCKED OUT · RESPAWNING':'');
     if(this.bannerT>0){ this.bannerT-=dt; if(this.bannerT<=0) this.banner.classList.remove('on'); }
-    this.mmT-=dt; if(this.mmT<=0){ this.mmT=1/20; this.drawMinimap(); }
-  }
-  buildMinimapBg(){
-    const c=document.createElement('canvas'); c.width=c.height=200; const x=c.getContext('2d'), s=200/16;
-    x.fillStyle='#4FAF3F'; x.fillRect(0,0,200,200);
-    ROWS.forEach((t,j)=>{ x.fillStyle=t==='D'?'#8A5A3C':(t==='S'||t==='P')?'#B9B2C9':'#63C94B'; x.fillRect(0,j*s+(t==='D'?1.5:0),200,s-(t==='D'?3:0)); });
-    for(const [i,j,t] of STATIC_COVER){ x.fillStyle=t==='hedge'?'#1F6B30':'#D69A1E'; x.fillRect(i*s+1,j*s+1,s-2,s-2); }
-    x.strokeStyle='#C28A55'; x.lineWidth=3; x.strokeRect(1.5,1.5,197,197);
-    return c;
-  }
-  drawMinimap(){
-    const x=this.mctx, g=this.game, s=200/16, P=v=>(v+HALF)*s;
-    x.save(); x.clearRect(0,0,200,200); x.beginPath(); x.arc(100,100,100,0,Math.PI*2); x.clip(); x.drawImage(this.mmBg,0,0);
-    for(const p of g.arena.plots) if(p.stage===3){ x.fillStyle='#FFB066'; x.fillRect(P(p.x)-3,P(p.z)-3,6,6); }
-    for(const h of g.arena.hedges){ x.fillStyle='#14502A'; x.fillRect(h.i*s+1,h.j*s+1,s-2,s-2); }
-    const star=(cx,cy,r,col)=>{ x.fillStyle=col; x.beginPath(); for(let k=0;k<10;k++){ const a=k*Math.PI/5-Math.PI/2, rr=k%2?r*0.45:r; x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr); } x.closePath(); x.fill(); };
-    star(100,100,9,'#FFC93C'); x.strokeStyle='#1F2A44'; x.lineWidth=1.5; x.stroke();
-    for(const sd of g.seeds.seeds){ if(Math.hypot(sd.x,sd.z)<1.4) continue; star(P(sd.x),P(sd.z),5,'#FFE27A'); }
-    for(const c of g.chars){ if(c.ko) continue; x.fillStyle=c.team?'#FF8A2B':'#7ED957'; x.strokeStyle=c.isPlayer?'#FFFFFF':'#1F2A44'; x.lineWidth=c.isPlayer?3:2;
-      x.beginPath(); x.arc(P(c.pos.x),P(c.pos.z),c.isPlayer?7:6,0,Math.PI*2); x.fill(); x.stroke(); }
-    x.restore();
   }
 }
 
@@ -1324,6 +1452,7 @@ class Game {
     this.arena=new Arena(this); this.fx=new FX(); this.seeds=new SeedSystem(this); this.weapons=new Weapon(this);
     this.chars=CHAR_ORDER.map(k=>new Character(this,k));
     this.portraits=this.makePortraits();
+    this.ach=new Achievements(); this.achOn=false;
     this.hud=new HUD(this); this.wins=[0,0]; this.bonus=[0,0]; this.round=1; this.roundTime=ROUND_TIME;
     this.placeTitleChars(); this.bindUI(); this.showScreen('title');
     this.fps=60; this.fpsAcc=0; this.fpsN=0;
@@ -1342,6 +1471,8 @@ class Game {
     const click=(id,fn)=>$(id).addEventListener('click',()=>{ audio.init(); audio.play('click'); fn(); });
     click('btn-play',()=>this.showScreen('select'));
     click('btn-diff',()=>{ const o=['easy','normal','hard']; this.difficulty=o[(o.indexOf(this.difficulty)+1)%3]; $('btn-diff').textContent='Difficulty: '+DIFF[this.difficulty].label; });
+    click('btn-ach',()=>this.openAch('title')); click('btn-res-ach',()=>this.openAch('results'));
+    click('btn-ach-back',()=>this.showScreen(this.achBack||'title'));
     click('btn-controls',()=>this.showScreen('controls')); click('btn-controls-back',()=>this.showScreen('title'));
     click('btn-select-back',()=>this.showScreen('title')); click('btn-fight',()=>this.startMatch());
     click('btn-resume',()=>this.togglePause()); click('btn-restart',()=>{ this.paused=false; this.startMatch(); });
@@ -1358,11 +1489,13 @@ class Game {
     });
     addEventListener('keydown',()=>audio.init(),{once:true});
   }
-  showScreen(name){ for(const s of ['title','controls','select','pause','results']) $(s).classList.toggle('hidden',s!==name); }
+  openAch(from){ this.achBack=from; this.ach.render(); this.showScreen('achievements'); }
+  showScreen(name){ for(const s of ['title','controls','select','pause','results','achievements']) $(s).classList.toggle('hidden',s!==name); }
   toTitle(){ this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.placeTitleChars(); this.showScreen('title'); }
   startMatch(){
     this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0];
     this.player=this.chars.find(c=>c.key===this.choice);
+    this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[];
       c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'normal':this.difficulty); }
     this.hud.setup(); this.hud.show(true); this.startRound();
@@ -1379,24 +1512,34 @@ class Game {
   }
   splash(text){ const s=$('splash'), d=s.firstElementChild; s.classList.remove('hidden'); d.textContent=text; d.classList.remove('pop'); void d.offsetWidth; d.classList.add('pop'); }
   // ---- combat resolution ----
-  damage(t,amount,src,dir,knock,ranged){
+  // Pumpkin Shield: frontal hits on the carrier are cut hard, Bulwark cuts everything and covers allies in the dome.
+  blockMul(t,dir){
+    if(t.weapon==='shield'){ if(t.bulwarkT>0) return BULWARK_MUL;
+      const front=Math.abs(angDiff(t.facing,Math.atan2(-dir.x,-dir.z)))<1.2; return front?SHIELD_FRONT:SHIELD_BACK; }
+    for(const a of this.chars) if(a!==t && a.team===t.team && !a.ko && a.bulwarkT>0 && dist2(a.pos.x,a.pos.z,t.pos.x,t.pos.z)<BULWARK_R*BULWARK_R) return 0.5;
+    return 1;
+  }
+  damage(t,amount,src,dir,knock,ranged,wtype=src.weapon){
     if(t.ko || t.invuln>0 || this.state!=='playing') return false;
-    amount=Math.round(amount); t.hp-=amount; t.flinch=0.25; t.lastAttacker=src; if(ranged) t.hurtRanged=1.5;
+    const bm=this.blockMul(t,dir), raw=amount; amount=Math.max(1,Math.round(amount*bm));
+    if(bm<1){ const saved=Math.max(0,Math.round(raw)-amount); t.stats.blocked+=saved; knock*=0.5+bm*0.5;
+      if(bm<=0.5){ this.fx.float('BLOCK',new V3(t.pos.x,1.95,t.pos.z),'info',0.5); this.fx.burst(new V3(t.pos.x+dir.x*-0.4,0.7,t.pos.z+dir.z*-0.4),[PAL.carrot,PAL.corn],5,2.5,1.5,0.7); audio.play('block'); } } t.hp-=amount; t.flinch=0.25; t.lastAttacker=src; if(ranged) t.hurtRanged=1.5;
     t.kb.x+=dir.x*knock; t.kb.z+=dir.z*knock; src.energy=Math.min(100,src.energy+7); t.energy=Math.min(100,t.energy+2); src.stats.dmg+=amount;
     this.fx.float(String(amount),new V3(t.pos.x,1.5,t.pos.z),amount>=15?'big':'dmg');
-    this.fx.burst(new V3(t.pos.x,0.7,t.pos.z),[t.def.fur,PAL.white,WEAPONS[src.weapon].veg==='beet'?PAL.beet:WEAPONS[src.weapon].veg==='celery'?PAL.celery:PAL.carrot],10,4,3);
+    this.fx.burst(new V3(t.pos.x,0.7,t.pos.z),[t.def.fur,PAL.white,WEAPONS[wtype].veg==='beet'?PAL.beet:WEAPONS[wtype].veg==='celery'?PAL.celery:PAL.carrot],10,4,3);
     audio.play('hit'); audio.play('crunch'); this.hitstop=3; if(t.isPlayer||src.isPlayer) this.shake(t.isPlayer?0.22:0.12);
     const ko=t.hp<=0;
     const pool=this.seeds.pool[t.team];
     if(pool>0){ const n=Math.min(pool,ko?randi(3,4):randi(1,2)); this.seeds.pool[t.team]-=n; this.seeds.scatter(t,n); t.dropFlash=1.0; audio.play('scatter'); }
-    if(ko) this.knockout(t,src);
+    if(ko) this.knockout(t,src,wtype);
     return true;
   }
-  knockout(t,src){
-    t.ko=true; t.hp=0; t.respawnT=RESPAWN; t.pending=null; t.spinT=0; t.lungeT=0; t.dodgeT=0; src.stats.ko++; t.stats.deaths++; this.teamKO[src.team]++;
+  knockout(t,src,wtype=src.weapon){
+    t.ko=true; t.hp=0; t.respawnT=RESPAWN; t.pending=null; t.spinT=0; t.lungeT=0; t.dodgeT=0; t.bulwarkT=0; src.stats.ko++; t.stats.deaths++; this.teamKO[src.team]++;
     audio.play('ko'); this.fx.burst(new V3(t.pos.x,0.6,t.pos.z),[t.def.fur,PAL.corn,PAL.white],22,6,5); this.hitstop=6; this.shake(0.3);
     this.fx.float('K.O.!',new V3(t.pos.x,2.0,t.pos.z),'big',1.2);
     if(t.isPlayer) this.hud.showBanner('KNOCKED OUT<small>BACK IN 4 SECONDS</small>',1.6);
+    if(this.achOn) this.ach.onKO(t,src,wtype,this);
   }
   respawn(c){
     const s=SPAWNS[c.team][this.chars.filter(x=>x.team===c.team).indexOf(c)]; const keepBuff=c.buffT;
@@ -1440,9 +1583,11 @@ class Game {
     let w=this.wins[0]>this.wins[1]?0:this.wins[1]>this.wins[0]?1:-1;
     const banner=$('res-banner'); banner.textContent=w<0?'DRAW!':TEAM_NAME[w]+' WINS!'; banner.style.color=w<0?'#FFC93C':w?'#FF8A2B':'#7ED957';
     setText($('res-sub'),w<0?'NOBODY EATS TONIGHT':(w===this.player.team?'YOU WIN! ':'YOU LOSE. ')+this.wins[0]+' – '+this.wins[1]+' ROUNDS');
-    let h='<tr><th></th><th>KNOCKOUTS</th><th>SEEDS</th><th>HEDGES</th><th>DAMAGE</th></tr>';
-    for(const c of this.chars) h+=`<tr style="--team:${TEAM_CSS[c.team]}"><td><img src="${this.portraits[c.key]}" alt="">${c.def.name}${c.isPlayer?' <span style="color:#FFC93C">(YOU)</span>':''}</td><td>${c.stats.ko}</td><td>${c.stats.seeds}</td><td>${c.stats.hedges}</td><td>${c.stats.dmg}</td></tr>`;
+    let h='<tr><th></th><th>KNOCKOUTS</th><th>SEEDS</th><th>HEDGES</th><th>DAMAGE</th><th>BLOCKED</th></tr>';
+    for(const c of this.chars) h+=`<tr style="--team:${TEAM_CSS[c.team]}"><td><img src="${this.portraits[c.key]}" alt="">${c.def.name}${c.isPlayer?' <span style="color:#FFC93C">(YOU)</span>':''}</td><td>${c.stats.ko}</td><td>${c.stats.seeds}</td><td>${c.stats.hedges}</td><td>${c.stats.dmg}</td><td>${c.stats.blocked}</td></tr>`;
     $('res-table').innerHTML=h; audio.play(w===this.player.team?'win':'ko');
+    if(this.achOn) this.ach.onMatchEnd(w===this.player.team);
+    setText($('res-new'),this.ach.newThisMatch.length?'NEW ACHIEVEMENTS: '+this.ach.newThisMatch.join(' · '):'');
   }
   // ---- fixed-timestep simulation ----
   fixedUpdate(dt){
