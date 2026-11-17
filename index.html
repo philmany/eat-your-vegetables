@@ -65,6 +65,12 @@
       follows the synced round clock in Online Play. POTATO_GAP: a critter hit by a potato ignores other potatoes for
       0.12 s, so a Spud Spread volley lands once per target. CELERY STAFF bolts give +6 extra energy per hit and every
       4th hit heals the wielder +5 HP (half a heart); the HUD weapon line shows HEAL n/4.
+  25. Look pass (Nov 17): pickup glows dimmed again and their beams, ripples, halos and bobbing made smaller. The
+      Rabbit lost its green leaf robe. The Possum HISSES when it attacks (2 s cooldown; reuses the goose's honk
+      timer so Online Play syncs it). New cosmetics for everyone: BIG SUNGLASSES and BLUE HAT (a baseball cap).
+      The title menu sits on a see-through black card. Achievements show medallion icons rendered once from the
+      game's own models (weapon models; seeds, berries, sunflower, salad bowl, plate for general ones); the ring
+      colour and stars show the tier (bronze 1, silver 10, gold 25 KOs).
 -->
 <html lang="en">
 <head>
@@ -97,7 +103,10 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 
 /* ---------- Screens ---------- */
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:20}
-.screen.dim{background:rgba(20,27,43,.62)}
+.screen.dim{background:rgba(10,12,18,.62)}
+/* see-through black card under the title menu so it pops off the 3D garden */
+.menu-card{display:flex;flex-direction:column;align-items:center;gap:16px;padding:30px clamp(18px,4vw,48px) 28px;max-width:calc(100vw - 32px);
+  background:rgba(0,0,0,.5);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
 #title h1{font-family:var(--display);font-size:clamp(48px,8vw,118px);line-height:.9;margin:0 0 6px;text-align:center;color:var(--corn);
   text-shadow:0 6px 0 var(--orange-s),0 12px 0 var(--navy),0 18px 30px rgba(0,0,0,.35);transform:skewX(-8deg) rotate(-3deg);letter-spacing:2px}
 #title h1 span{display:block;color:var(--orange);font-size:.62em}
@@ -233,9 +242,17 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .toast .d{font-size:13px;color:#C9CFDD;line-height:1.25}
 @keyframes toastIn{from{transform:translateX(120%)}to{transform:none}}
 @keyframes toastOut{to{transform:translateX(120%);opacity:0}}
-#ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-height:min(58vh,560px);overflow:auto;padding-right:4px;width:min(720px,84vw)}
+#ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;max-height:min(58vh,560px);overflow:auto;padding-right:4px;width:min(720px,84vw)}
 .ach{background:#2A3757;padding:8px 12px 10px;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);border-bottom:5px solid var(--wc,#3A4560)}
 .ach.locked{opacity:.55;filter:grayscale(.7)}
+.ach{display:flex;gap:10px;align-items:flex-start}
+.ach .tx{flex:1;min-width:0}
+/* icon medallion: the weapon (or general) model; ring colour = tier (bronze 1, silver 10, gold 25 KOs) */
+.ach .ic{position:relative;flex:0 0 56px;height:56px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#3B4B72,#1B2440);box-shadow:inset 0 0 0 3px var(--wc,#55618A);margin-top:2px}
+.ach .ic.t0{box-shadow:inset 0 0 0 3px #B8763E} .ach .ic.t1{box-shadow:inset 0 0 0 3px #C9D2DE} .ach .ic.t2{box-shadow:inset 0 0 0 3px #F2B51E,0 0 0 2px rgba(242,181,30,.35)}
+.ach .ic img{position:absolute;inset:4px;width:48px;height:48px;object-fit:contain}
+@media (max-width:520px){ .panel{padding:20px 16px} #ach-grid{width:100%;grid-template-columns:1fr} }
+.ach .ic i{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-style:normal;font-size:10px;line-height:1;color:var(--corn);background:#1A2030;padding:1px 4px;border-radius:6px;white-space:nowrap}
 .ach .n{font-family:var(--display);font-size:19px;line-height:1.1;color:var(--corn)}
 .ach.locked .n{color:#C9CFDD}
 .ach .d{font-size:13px;color:#C9CFDD;line-height:1.25;margin-top:2px;font-family:var(--ui)}
@@ -370,7 +387,7 @@ body.night #nightvig{display:block}
 <div id="toasts"></div>
 
 <!-- ================= SCREENS ================= -->
-<div id="title" class="screen hidden">
+<div id="title" class="screen hidden"><div class="menu-card">
   <h1>EAT YOUR<span>VEGETABLES</span></h1>
   <div class="tag">2 V 2 GARDEN BRAWL</div>
   <button class="btn" id="btn-play">Play</button>
@@ -378,7 +395,7 @@ body.night #nightvig{display:block}
   <button class="btn green" id="btn-tutorial">Tutorial</button>
   <button class="btn green" id="btn-diff">Difficulty: Normal</button>
   <div class="row"><button class="btn ghost small" id="btn-controls">Controls</button><button class="btn ghost small" id="btn-ach">Achievements</button><button class="btn ghost small" id="btn-settings">Settings</button></div>
-</div>
+</div></div>
 <div id="online" class="screen dim hidden">
   <div class="panel">
     <h2>ONLINE PLAY</h2>
@@ -528,9 +545,9 @@ const BERRY_BUSHES=[[3,6],[12,9],[13,0],[2,15]]; // [i, j] tiles, point-symmetri
 // Cosmetics: one per character, purely visual. 'only' limits an item to one critter.
 const COSMETICS = {
   none:{ name:'NONE' }, overalls:{ name:'OVERALLS' }, pants:{ name:'PANTS' }, hat:{ name:'STRAW HAT' },
-  boots:{ name:'BIG RED BOOTS' }, skull:{ name:'SKULL HELMET', only:'raccoon' },
+  boots:{ name:'BIG RED BOOTS' }, shades:{ name:'BIG SUNGLASSES' }, bluehat:{ name:'BLUE HAT' }, skull:{ name:'SKULL HELMET', only:'raccoon' },
 };
-const COS_ORDER=['none','overalls','pants','hat','boots','skull'];
+const COS_ORDER=['none','overalls','pants','hat','bluehat','boots','shades','skull'];
 const cosmeticsFor=k=>COS_ORDER.filter(id=>!COSMETICS[id].only||COSMETICS[id].only===k);
 const CHARS = {
   rabbit:{ name:'RABBIT', team:0, weapon:'sword', blurb:'Knighted by the Radish Council. Takes it far too seriously.', fur:0xEDE3D3 },
@@ -695,6 +712,7 @@ class Audio {
       case 'hedgehit': this.noise(0.12,'bandpass',1800,700,0.3,1); break;
       case 'dodge': this.noise(0.22,'bandpass',300,2600,0.3,1.2); break;
       case 'honk': this.honk(0); this.honk(0.16); break;
+      case 'hiss': this.noise(0.5,'highpass',3800,6500,0.32,0.8); this.noise(0.45,'bandpass',2600,3400,0.18,2,0.03); break;
       case 'ko': this.tone(440,0.5,'square',0.15,110); this.noise(0.3,'lowpass',1200,200,0.3); break;
       case 'pickup': this.tone(520,0.08,'square',0.12,780); this.tone(780,0.12,'square',0.1,1040,0.07); break;
       case 'break': this.tone(300,0.2,'sawtooth',0.1,120); this.noise(0.15,'highpass',2000,null,0.2); break;
@@ -852,13 +870,8 @@ function buildCharacter(key){
   const P={root,rig,B,legL,legR,armL,armR,handL,handR,head,ears:[],tail:null,extra:{}};
   const limb=(arm,col,mitt)=>{ M(BOX(0.1,0.24,0.1),col,0,-0.12,0,arm); M(ICO(0.075,0),mitt,0,-0.26,0,arm); };
   if(key==='rabbit'){
-    const armour=PAL.leaf, twine=0xC9A26B;
     M(ICO(0.3,1),fur,0,0.48,0,B).scale.set(1,1.05,0.9);
     M(ICO(0.2,1),PAL.white,0,0.44,0.13,B).scale.set(1,1,0.7);
-    for(const s of [-1,1]){ const l=M(BOX(0.2,0.3,0.06),armour,s*0.1,0.52,0.24,B); l.rotation.z=s*0.35; l.rotation.x=-0.15;
-      const p=M(CONE(0.13,0.12,5),PAL.sprout,s*0.27,0.68,0,B); p.rotation.z=-s*1.1; }
-    M(CYL(0.3,0.3,0.06,10),twine,0,0.34,0,B);
-    M(BOX(0.06,0.06,0.04),twine,0.1,0.3,0.28,B);
     head.position.set(0,0.98,0.02);
     M(ICO(0.3,1),fur,0,0,0,head);
     M(ICO(0.12,1),PAL.white,0,-0.08,0.22,head).scale.set(1.2,0.8,0.8);
@@ -914,6 +927,8 @@ function buildCharacter(key){
     M(ICO(0.26,1),face,0,0,0,head).scale.set(0.98,0.9,1.12);
     const sn=M(CONE(0.11,0.3,6),face,0,-0.06,0.3,head); sn.rotation.x=Math.PI/2;
     M(ICO(0.05,0),pink,0,-0.06,0.46,head,false);
+    const mouth=M(BOX(0.12,0.05,0.1),0x5A1E32,0,-0.13,0.36,head,false); mouth.visible=false; P.extra.mouth=mouth; // shown while hissing
+    for(const s of [-1,1]) M(CONE(0.015,0.05,4),PAL.white,s*0.04,-0.11,0.4,mouth,false).rotation.x=Math.PI;
     eyes(head,0.06,0.255,0.11,0.08);
     for(const s of [-1,1]){ const lid=M(BOX(0.18,0.06,0.04),grey,s*0.11,0.11,0.265,head,false); lid.rotation.z=-s*0.2; }
     for(let i=0;i<3;i++){ const t=M(CONE(0.04,0.14,4),grey,(i-1)*0.07,0.24,-0.02,head); t.rotation.z=(i-1)*0.6; }
@@ -932,13 +947,15 @@ function buildCharacter(key){
 // ---- Cosmetics: built onto a critter's rig parts so they move with it. Returns [parent, object] pairs to remove later.
 // Per-critter fit: body centre / radius / scale, head radius, and whether ears poke through hats.
 const COS_FIT = {
-  rabbit:{ by:0.48, bz:0,     r:0.3,  s:[1,1.05,0.9],  hr:0.3,  hy:0,    earsOut:true },
-  raccoon:{by:0.48, bz:0,     r:0.31, s:[1.05,1,0.95], hr:0.29, hy:0,    earsOut:false },
-  goose:{  by:0.46, bz:-0.02, r:0.33, s:[1,0.85,1.2],  hr:0.17, hy:0.02, earsOut:true },
-  possum:{ by:0.47, bz:0,     r:0.3,  s:[1,0.95,1.05], hr:0.25, hy:0,    earsOut:false },
+  // ey/ez/es/er: where the eyes sit on the head (height, depth, half-spacing, size) for the sunglasses
+  rabbit:{ by:0.48, bz:0,     r:0.3,  s:[1,1.05,0.9],  hr:0.3,  hy:0,    earsOut:true,  ey:0.05,  ez:0.285, es:0.12, er:0.085 },
+  raccoon:{by:0.48, bz:0,     r:0.31, s:[1.05,1,0.95], hr:0.29, hy:0,    earsOut:false, ey:0.045, ez:0.3,   es:0.12, er:0.08 },
+  goose:{  by:0.46, bz:-0.02, r:0.33, s:[1,0.85,1.2],  hr:0.17, hy:0.02, earsOut:true,  ey:0.05,  ez:0.18,  es:0.085,er:0.065 },
+  possum:{ by:0.47, bz:0,     r:0.3,  s:[1,0.95,1.05], hr:0.25, hy:0,    earsOut:false, ey:0.06,  ez:0.275, es:0.11, er:0.08 },
 };
 const COS_COL = { denim:0x4D6A94, denimS:0x37506F, denimL:0x7C95B8, brass:0xE0A93A, pants:0x8A5A34, pantsS:0x5E3A22, belt:0x3A2A1E,
-  straw:0xE6C77A, strawS:0xB8944C, band:0xC23B2E, boot:0xD23A2A, bootS:0x8E2018, sole:0x2E2228, bone:0xEFE6D2, boneS:0xC9BBA0, crack:0x5A4A3E };
+  straw:0xE6C77A, strawS:0xB8944C, band:0xC23B2E, boot:0xD23A2A, bootS:0x8E2018, sole:0x2E2228, bone:0xEFE6D2, boneS:0xC9BBA0, crack:0x5A4A3E,
+  lens:0x1B1E2B, frame:0x2A2430, glint:0xBFE6FF, cap:0x3E7CC9, capS:0x2A5A99, capL:0x8FC0EE };
 function addCosmetic(P,key,id){
   const out=[], f=COS_FIT[key], C=COS_COL;
   if(!id||id==='none'||!COSMETICS[id]) return out;
@@ -973,6 +990,22 @@ function addCosmetic(P,key,id){
       M(BOX(0.2,0.12,0.32),C.boot,0,-0.13,0.06,g); M(BOX(0.215,0.035,0.34),C.sole,0,-0.195,0.06,g);
       M(CYL(0.095,0.09,0.15,8),C.boot,0,-0.03,0,g); M(CYL(0.11,0.11,0.04,8),C.bootS,0,0.05,0,g,false);
       M(ICO(0.05,0),C.boot,0,-0.1,0.2,g).scale.set(1.6,1,1); }
+  } else if(id==='shades'){ // oversized round sunglasses: dark lenses, chunky frame, a sky glint on each lens
+    const g=grp(P.head), lr=f.er*1.55; g.position.set(0,f.ey,f.ez+0.02);
+    for(const sx of [-1,1]){
+      const rim=M(CYL(lr*1.12,lr*1.12,0.03,14),C.frame,sx*f.es*1.08,0,0,g); rim.rotation.x=Math.PI/2;
+      const lens=M(CYL(lr,lr,0.035,14),C.lens,sx*f.es*1.08,0,0.006,g,false); lens.rotation.x=Math.PI/2;
+      const gl=M(BOX(lr*0.5,lr*0.16,0.01),C.glint,sx*f.es*1.08-lr*0.25,lr*0.4,0.026,g,false); gl.rotation.z=0.5;
+      const arm=M(BOX(0.025,0.025,f.ez*0.9),C.frame,sx*(f.es*1.08+lr*1.05),0.01,-f.ez*0.45,g,false); arm.rotation.y=sx*0.12; }
+    M(BOX(f.es*0.55,0.03,0.03),C.frame,0,lr*0.35,0.005,g,false);           // bridge
+  } else if(id==='bluehat'){ // a blue baseball cap with the brim to the front
+    const g=grp(P.head), hr=f.hr; g.position.set(0,f.hy+hr*0.42,0); g.rotation.x=-0.18;
+    const crown=M(G('capcrown',()=>new THREE.SphereGeometry(1,14,7,0,Math.PI*2,0,Math.PI/2)),C.cap,0,0,0,g); crown.scale.set(hr*1.04,hr*0.82,hr*1.06);
+    M(CYL(hr*1.05,hr*1.05,0.04,14),C.capS,0,0.01,0,g,false);                // band
+    const brim=M(BOX(hr*1.2,0.03,hr*0.6),C.capS,0,0.04,hr*1.12,g); brim.rotation.x=-0.3;
+    M(BOX(hr*0.34,hr*0.2,0.02),C.capL,0,hr*0.42,hr*0.92,g,false).rotation.x=-0.5; // little front badge
+    M(ICO(0.035,0),C.capS,0,hr*0.84,0,g,false);                            // top button
+    if(!f.earsOut) for(const e of P.ears) e.visible=false;
   } else if(id==='skull'){
     // Original design: a bone mask with deep sockets, a muzzle guard, a crest, curled horns and a crack over one brow.
     const g=grp(P.head);
@@ -1074,11 +1107,11 @@ class Arena {
     for(const [i,j,type] of PLOTS){
       const x=tileC(i), z=tileC(j), g=new THREE.Group(); g.position.set(x,0.16,z); this.root.add(g);
       M(BOX(0.78,0.06,0.62),PAL.loamS,0,0.02,0,g,false);
-      const glow=M(CYL(0.56,0.56,0.02,16),PAL.corn,0,0.05,0,g,false,{emissive:0xFFC93C,emissiveIntensity:0.4,transparent:true,opacity:0.32});
+      const glow=M(CYL(0.46,0.46,0.02,16),PAL.corn,0,0.05,0,g,false,{emissive:0xFFC93C,emissiveIntensity:0.3,transparent:true,opacity:0.22});
       // pickup beacon: a soft gold light pillar and a ripple ring that keeps expanding outward
-      const beam=new THREE.Mesh(CYL(0.36,0.46,2.4,14,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.5,transparent:true,opacity:0.08,side:THREE.DoubleSide,depthWrite:false}));
-      beam.position.y=1.2; g.add(beam);
-      const ripple=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.6,transparent:true,opacity:0.5,side:THREE.DoubleSide,depthWrite:false}));
+      const beam=new THREE.Mesh(CYL(0.26,0.34,1.5,14,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.35,transparent:true,opacity:0.05,side:THREE.DoubleSide,depthWrite:false}));
+      beam.position.y=0.75; g.add(beam);
+      const ripple=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.4,transparent:true,opacity:0.32,side:THREE.DoubleSide,depthWrite:false}));
       ripple.rotation.x=-Math.PI/2; ripple.position.y=0.07; g.add(ripple);
       const st=[new THREE.Group(),new THREE.Group(),new THREE.Group(),new THREE.Group()]; st.forEach(s=>g.add(s));
       // stage 0 — sprout
@@ -1088,7 +1121,7 @@ class Arena {
       for(let k=0;k<4;k++){ const l=M(BOX(0.18,0.025,0.08),PAL.sprout,Math.cos(k*1.57)*0.08,0.16+k*0.015,Math.sin(k*1.57)*0.08,st[1]); l.rotation.y=-k*1.57; l.rotation.z=0.35; }
       // stage 2 — young plant; stage 3 — ripe
       this.vegModel(type,st[2],0.6); this.vegModel(type,st[3],1.5); addOutlines(st[3],0.016,0.12);
-      const pool=lightPool(g,0xFFB84A,0.95,0.06,0.45);
+      const pool=lightPool(g,0xFFB84A,0.8,0.06,0.32);
       this.plots.push({i,j,x,z,type,g,st,glow,beam,ripple,pool,stage:3,t:0});
     }
   }
@@ -1112,14 +1145,14 @@ class Arena {
     this.cluster=new THREE.Group(); R.add(this.cluster);
     this.clusterMat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.8});
     for(let k=0;k<5;k++){ const m=new THREE.Mesh(ICO(0.09,0),this.clusterMat); m.scale.set(1,1.4,1); m.userData.a=k/5*Math.PI*2; this.cluster.add(m); }
-    lightPool(R,0x5FF0B0,2.2,0.16,0.26);
+    lightPool(R,0x5FF0B0,1.9,0.16,0.2);
   }
   // Berry bushes: block their tile; a hurt critter that touches a ripe bush eats it (BERRY_HEAL), then it regrows.
   buildBerries(){
     this.bushes=[];
     this.berryMat=toonMat({color:0xD8315B,emissive:0xFF4F7A,emissiveIntensity:0.18});
     this.unripeMat=toonMat({color:0xA9C25A,emissive:0x000000});
-    const ringMat=toonMat({color:0xF27A9A,emissive:0xFF5A88,emissiveIntensity:0.55,transparent:true,opacity:0.45,side:THREE.DoubleSide,depthWrite:false});
+    const ringMat=toonMat({color:0xF27A9A,emissive:0xFF5A88,emissiveIntensity:0.38,transparent:true,opacity:0.3,side:THREE.DoubleSide,depthWrite:false});
     const spots=[[0.3,0.32,0.12],[0.12,0.42,0.3],[-0.12,0.36,0.3],[0.33,0.2,-0.12],[-0.02,0.58,0.12],[0.22,0.52,0.05],[-0.3,0.3,0.14],[0.06,0.24,0.36],[0.28,0.42,-0.24],[-0.18,0.5,-0.08]];
     for(const [i,j] of BERRY_BUSHES){ this.blocked[j][i]=1; const x=tileC(i), z=tileC(j), g=new THREE.Group(); g.position.set(x,this.heightAt(x,z),z); this.root.add(g);
       M(CYL(0.44,0.48,0.08,10),PAL.loamS,0,0.04,0,g,false);
@@ -1130,7 +1163,7 @@ class Arena {
       for(const [a,b,c] of spots){ const m=new THREE.Mesh(ICO(0.075,0),this.berryMat); m.position.set(a,b,c); m.castShadow=true; berries.add(m);
         M(BOX(0.02,0.05,0.02),PAL.leaf,a,b+0.07,c,berries,false); }
       const ring=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),ringMat.clone()); ring.rotation.x=-Math.PI/2; ring.position.y=0.06; g.add(ring);
-      const pool=lightPool(g,0xFF5F8A,1.0,0.06,0.55);
+      const pool=lightPool(g,0xFF5F8A,0.85,0.06,0.4);
       this.bushes.push({i,j,x,z,g,berries,ring,pool,ripe:true,t:0,pop:0});
     }
   }
@@ -1154,23 +1187,23 @@ class Arena {
       if(p.stage<3){ p.t+=dt; if(p.t>=5){ p.t=0; p.stage++; p.pop=0.3; } }
       p.st.forEach((s,k)=>s.visible=k===p.stage);
       const ripe=p.stage===3; p.glow.visible=p.beam.visible=p.ripple.visible=ripe; p.pool.visible=NIGHT.on&&ripe;
-      if(p.pool.visible) p.pool.material.opacity=0.38+Math.sin(time*3+p.i)*0.08;
-      const sc=p.pop>0?1+Math.sin((0.3-p.pop)/0.3*Math.PI)*0.35:ripe?1+Math.sin(time*4+p.i)*0.06:1;
+      if(p.pool.visible) p.pool.material.opacity=0.28+Math.sin(time*3+p.i)*0.05;
+      const sc=p.pop>0?1+Math.sin((0.3-p.pop)/0.3*Math.PI)*0.2:ripe?1+Math.sin(time*4+p.i)*0.025:1;
       p.st[p.stage].scale.set(sc,sc,sc); if(p.pop>0) p.pop-=dt;
-      if(ripe){ const r=(time*0.8+p.i*0.13)%1; p.ripple.scale.setScalar(0.9+r*1.0); p.ripple.material.opacity=0.5*(1-r);
-        p.beam.material.opacity=0.07+Math.sin(time*3+p.i)*0.025; p.glow.material.opacity=0.3+Math.sin(time*4)*0.1;
-        p.st[3].position.y=0.05+Math.abs(Math.sin(time*2.2+p.i))*0.08; p.st[3].rotation.y=Math.sin(time*1.3+p.i)*0.35; }
+      if(ripe){ const r=(time*0.8+p.i*0.13)%1; p.ripple.scale.setScalar(0.8+r*0.55); p.ripple.material.opacity=0.32*(1-r);
+        p.beam.material.opacity=0.045+Math.sin(time*3+p.i)*0.015; p.glow.material.opacity=0.2+Math.sin(time*4)*0.05;
+        p.st[3].position.y=0.03+Math.abs(Math.sin(time*2.2+p.i))*0.035; p.st[3].rotation.y=Math.sin(time*1.3+p.i)*0.18; }
       else p.st[3].position.y=0;
     }
     this.cluster.children.forEach((m,k)=>{ const a=m.userData.a+time*0.9; m.position.set(Math.cos(a)*0.45,0.55+Math.sin(time*2.4+k)*0.1,Math.sin(a)*0.45); m.rotation.y=time*2; });
-    const nk=NIGHT.on?1.35:1; this.clusterMat.emissiveIntensity=(0.55+Math.sin(time*3)*0.2)*nk; this.seedLight.intensity=(3.5+Math.sin(time*3)*1.2)*nk; this.seedLight.distance=NIGHT.on?7:5;
+    const nk=NIGHT.on?1.25:1; this.clusterMat.emissiveIntensity=(0.45+Math.sin(time*3)*0.12)*nk; this.seedLight.intensity=(2.6+Math.sin(time*3)*0.7)*nk; this.seedLight.distance=NIGHT.on?7:5;
     for(const b of this.bushes){
       if(!b.ripe){ b.t+=dt; const k=b.t/BERRY_REGROW; b.berries.visible=k>0.35; if(k>0.35) b.berries.scale.setScalar(0.4+0.5*(k-0.35)/0.65);
         if(b.t>=BERRY_REGROW){ b.ripe=true; b.pop=0.35; this.setBerryLook(b); } }
       else if(b.pop>0){ b.pop-=dt; b.berries.scale.setScalar(1+Math.sin((0.35-b.pop)/0.35*Math.PI)*0.35); }
       b.ring.visible=b.ripe; b.pool.visible=NIGHT.on&&b.ripe;
-      if(b.ripe){ const r=(time*0.7+b.i*0.21)%1; b.ring.scale.setScalar(0.95+r*0.9); b.ring.material.opacity=0.45*(1-r); if(b.pool.visible) b.pool.material.opacity=0.5+Math.sin(time*2.6+b.j)*0.1; } }
-    this.berryMat.emissiveIntensity=(NIGHT.on?0.5:0.14)+Math.sin(time*3)*(NIGHT.on?0.12:0.04);
+      if(b.ripe){ const r=(time*0.7+b.i*0.21)%1; b.ring.scale.setScalar(0.85+r*0.5); b.ring.material.opacity=0.3*(1-r); if(b.pool.visible) b.pool.material.opacity=0.36+Math.sin(time*2.6+b.j)*0.06; } }
+    this.berryMat.emissiveIntensity=(NIGHT.on?0.38:0.1)+Math.sin(time*3)*(NIGHT.on?0.08:0.02);
     if(NIGHT.on){ const a=this.ff.geometry.attributes.position; for(let k=0;k<this.ffSeed.length;k++){ const [x,z,y,ph,sp]=this.ffSeed[k];
         a.setXYZ(k,x+Math.sin(time*sp+ph)*0.8,y+Math.sin(time*sp*2.3+ph*2)*0.25,z+Math.cos(time*sp*0.8+ph)*0.8); }
       a.needsUpdate=true; this.ff.material.opacity=0.75+Math.sin(time*1.7)*0.2; }
@@ -1296,16 +1329,16 @@ class FX {
 /* =====================================================================
    SECTION 9 — SEED SYSTEM (centre spawns, pools, scatter, 12-seed surge)
    ===================================================================== */
-const seedGlowAt=t=>(0.5+Math.sin(t*4)*0.18)*(NIGHT.on?1.15:1); // loose-seed shimmer (shared by host and Online guest)
+const seedGlowAt=t=>(0.42+Math.sin(t*4)*0.1)*(NIGHT.on?1.12:1); // loose-seed shimmer (shared by host and Online guest)
 class SeedSystem {
   constructor(game){
     this.game=game; this.max=90; this.seeds=[];
     this.mat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.6});
     this.im=new THREE.InstancedMesh(ICO(0.17,0),this.mat,this.max); this.im.castShadow=true; this.im.frustumCulled=false; scene.add(this.im);
     // a glowing halo on the ground under every loose seed, so they read at a glance
-    this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:0.6,transparent:true,opacity:0.32,depthWrite:false});
-    this.halo=new THREE.InstancedMesh(G('seedhalo',()=>new THREE.RingGeometry(0.16,0.3,16).rotateX(-Math.PI/2)),this.haloMat,this.max); this.halo.frustumCulled=false; scene.add(this.halo);
-    this.pools=new THREE.InstancedMesh(POOL_GEO,glowMat(0x4FE0A0,0.26),this.max); this.pools.frustumCulled=false; this.pools.renderOrder=2; this.pools.visible=false; scene.add(this.pools);
+    this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:0.45,transparent:true,opacity:0.22,depthWrite:false});
+    this.halo=new THREE.InstancedMesh(G('seedhalo',()=>new THREE.RingGeometry(0.15,0.24,16).rotateX(-Math.PI/2)),this.haloMat,this.max); this.halo.frustumCulled=false; scene.add(this.halo);
+    this.pools=new THREE.InstancedMesh(POOL_GEO,glowMat(0x4FE0A0,0.2),this.max); this.pools.frustumCulled=false; this.pools.renderOrder=2; this.pools.visible=false; scene.add(this.pools);
     this.sid=0; this.reset();
   }
   reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; this.render(0); }
@@ -1326,7 +1359,7 @@ class SeedSystem {
       else if(s.state==='fly'){ s.vy-=18*dt; const nx=s.x+s.vx*dt, nz=s.z+s.vz*dt;
         if(ar.blockedAt(nx,nz)){ s.vx*=-0.4; s.vz*=-0.4; } else { s.x=nx; s.z=nz; }
         s.y+=s.vy*dt; const gy=ar.heightAt(s.x,s.z)+0.3; if(s.y<=gy){ if(s.vy<-3){ s.vy*=-0.35; s.vx*=0.5; s.vz*=0.5; s.y=gy; } else { s.y=gy; s.state='float'; } } }
-      if(s.state==='float'){ s.y=lerp(s.y,ar.heightAt(s.x,s.z)+0.32+Math.sin(time*3+s.ph)*0.07,0.15); }
+      if(s.state==='float'){ s.y=lerp(s.y,ar.heightAt(s.x,s.z)+0.3+Math.sin(time*3+s.ph)*0.04,0.15); }
       if(active && s.pick<=0) for(const c of this.game.chars){ if(c.ko) continue; if(dist2(c.pos.x,c.pos.z,s.x,s.z)<0.42){ this.collect(c,k); break; } }
     }
     this.mat.emissiveIntensity=seedGlowAt(time);
@@ -1342,16 +1375,16 @@ class SeedSystem {
     if(this.pool[c.team]>=SEED_GOAL) this.game.seedSurge(c.team);
   }
   render(time){
-    const ar=this.game.arena, hs=1+Math.sin(time*5)*0.1;
+    const ar=this.game.arena, hs=1+Math.sin(time*5)*0.05;
     for(let k=0;k<this.max;k++){ const s=this.seeds[k];
       if(s){ _e.set(0,time*2+s.ph,0.3); _q.setFromEuler(_e); _m4.compose(_v.set(s.x,s.y,s.z),_q,_s.set(1,1.45,1)); }
       else _m4.makeScale(0,0,0);
       this.im.setMatrixAt(k,_m4);
       if(s && s.state!=='fly') _m4.makeScale(hs,1,hs).setPosition(s.x,ar.heightAt(s.x,s.z)+0.06,s.z); else _m4.makeScale(0,0,0);
       this.halo.setMatrixAt(k,_m4);
-      if(NIGHT.on){ if(s){ const ps=1.25*hs; _m4.makeScale(ps,1,ps).setPosition(s.x,ar.heightAt(s.x,s.z)+0.07,s.z); } else _m4.makeScale(0,0,0); this.pools.setMatrixAt(k,_m4); } }
+      if(NIGHT.on){ if(s){ const ps=1.0*hs; _m4.makeScale(ps,1,ps).setPosition(s.x,ar.heightAt(s.x,s.z)+0.07,s.z); } else _m4.makeScale(0,0,0); this.pools.setMatrixAt(k,_m4); } }
     this.im.instanceMatrix.needsUpdate=true; this.halo.instanceMatrix.needsUpdate=true; this.pools.visible=NIGHT.on; if(NIGHT.on) this.pools.instanceMatrix.needsUpdate=true;
-    this.haloMat.opacity=0.28+Math.sin(time*5)*0.07;
+    this.haloMat.opacity=0.2+Math.sin(time*5)*0.04;
   }
   nearest(x,z,avoid=[]){ let best=null,bd=1e9; for(const s of this.seeds){ if(s.state==='fly') continue; let d=Math.sqrt(dist2(x,z,s.x,s.z));
       for(const e of avoid) if(!e.ko && dist2(e.pos.x,e.pos.z,s.x,s.z)<4) d+=2.5; if(d<bd){bd=d;best=s;} } return best; }
@@ -1473,8 +1506,10 @@ class Character {
     if(this.squash>0){ const f=this.squash/0.15; sy*=1-0.2*f; sx*=1+0.12*f; sz*=1+0.12*f; }
     if(this.key==='goose' && this.honkT>0){ m.head.position.z=0.2+Math.sin((0.5-this.honkT)*12)*0.08; m.extra.beakLow.rotation.x=0.5; }
     else if(this.key==='goose'){ m.head.position.z=0.2; m.extra.beakLow.rotation.x=0; m.head.rotation.y=Math.sin(t*1.5)*0.2; }
+    if(this.key==='possum'){ const h=this.honkT>0; m.extra.mouth.visible=h; m.head.position.z=0.04+(h?0.06+Math.sin((0.5-this.honkT)*40)*0.012:0); if(h) rx-=0.12; }
     for(const e of m.ears) e.rotation.x=Math.sin(t*4+this.phase)*0.12-(moving?0.25:0);
     if(m.tail) m.tail.rotation.y=Math.sin(t*5+this.phase*0.5)*0.3;
+    if(this.key==='possum'&&this.honkT>0) for(const e of m.ears) e.rotation.x=-0.7; // ears pinned back mid-hiss
     if(this.ko){ // knocked out: tipped over, sunk, stars circling
       const k=Math.min(1,(RESPAWN-this.respawnT)/0.35); rz=lerp(0,Math.PI/2,k); y=0.5-0.25*k; armR=-2.5; armL=-2.5; legA=0.6; }
     m.rig.position.y=y; m.rig.rotation.set(rx,ry,rz); m.rig.scale.set(sx,sy,sz);
@@ -1504,6 +1539,7 @@ class Weapon {
   basic(c){
     const W=c.W, g=this.game; c.atkCd=W.cd*c.cdMul; c.atkAnim=c.atkDur=Math.min(W.anim,W.cd*c.cdMul+0.05); c.atkKind=c.weapon;
     if(c.key==='goose' && c.honkT<=-0.3){ c.honkT=0.5; audio.play('honk'); g.fx.float('HONK!',new V3(c.pos.x,2.0,c.pos.z),'honk',0.8); }
+    if(c.key==='possum' && c.honkT<=-1.2){ c.honkT=0.5; audio.play('hiss'); g.fx.float('HSSSS!',new V3(c.pos.x,2.0,c.pos.z),'honk',0.8); } // the possum hisses (honkT doubles as its hiss timer)
     if(W.kind==='melee'){
       audio.play(c.weapon==='flail'?'heavy':'swing');
       c.pending={t:W.windup,fn:()=>{ this.strike(c,W.range,W.arc,W.dmg*c.dmgMul,W.knock); this.slashFX(c,W); }};
@@ -1763,6 +1799,41 @@ const ACH=[
   {id:'revenge', name:'SERVED COLD', desc:'Knock out the critter who last knocked you out.'},
   {id:'clean', name:'CLEAN PLATE', desc:'Win a match with 3+ knockouts and without getting knocked out.'},
 ];
+// Achievement icons: the game's own cel-shaded models rendered once, offscreen, into small images (no image files).
+function achIconModel(id){
+  const g=new THREE.Group(), seed=(x,y,z,sc=1)=>{ const m=M(ICO(0.17*sc,0),PAL.seed,x,y,z,g,false,{emissive:PAL.seedGlow,emissiveIntensity:0.35}); m.scale.set(1,1.45,1); return m; };
+  const berry=(x,y,z)=>{ M(ICO(0.12,0),0xD8315B,x,y,z,g,false); M(BOX(0.03,0.08,0.03),PAL.leaf,x,y+0.12,z,g,false); };
+  // weapons are drawn side-on (camera on +x), laid on a diagonal so long ones fill the medallion
+  const lay=(w,k)=>{ w.rotation.set(0,0,0); const p=new THREE.Group(); p.add(w); if(k==='shield') p.rotation.y=Math.PI/2-0.45; else if(k==='kunai') p.rotation.y=0.6; else p.rotation.x=k==='flail'?-0.6:-0.8; return p; };
+  if(WEAPONS[id]){ g.add(lay(makeWeapon(id),id)); return g; }
+  if(id==='first') seed(0,0,0,1.3);
+  else if(id==='ko50'){ M(CYL(0.42,0.5,0.14,10),PAL.loamS,0,-0.1,0,g); seed(-0.15,0.12,0.05); seed(0.16,0.13,-0.02); seed(0,0.2,0.18); seed(0.02,0.36,0); }
+  else if(id==='ko150'){ const f=new THREE.Group(); f.rotation.x=Math.PI/2-0.35; g.add(f);
+    for(let k=0;k<10;k++){ const a=k/10*Math.PI*2, pt=M(BOX(0.13,0.05,0.24),PAL.corn,Math.cos(a)*0.3,0,Math.sin(a)*0.3,f); pt.rotation.y=-a+Math.PI/2; }
+    M(CYL(0.2,0.2,0.08,12),0x5A3A1E,0,0.02,0,f); M(CYL(0.15,0.15,0.09,10),0x3A2614,0,0.03,0,f,false); }
+  else if(id==='double'){ berry(-0.14,0,0.05); berry(0.15,0.04,-0.03); }
+  else if(id==='five'){ for(let k=0;k<5;k++){ const a=k/5*Math.PI*2; berry(Math.cos(a)*0.22,k%2*0.05,Math.sin(a)*0.22); } }
+  else if(id==='salad'){ M(CYL(0.45,0.3,0.22,12),PAL.wood,0,0,0,g); M(CYL(0.4,0.4,0.03,12),0x6FA040,0,0.12,0,g,false);
+    M(ICO(0.12,0),PAL.beet,-0.14,0.18,0.06,g); const c=M(CONE(0.06,0.3,6),PAL.carrot,0.16,0.2,0,g); c.rotation.z=1.1;
+    for(let k=0;k<4;k++) M(ICO(0.09,0),k%2?PAL.leaf:PAL.celery,Math.cos(k*1.6)*0.22,0.17,Math.sin(k*1.6)*0.22,g,false); }
+  else if(id==='harvest'){ WEAPON_ORDER.forEach((w,k)=>{ const m=lay(makeWeapon(w),w); m.scale.setScalar(0.7); m.position.set(0,k%2*0.12,(k-2)*0.34); g.add(m); }); }
+  else if(id==='revenge'){ M(CYL(0.28,0.2,0.09,10),PAL.white,0,-0.15,0,g); const ic=M(ICO(0.2,0),0xBFE6FF,0,0.05,0,g,false,{transparent:true,opacity:0.9}); ic.scale.set(1,1.1,1);
+    M(ICO(0.11,0),PAL.carrot,0,0.05,0,g,false); }
+  else if(id==='clean'){ M(CYL(0.5,0.42,0.06,16),PAL.white,0,0,0,g); M(CYL(0.36,0.36,0.065,16),0xE4DCCB,0,0.003,0,g,false);
+    const k=M(BOX(0.05,0.02,0.5),0xB8BEC8,0.32,0.06,0.05,g); k.rotation.y=0.3; }
+  return addOutlines(g,0.014,0.06);
+}
+function renderAchIcons(ids){
+  const out={}, S=112; let r; try{ r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true}); }catch(e){ return out; }
+  r.setSize(S,S); r.setPixelRatio(1); r.setClearColor(0x000000,0);
+  const sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xD8E6C8,0x4A3A22,1.5)); const dl=new THREE.DirectionalLight(0xFFE6B8,2.7); dl.position.set(-2,4,3); sc.add(dl);
+  const cam=new THREE.OrthographicCamera(-1,1,1,-1,0.1,50), box=new THREE.Box3(), sph=new THREE.Sphere();
+  for(const id of ids){ const m=achIconModel(id); sc.add(m); m.updateMatrixWorld(true); box.setFromObject(m).getBoundingSphere(sph);
+    const R=sph.radius*1.08; Object.assign(cam,{left:-R,right:R,top:R,bottom:-R}); cam.updateProjectionMatrix();
+    cam.position.copy(sph.center).add((WEAPONS[id]||id==='harvest'?new V3(1,0.4,0.12):new V3(1.1,1.3,1.8)).normalize().multiplyScalar(10)); cam.lookAt(sph.center);
+    r.render(sc,cam); out[id]=r.domElement.toDataURL('image/png'); sc.remove(m); }
+  r.dispose(); r.forceContextLoss(); return out;
+}
 class Achievements {
   constructor(){ this.key='eyv-achievements-v1'; this.s={total:0,kos:{},got:{}};
     try{ const raw=localStorage.getItem(this.key); if(raw){ const d=JSON.parse(raw); if(d&&typeof d==='object') this.s={total:d.total|0,kos:d.kos||{},got:d.got||{}}; } }catch(e){}
@@ -1795,9 +1866,11 @@ class Achievements {
     const got=ACH.filter(a=>this.s.got[a.id]).length;
     $('ach-sum').textContent=`${got} / ${ACH.length} UNLOCKED · ${this.s.total} LIFETIME KNOCKOUTS`;
     const grid=$('ach-grid'); grid.innerHTML='';
+    if(!this.icons) this.icons=renderAchIcons([...WEAPON_ORDER,...ACH.filter(a=>!a.w).map(a=>a.id)]);
     for(const a of ACH){ const d=document.createElement('div'), on=!!this.s.got[a.id]; d.className='ach'+(on?'':' locked'); if(a.w) d.style.setProperty('--wc',WEAPON_CSS[a.w]);
       const pr=a.goal?Math.min(a.goal,a.prog(this.s)):0;
-      d.innerHTML=`<div class="w">${a.w?WEAPONS[a.w].name:'GENERAL'}</div><div class="n"></div><div class="d"></div>`+(a.goal>1?`<div class="bar"><b style="width:${pr/a.goal*100}%"></b></div>`:'');
+      const tier=a.w?ACH_TIERS[a.w].findIndex(t=>t[0]===a.goal):-1, src=this.icons[a.w||a.id];
+      d.innerHTML=`<div class="ic${tier>=0?' t'+tier:''}">${src?`<img alt="" src="${src}">`:''}${tier>=0?`<i>${'★'.repeat(tier+1)}</i>`:''}</div><div class="tx"><div class="w">${a.w?WEAPONS[a.w].name:'GENERAL'}</div><div class="n"></div><div class="d"></div>`+(a.goal>1?`<div class="bar"><b style="width:${pr/a.goal*100}%"></b></div>`:'')+'</div>';
       d.querySelector('.n').textContent=(on?'★ ':'')+a.name; d.querySelector('.d').textContent=a.desc+(a.goal>1&&!on?` (${pr}/${a.goal})`:'');
       grid.appendChild(d); }
   }
