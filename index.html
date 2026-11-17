@@ -59,6 +59,10 @@
       is authoritative; the guest sends inputs and draws 20 Hz snapshots ~0.1 s behind, predicts its own walking,
       and sees the arena from the opposite corner. Online matches never pause, achievements are off, both bots
       play at Normal. If the friend leaves mid-match a bot takes over. ?net=local tests with two tabs. See SECTION 14b.
+  24. CO-OP + TEAM DEATHMATCH (Nov 17): in the Online Play lobby the host picks "Vs each other" or "Co-op vs bots"
+      (both humans on one team vs 2 bots at the host's chosen difficulty; the guest gets the host's teammate and the
+      view isn't flipped). New MODE setting (title screen, and in the lobby): Seed Surge (as before) or Team
+      Deathmatch, where most knockouts wins the round; tie on knockouts goes to more seed surges, else a draw.
   24. Calmer glow + final stretch (Nov 17): pickup beams, ripples, seed halos, berry rings and night light pools
       toned down ~40% so they read without competing with the fight. The last 30 s of a round (FINAL_STRETCH) switch
       the music to a faster minor-key loop (168 BPM) with a riser; it drops back to the calm loop between rounds, and
@@ -341,6 +345,11 @@ body.night #nightvig{display:block}
 .mcard.off{opacity:.3;cursor:not-allowed;filter:grayscale(.8)}
 .mcard .tag{position:absolute;top:4px;left:4px;font-family:var(--num);font-size:13px;letter-spacing:1px;background:var(--corn);color:var(--navy);padding:1px 5px 0}
 .pickhint{font-family:var(--num);font-size:18px;letter-spacing:2px;color:#9AA3B8;text-align:center;margin-bottom:6px}
+.lobbyopts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:0 0 10px}
+.optgrp{display:flex;align-items:center;gap:6px;background:#11182A;padding:5px 6px 5px 10px}
+.optgrp .ol{font-family:var(--num);font-size:16px;letter-spacing:2px;color:#9AA3B8;margin-right:2px}
+.optgrp .chip:disabled{cursor:default}
+.optgrp .chip:disabled:not(.sel){opacity:.45}
 #on-status{font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--mint);text-align:center;min-height:26px;margin:4px 0 10px}
 #net-ping{font-family:var(--num);font-size:17px;letter-spacing:2px;color:#C9CFDD;text-align:right;line-height:1;margin-top:2px}
 #net-ping.bad{color:#FF8A6A}
@@ -366,7 +375,7 @@ body.night #nightvig{display:block}
     <div id="energy"><b id="energy-fill"></b><i class="tick" style="left:20%"></i><i class="tick" style="left:40%"></i><i class="tick" style="left:60%"></i><i class="tick" style="left:80%"></i><i id="energy-cost"></i></div>
   </div>
   <div id="hud-tc">
-    <div class="slabel">MAGIC SEEDS</div>
+    <div class="slabel" id="slabel">MAGIC SEEDS</div>
     <div class="scounters">
       <div class="sc" id="sc0" style="--team:var(--green)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div></div>
       <div class="sc" id="sc1" style="--team:var(--orange)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div></div>
@@ -394,12 +403,13 @@ body.night #nightvig{display:block}
   <button class="btn" id="btn-online">Online Play</button>
   <button class="btn green" id="btn-tutorial">Tutorial</button>
   <button class="btn green" id="btn-diff">Difficulty: Normal</button>
+  <button class="btn green" id="btn-mode">Mode: Seed Surge</button>
   <div class="row"><button class="btn ghost small" id="btn-controls">Controls</button><button class="btn ghost small" id="btn-ach">Achievements</button><button class="btn ghost small" id="btn-settings">Settings</button></div>
 </div></div>
 <div id="online" class="screen dim hidden">
   <div class="panel">
     <h2>ONLINE PLAY</h2>
-    <div class="lead">You and a bot teammate vs. a friend and their bot. Host a game and send the code or link, or join a friend's game.</div>
+    <div class="lead">Play against a friend (each with a bot teammate) or team up with them against two bots. Host a game and send the code or link, or join a friend's game.</div>
     <div id="on-menu" class="on-menu">
       <button class="btn" id="btn-on-host">Host a game</button>
       <div class="on-or">OR JOIN WITH A CODE</div>
@@ -413,7 +423,8 @@ body.night #nightvig{display:block}
         <div class="codebox"><small>ROOM CODE</small><b id="on-codeval">----</b></div>
         <div class="linkcol"><input id="on-link" readonly><button class="btn small" id="btn-on-copy">Copy invite link</button></div>
       </div>
-      <div class="slots"><div class="slot" id="slot-me"></div><div class="vs">VS</div><div class="slot" id="slot-them"></div></div>
+      <div class="lobbyopts" id="on-opts"></div>
+      <div class="slots"><div class="slot" id="slot-me"></div><div class="vs" id="on-vs">VS</div><div class="slot" id="slot-them"></div></div>
       <div class="pickhint" id="on-pickhint">PICK YOUR WARRIOR</div>
       <div class="mcards" id="on-cards"></div>
       <div id="on-status"></div>
@@ -556,6 +567,8 @@ const CHARS = {
   possum:{ name:'POSSUM', team:1, weapon:'staff', blurb:'Plays dead for applause. Fights for real. Very dramatic.', fur:0xCFCAD6 },
 };
 const CHAR_ORDER = ['rabbit','raccoon','goose','possum'];
+// Game modes. Seed Surge: most surges wins a round. Team Deathmatch: most knockouts wins (tie: more surges, else a draw).
+const MODES={ seeds:{name:'Seed Surge'}, tdm:{name:'Team Deathmatch'} };
 const DIFF = {
   easy:  { label:'Easy',   react:0.7,  aim:0.5,  aggr:0.3,  atkDelay:0.8,  dodge:0.06, special:0.12, lead:0,   hedge:0.15, think:0.6,  greed:0,   focus:0 },
   normal:{ label:'Normal', react:0.3,  aim:0.16, aggr:0.62, atkDelay:0.2,  dodge:0.35, special:0.45, lead:0.5, hedge:0.5,  think:0.3,  greed:1,   focus:0.5 },
@@ -1939,7 +1952,8 @@ class HUD {
     // seed counters
     const pool=g.seeds.pool;
     for(let t=0;t<2;t++){ const s=this.sc[t]; if(s.last!==pool[t]){ s.last=pool[t]; s.num.textContent=pool[t]; s.icons.forEach((i,k)=>i.classList.toggle('on',k<pool[t])); }
-      setText(s.bonus,'SURGES '+g.bonus[t]); s.el.classList.toggle('lead',pool[t]>pool[1-t]); }
+      const tdm=g.mode==='tdm', ko=g.teamKO||[0,0]; setText(s.bonus,tdm?'KNOCKOUTS '+ko[t]+' · SURGES '+g.bonus[t]:'SURGES '+g.bonus[t]); s.el.classList.toggle('lead',tdm?ko[t]>ko[1-t]:pool[t]>pool[1-t]); }
+    setText($('slabel'),g.mode==='tdm'&&!g.tut?'TEAM DEATHMATCH · MOST KNOCKOUTS WINS':'MAGIC SEEDS');
     // timer
     const tl=Math.max(0,Math.ceil(g.roundTime)); setText(this.timer,Math.floor(tl/60)+':'+String(tl%60).padStart(2,'0'));
     this.timer.classList.toggle('urgent',g.state==='playing'&&g.roundTime<=10); setText(this.roundLabel,'ROUND '+g.round);
@@ -2090,7 +2104,7 @@ class Game {
     this.portraits=this.makePortraits();
     this.ach=new Achievements(); this.achOn=false;
     this.hud=new HUD(this); this.wins=[0,0]; this.bonus=[0,0]; this.round=1; this.roundTime=ROUND_TIME;
-    this.view=1; this.net=null;
+    this.view=1; this.net=null; this.mode='seeds'; this.modeSP='seeds';
     this.settings={shake:true,night:false}; try{ const d=JSON.parse(localStorage.getItem('eyv-settings-v1')||'{}'); if(d&&typeof d.shake==='boolean') this.settings.shake=d.shake; if(d&&typeof d.night==='boolean') this.settings.night=d.night; }catch(e){}
     this.applyNight();
     this.tutorial=new Tutorial(this); this.tut=null; this.spinV=0.12;
@@ -2158,6 +2172,7 @@ class Game {
     click('btn-tut-skip',()=>{ if(this.tut){ if(this.tut.step.id==='surge'&&this.bonus[0]<1) this.seedSurge(0); this.tut.next(); } });
     click('btn-tut-quit',()=>this.toTitle()); click('btn-tut-title',()=>this.toTitle());
     click('btn-tut-play',()=>{ this.toTitle(); this.showScreen('select'); this.renderCosmetics(); });
+    click('btn-mode',()=>{ this.modeSP=this.modeSP==='tdm'?'seeds':'tdm'; $('btn-mode').textContent='Mode: '+MODES[this.modeSP].name; });
     click('btn-diff',()=>{ const o=['easy','normal','hard']; this.difficulty=o[(o.indexOf(this.difficulty)+1)%3]; $('btn-diff').textContent='Difficulty: '+DIFF[this.difficulty].label; });
     click('btn-ach',()=>this.openAch('title')); click('btn-res-ach',()=>this.openAch('results'));
     click('btn-ach-back',()=>this.showScreen(this.achBack||'title'));
@@ -2183,7 +2198,7 @@ class Game {
   renderSettings(){
     for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()],['btn-set-night',this.settings.night]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); } }
   startTutorial(){ // learn-by-doing sandbox: you play the Rabbit, everyone else is a training partner
-    this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME;
+    this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME; this.mode='seeds';
     this.player=this.chars.find(c=>c.key==='rabbit'); this.achOn=false; this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.controller=c.isPlayer?new Player(this,c):new TutDummy(this,c); }
     this.weapons.clear(); this.seeds.reset(); this.seeds.spawnT=1e9; this.arena.resetForRound(); this.fx.clearFloats();
@@ -2205,16 +2220,18 @@ class Game {
   // Online Play: the host runs the real match; the guest (role 'guest') only draws snapshots, from the mirrored side.
   startOnline(cfg,role){
     this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0];
-    this.player=this.chars.find(c=>c.key===(role==='host'?cfg.host:cfg.guest));
-    this.view=role==='guest'?-1:1; this.applyNight(); this.achOn=false; this.ach.startMatch();
+    this.player=this.chars.find(c=>c.key===(role==='host'?cfg.host:cfg.guest)); this.mode=MODES[cfg.mode]?cfg.mode:'seeds';
+    const coop=cfg.fmt==='coop', hostTeam=CHARS[cfg.host].team, foeDiff=coop&&DIFF[cfg.diff]?cfg.diff:'normal';
+    // the guest looks from the opposite corner only when on the other team, so everyone's base sits in the same spot on screen
+    this.view=role==='guest'&&CHARS[cfg.guest].team!==hostTeam?-1:1; this.applyNight(); this.achOn=false; this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.remote=role==='host'&&c.key===cfg.guest; c.hedges=[]; c.setCosmetic(cfg.cos[c.key]||'none');
-      c.controller=role!=='host'?null:c.isPlayer?new Player(this,c):c.remote?new RemoteController(this,c):new AIController(this,c,'normal'); }
+      c.controller=role!=='host'?null:c.isPlayer?new Player(this,c):c.remote?new RemoteController(this,c):new AIController(this,c,c.team===hostTeam?'normal':foeDiff); }
     this.hud.setup(); this.hud.show(true); $('net-ping').classList.remove('hidden'); this.startRound();
   }
   // Run feedback meant for one human only: shown here if c is this browser's player, sent to the guest if c is theirs.
   personal(c,fn){ const m=c.isPlayer?'local':c.remote?'remote':null; if(!m) return; NET.mode=m; try{ fn(); } finally { NET.mode='both'; } }
   startMatch(){
-    this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0];
+    this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.mode=this.modeSP;
     this.player=this.chars.find(c=>c.key===this.choice);
     this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[];
@@ -2294,7 +2311,8 @@ class Game {
   // ---- round flow ----
   endRound(){
     const b=this.bonus, pl=this.seeds.pool, k=this.teamKO; let w=-1, why='';
-    if(b[0]!==b[1]){ w=b[0]>b[1]?0:1; why='MOST SEED SURGES'; } else if(pl[0]!==pl[1]){ w=pl[0]>pl[1]?0:1; why='MORE SEEDS HELD'; } else if(k[0]!==k[1]){ w=k[0]>k[1]?0:1; why='MORE KNOCKOUTS'; }
+    if(this.mode==='tdm'){ if(k[0]!==k[1]){ w=k[0]>k[1]?0:1; why='MOST KNOCKOUTS · '+k[0]+' TO '+k[1]; } else if(b[0]!==b[1]){ w=b[0]>b[1]?0:1; why='KNOCKOUTS TIED · MORE SEED SURGES'; } }
+    else if(b[0]!==b[1]){ w=b[0]>b[1]?0:1; why='MOST SEED SURGES'; } else if(pl[0]!==pl[1]){ w=pl[0]>pl[1]?0:1; why='MORE SEEDS HELD'; } else if(k[0]!==k[1]){ w=k[0]>k[1]?0:1; why='MORE KNOCKOUTS'; }
     if(w>=0) this.wins[w]++; this.hud.renderWins();
     this.state='roundEnd'; this.endT=3.2; this.weapons.clear();
     this.hud.showBanner(w<0?'DRAW ROUND<small>DEAD EVEN</small>':`<span style="color:${w?'#F28A2A':'#6CC24A'}">${TEAM_NAME[w]}</span> TAKES ROUND ${this.round}<small>${why}</small>`,3);
@@ -2380,7 +2398,7 @@ class Game {
        local Two tabs of the same browser on one computer (?net=local). For testing without the internet.
    - Rooms have guest slots (NET_CFG.maxGuests) so more players can be added later; today the lobby is 1v1.
    ===================================================================== */
-const NET_PROTO=1, SNAP_EVERY=3, INTERP=0.11, NET_TIMEOUT=8;
+const NET_PROTO=2, SNAP_EVERY=3, INTERP=0.11, NET_TIMEOUT=8;
 const NET_CFG={
   relay:'',          // optional future relay server address (wss://...). Empty = peer-to-peer.
   peer:{debug:0},    // PeerJS options (default: free PeerJS cloud server + public STUN)
@@ -2544,7 +2562,7 @@ class Online {
       try{ await t.open('host',code); }
       catch(e){ if(e.code==='taken') continue; this.busy(false); $('on-err').textContent=e.message; return; }
       this.t=t; this.role='host'; this.code=code; this.onConnChange();
-      const ch=this.game.choice; this.lobby={v:NET_PROTO,host:{char:ch,cos:this.game.cosmetics[ch]||'none',ready:false},guest:null};
+      const ch=this.game.choice; this.lobby={v:NET_PROTO,fmt:'versus',mode:this.game.modeSP,diff:this.game.difficulty,host:{char:ch,cos:this.game.cosmetics[ch]||'none',ready:false},guest:null};
       this.showRoom(); return; }
     this.busy(false); $('on-err').textContent='Could not get a free room code. Try again.';
   }
@@ -2569,8 +2587,23 @@ class Online {
     $('btn-on-copy').textContent=navigator.share&&matchMedia('(pointer:coarse)').matches?'Share invite link':'Copy invite link'; this.renderRoom(); }
   me(){ const L=this.lobby; return L&&(this.role==='host'?L.host:L.guest); }
   them(){ const L=this.lobby; return L&&(this.role==='host'?L.guest:L.host); }
-  slotHTML(p,who){ if(!p) return null; const d=CHARS[p.char], mate=CHAR_ORDER.find(k=>k!==p.char&&CHARS[k].team===d.team);
-    return `<img src="${this.game.portraits[p.char]}" alt=""><div><div class="who">${who}</div><div class="nm">${d.name}</div><div class="bot">${TEAM_NAME[d.team]} · BOT TEAMMATE: ${CHARS[mate].name}</div>`+
+  // Format: 'versus' = each human + a bot on opposite teams; 'coop' = both humans on one team vs 2 bots.
+  guestChoices(){ const L=this.lobby, h=L.host.char, ht=CHARS[h].team;
+    return L.fmt==='coop'?CHAR_ORDER.filter(k=>k!==h&&CHARS[k].team===ht):CHAR_ORDER.filter(k=>CHARS[k].team!==ht); }
+  fixGuest(){ const L=this.lobby, G=L&&L.guest; if(!G) return; const ok=this.guestChoices(); if(ok.includes(G.char)) return;
+    const i=Math.max(0,CHAR_ORDER.filter(x=>CHARS[x].team===CHARS[G.char].team).indexOf(G.char)); G.char=ok[Math.min(i,ok.length-1)]; G.cos='none'; G.ready=false; }
+  setOpt(key,val){ const L=this.lobby; if(this.role!=='host'||!L||this.inMatch||L[key]===val) return; L[key]=val; L.host.ready=false; if(L.guest) L.guest.ready=false;
+    if(key==='mode') this.game.modeSP=val; if(key==='diff') this.game.difficulty=val; this.fixGuest(); this.pushRoom(); }
+  renderOpts(){ const L=this.lobby, box=$('on-opts'); box.innerHTML=''; if(!L) return; const host=this.role==='host';
+    const grp=(label,key,opts)=>{ const g=document.createElement('div'); g.className='optgrp'; g.innerHTML=`<span class="ol">${label}</span>`;
+      for(const [v,name] of opts){ const b=document.createElement('button'); b.className='chip'+(L[key]===v?' sel':''); b.textContent=name; b.disabled=!host;
+        if(host) b.addEventListener('click',e=>{ e.currentTarget.blur(); audio.init(); audio.play('click'); this.setOpt(key,v); }); g.appendChild(b); }
+      box.appendChild(g); };
+    grp('PLAY','fmt',[['versus','VS EACH OTHER'],['coop','CO-OP VS BOTS']]);
+    grp('MODE','mode',Object.entries(MODES).map(([k,m])=>[k,m.name.toUpperCase()]));
+    if(L.fmt==='coop') grp('BOTS','diff',Object.entries(DIFF).map(([k,d])=>[k,d.label.toUpperCase()])); }
+  slotHTML(p,who){ if(!p) return null; const d=CHARS[p.char], mate=CHAR_ORDER.find(k=>k!==p.char&&CHARS[k].team===d.team), coop=this.lobby.fmt==='coop';
+    return `<img src="${this.game.portraits[p.char]}" alt=""><div><div class="who">${who}</div><div class="nm">${d.name}</div><div class="bot">${TEAM_NAME[d.team]} · ${coop?'TEAMED UP VS 2 BOTS':'BOT TEAMMATE: '+CHARS[mate].name}</div>`+
       `<div class="st ${p.ready?'ok':''}">${p.ready?'READY ✓':'NOT READY'}</div></div>`; }
   renderRoom(){
     const L=this.lobby, me=this.me(), them=this.them(), sm=$('slot-me'), st=$('slot-them');
@@ -2579,18 +2612,17 @@ class Online {
     if(them){ st.className='slot'; st.style.setProperty('--team',TEAM_CSS[CHARS[them.char].team]); st.innerHTML=this.slotHTML(them,this.role==='host'?'YOUR FRIEND':'HOST'); }
     else { st.className='slot empty'; st.style.removeProperty('--team'); st.innerHTML='<span>WAITING FOR YOUR FRIEND<span class="dots"></span><br><small style="font-size:15px;letter-spacing:1px">Send them the code or the link</small></span>'; }
     const box=$('on-cards'); box.innerHTML='';
-    for(const k of CHAR_ORDER){ const d=CHARS[k], ok=this.role==='host'||d.team!==CHARS[L.host.char].team, el=document.createElement('div');
+    this.renderOpts(); const coop=L.fmt==='coop', gc=this.guestChoices(); setText($('on-vs'),coop?'&':'VS');
+    for(const k of CHAR_ORDER){ const d=CHARS[k], ok=this.role==='host'||gc.includes(k), el=document.createElement('div');
       el.className='mcard'+(me.char===k?' sel':'')+(ok?'':' off'); el.style.setProperty('--team',TEAM_CSS[d.team]);
       el.innerHTML=`${them&&them.char===k?'<span class="tag">'+(this.role==='host'?'FRIEND':'HOST')+'</span>':''}<img src="${this.game.portraits[k]}" alt=""><div class="nm">${d.name}</div><div class="wp">${WEAPONS[d.weapon].name}</div>`;
       if(ok) el.addEventListener('click',()=>{ audio.init(); audio.play('click'); this.pick(k); }); box.appendChild(el); }
-    setText($('on-pickhint'),this.role==='host'?'PICK YOUR WARRIOR (YOUR FRIEND GETS THE OTHER TEAM)':'PICK YOUR WARRIOR FROM THE '+TEAM_NAME[1-CHARS[L.host.char].team]);
+    setText($('on-pickhint'),coop?(this.role==='host'?'PICK YOUR WARRIOR (YOUR FRIEND JOINS YOUR TEAM)':'YOU TEAM UP WITH THE HOST'):this.role==='host'?'PICK YOUR WARRIOR (YOUR FRIEND GETS THE OTHER TEAM)':'PICK YOUR WARRIOR FROM THE '+TEAM_NAME[1-CHARS[L.host.char].team]);
     const rb=$('btn-on-ready'); rb.disabled=!them; rb.textContent=me.ready?'Not ready':'Ready!'; rb.classList.toggle('green',me.ready);
     setText($('on-status'),!them?(this.role==='host'?'ROOM OPEN · CODE '+this.code:'WAITING FOR THE HOST'):me.ready&&them.ready?'STARTING…':me.ready?'WAITING FOR '+(this.role==='host'?'YOUR FRIEND':'THE HOST')+' TO READY UP':'PRESS READY WHEN YOU ARE SET');
   }
   pick(k){ const L=this.lobby, cos=this.game.cosmetics[k]||'none'; this.game.choice=k;
-    if(this.role==='host'){ if(L.host.char===k) return; L.host={char:k,cos,ready:false}; const G=L.guest;
-      if(G&&CHARS[G.char].team===CHARS[k].team){ const i=CHAR_ORDER.filter(x=>CHARS[x].team===CHARS[G.char].team).indexOf(G.char); G.char=CHAR_ORDER.filter(x=>CHARS[x].team!==CHARS[k].team)[Math.max(0,i)]; G.cos='none'; G.ready=false; }
-      this.pushRoom(); }
+    if(this.role==='host'){ if(L.host.char===k) return; L.host={char:k,cos,ready:false}; this.fixGuest(); this.pushRoom(); }
     else { this.lobby.guest={...this.lobby.guest,char:k,cos,ready:false}; this.send({t:'pick',char:k,cos}); }
     this.renderRoom(); }
   toggleReady(){ const me=this.me(); if(!me||!this.them()) return; me.ready=!me.ready;
@@ -2599,12 +2631,12 @@ class Online {
   maybeStart(){ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return; clearTimeout(this.startT);
     this.startT=setTimeout(()=>{ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return;
       const cos={}; for(const k of CHAR_ORDER){ const o=cosmeticsFor(k); cos[k]=k===L.host.char?L.host.cos:k===L.guest.char?L.guest.cos:o[randi(0,o.length-1)]; }
-      L.host.ready=L.guest.ready=false; const cfg={host:L.host.char,guest:L.guest.char,cos}; this.send({t:'start',cfg}); this.beginMatch(cfg); },700); }
+      L.host.ready=L.guest.ready=false; const cfg={host:L.host.char,guest:L.guest.char,cos,fmt:L.fmt,mode:L.mode,diff:L.diff}; this.send({t:'start',cfg}); this.beginMatch(cfg); },700); }
   backToLobby(){ if(this.inMatch) return; this.game.resetScene(); if(!this.t){ this.openMenu(); return; } const me=this.me(); if(me) me.ready=false; this.pushRoom(); this.showRoom(); }
   // ---------- connection events ----------
   onJoin(id){ if(this.role!=='host') return; const L=this.lobby; this.heard.set(id,performance.now());
     if(L.guest&&L.guest.id!==id){ this.send({t:'full'},id); setTimeout(()=>this.t&&this.t.kick(id),200); return; }
-    if(!L.guest){ const ht=CHARS[L.host.char].team; L.guest={id,char:CHAR_ORDER.find(k=>CHARS[k].team!==ht),cos:'none',ready:false}; L.host.ready=false; audio.play('pickup'); }
+    if(!L.guest){ L.guest={id,char:this.guestChoices()[0],cos:'none',ready:false}; L.host.ready=false; audio.play('pickup'); }
     this.pushRoom(); }
   onLeave(id){ if(!this.t) return;
     if(this.role==='guest'||id==='*'){ const wasHost=this.role==='host'; this.t.close(); this.t=null; this.leave();
@@ -2624,7 +2656,7 @@ class Online {
     if(m.t==='bye'){ this.onLeave(from); return; }
     if(this.role==='host'){ const L=this.lobby, G=L&&L.guest; if(!G||G.id!==from) return;
       if(m.t==='hi'){ if(m.v!==NET_PROTO){ this.send({t:'old'},from); return; } this.pushRoom(); }
-      else if(m.t==='pick'&&CHARS[m.char]&&CHARS[m.char].team!==CHARS[L.host.char].team&&!this.inMatch){ G.char=m.char; G.cos=cosmeticsFor(m.char).includes(m.cos)?m.cos:'none'; G.ready=false; this.pushRoom(); }
+      else if(m.t==='pick'&&this.guestChoices().includes(m.char)&&!this.inMatch){ G.char=m.char; G.cos=cosmeticsFor(m.char).includes(m.cos)?m.cos:'none'; G.ready=false; this.pushRoom(); }
       else if(m.t==='ready'&&!this.inMatch){ G.ready=!!m.on; this.pushRoom(); this.maybeStart(); }
       else if(m.t==='in'&&this.inMatch&&Array.isArray(m.i)){ const c=this.game.chars.find(x=>x.remote); if(c&&c.controller instanceof RemoteController) c.controller.push(m.i); }
       return; }
@@ -2652,7 +2684,7 @@ class Online {
   hostTick(){ const g=this.game, rc=g.chars.find(c=>c.remote); if(rc&&g.state!=='playing'&&rc.controller instanceof RemoteController) rc.controller.idle();
     if(++this.tick%SNAP_EVERY) return; this.sendSnap(); }
   sendSnap(){ const g=this.game, A=g.arena, rc=g.chars.find(c=>c.remote);
-    this.send({t:'s', t2:r3(g.time), ack:rc&&rc.controller instanceof RemoteController?rc.controller.ack:0, st:g.state, rd:g.round, rt:r1(g.roundTime), w:g.wins, b:g.bonus, pl:g.seeds.pool,
+    this.send({t:'s', t2:r3(g.time), ack:rc&&rc.controller instanceof RemoteController?rc.controller.ack:0, st:g.state, rd:g.round, rt:r1(g.roundTime), w:g.wins, b:g.bonus, ko:g.teamKO, pl:g.seeds.pool,
       c:g.chars.map(packChar), pt:A.plots.map(p=>[p.stage,r1(p.t)]), bu:A.bushes.map(b=>[b.ripe?1:0,r1(b.t)]),
       hd:A.hedges.map(h=>[h.id,h.i,h.j,h.hp,g.chars.indexOf(h.owner)]), fd:A.fields.map(f=>[f.id,r2(f.x),r2(f.z),f.team,r2(f.t)]),
       sd:g.seeds.seeds.map(s=>[s.id,r2(s.x),r2(s.y),r2(s.z),s.state==='fly'?1:0,r1(s.ph)]),
@@ -2694,7 +2726,7 @@ class Online {
     if(c.popT<1) c.popT=Math.min(1,c.popT+dt*2.5); if(this.pred.dodgeT>0) c.dodgeT=Math.max(c.dodgeT,this.pred.dodgeT); }
   applyWorld(S){ const g=this.game, A=g.arena;
     if(S.st==='countdown'&&g.state!=='countdown'){ g.fx.clearFloats(); g.weapons.clear(); }
-    if(S.st!=='results') g.state=S.st; g.round=S.rd; g.roundTime=S.rt; g.bonus=S.b; g.seeds.pool=S.pl;
+    if(S.st!=='results') g.state=S.st; g.round=S.rd; g.roundTime=S.rt; g.bonus=S.b; if(S.ko) g.teamKO=S.ko; g.seeds.pool=S.pl;
     if(String(g.wins)!==String(S.w)){ g.wins=S.w; g.hud.renderWins(); }
     S.pt.forEach(([st,t],i)=>{ const p=A.plots[i]; if(!p) return; if(p.stage!==st){ p.pop=0.3; p.stage=st; } p.t=t; });
     S.bu.forEach(([r,t],i)=>{ const b=A.bushes[i]; if(!b) return; if(b.ripe!==!!r){ b.ripe=!!r; if(b.ripe) b.pop=0.35; A.setBerryLook(b); } b.t=t; });
