@@ -59,6 +59,12 @@
       is authoritative; the guest sends inputs and draws 20 Hz snapshots ~0.1 s behind, predicts its own walking,
       and sees the arena from the opposite corner. Online matches never pause, achievements are off, both bots
       play at Normal. If the friend leaves mid-match a bot takes over. ?net=local tests with two tabs. See SECTION 14b.
+  24. Calmer glow + final stretch (Nov 17): pickup beams, ripples, seed halos, berry rings and night light pools
+      toned down ~40% so they read without competing with the fight. The last 30 s of a round (FINAL_STRETCH) switch
+      the music to a faster minor-key loop (168 BPM) with a riser; it drops back to the calm loop between rounds, and
+      follows the synced round clock in Online Play. POTATO_GAP: a critter hit by a potato ignores other potatoes for
+      0.12 s, so a Spud Spread volley lands once per target. CELERY STAFF bolts give +6 extra energy per hit and every
+      4th hit heals the wielder +5 HP (half a heart); the HUD weapon line shows HEAL n/4.
 -->
 <html lang="en">
 <head>
@@ -498,6 +504,7 @@ const TEAM_HEX = [0x6CC24A, 0xF28A2A];
 const TEAM_NAME = ['GREEN TEAM', 'ORANGE TEAM'];
 const TEAM_CSS = ['var(--green)', 'var(--orange)'];
 const FIXED_DT = 1/60, HALF = 8, N = 16;
+const FINAL_STRETCH = 30; // seconds left in a round when the music turns intense
 const MAX_HP = 80, RESPAWN = 4, ROUND_TIME = 150, SEED_GOAL = 12, BUFF_TIME = 10, HEDGE_COST = 20;
 const BASE_SPEED = 4.4, CHAR_R = 0.32;
 
@@ -513,7 +520,8 @@ const WEAPONS = {
   shield:{ name:'PUMPKIN SHIELD', kind:'melee', dmg:8, cd:0.6, range:1.35, arc:Math.PI*0.7, knock:6.5, windup:0.1, anim:0.32,
           spName:'BULWARK', spCost:35, aiRange:1.1, veg:'pumpkin' },
 };
-const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5, ENERGY_PER_SEED=5, HEDGE_MAX=3, LUNGE_SPEED=13.6;
+const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5, ENERGY_PER_SEED=5,
+      POTATO_GAP=0.12, CELERY_ENERGY=6, CELERY_HEAL_EVERY=4, CELERY_HEAL=5, HEDGE_MAX=3, LUNGE_SPEED=13.6;
 // Berry bushes: walk into a ripe bush while hurt to eat. 10 HP = 1 full heart, twice a seed.
 const BERRY_HEAL=10, BERRY_REGROW=20, BERRY_R=1.1;
 const BERRY_BUSHES=[[3,6],[12,9],[13,0],[2,15]]; // [i, j] tiles, point-symmetric about the centre
@@ -643,7 +651,7 @@ const SKY={ day:{bg:PAL.forest, sky:0xD8E6C8, gnd:0x4A3A22, hi:1.25, sun:0xFFE6B
    SECTION 4 — AUDIO (all synthesized with Web Audio)
    ===================================================================== */
 class Audio {
-  constructor(){ this.ctx=null; this.muted=false; this.last={}; this.musicOn=false; }
+  constructor(){ this.ctx=null; this.muted=false; this.last={}; this.musicOn=false; this.intense=false; this.moodChange=false; }
   init(){
     if(this.ctx){ if(this.ctx.state==='suspended') this.ctx.resume(); return; }
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
@@ -712,25 +720,48 @@ class Audio {
     const g=c.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.5,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.15);
     o.connect(f1); f1.connect(f2); f2.connect(g); g.connect(this.sfx); o.start(t); o.stop(t+0.2);
   }
-  startMusic(){ // tiny step sequencer with lookahead scheduling: C - Am - F - G
+  // Final stretch: the last FINAL_STRETCH seconds of a round switch the loop to a faster, minor-key "panic" version.
+  setIntense(on){ on=!!on; if(this.intense===on) return; this.intense=on; this.moodChange=true;
+    if(this.ctx&&this.mus) this.mus.gain.setTargetAtTime(on?0.27:0.22,this.ctx.currentTime,0.3);
+    if(on&&this.ctx){ this.noise(1.1,'bandpass',300,5200,0.22,1.2); this.tone(220,1.1,'sawtooth',0.07,880); } } // riser stinger
+  startMusic(){ // tiny step sequencer with lookahead scheduling. Calm: C - Am - F - G at 132 BPM.
     if(this.musicOn) return; this.musicOn=true;
-    const c=this.ctx, bpm=132, step=60/bpm/4; let n=0, next=c.currentTime+0.1;
+    const c=this.ctx; let n=0, next=c.currentTime+0.1;
     const roots=[48,45,41,43], chords=[[0,4,7],[0,3,7],[0,4,7],[0,4,7]];
     const pat=[0,-1,2,-1,1,-1,2,3,-1,2,-1,1,0,-1,1,-1];
+    // Intense: Am - F - G - E at 168 BPM, pumping 8th-note bass, four-on-the-floor kick, 16th hats, rolling arpeggio
+    const iRoots=[45,41,43,40], iChords=[[0,3,7],[0,4,7],[0,4,7],[0,4,7]];
+    const arp=[0,1,2,3,2,1,0,1, 2,3,4,3,2,1,2,3];
     const mtof=m=>440*Math.pow(2,(m-69)/12);
     const tick=()=>{
       while(next<c.currentTime+0.12){
-        const bar=Math.floor(n/16)%4, s=n%16, r=roots[bar], ch=chords[bar], dt=next-c.currentTime;
-        if(s%4===0) this.tone(mtof(r-12),step*1.8,'triangle',0.32,null,dt,this.mus);
-        if(s===6||s===10||s===14) this.tone(mtof(r),step*1.2,'triangle',0.22,null,dt,this.mus);
-        const p=pat[(s+(Math.floor(n/64)%2)*3)%16];
-        if(p>=0){ const note=r+24+(p===3?12:ch[p]); this.tone(mtof(note),step*0.9,'square',0.055,null,dt,this.mus); }
-        if(s%4===0) this.tone(150,0.12,'sine',0.35,45,dt,this.mus);
-        if(s%4===2) this.noise(0.04,'highpass',7000,null,0.08,1,dt,this.mus);
-        if(s===4||s===12) this.noise(0.1,'bandpass',1800,900,0.18,0.8,dt,this.mus);
-        n++; next+=step;
+        if(this.moodChange){ this.moodChange=false; n=0; } // restart the phrase on a mood switch
+        const s=n%16, dt=Math.max(0,next-c.currentTime);
+        if(!this.intense){
+          const bar=Math.floor(n/16)%4, r=roots[bar], ch=chords[bar];
+          if(s%4===0) this.tone(mtof(r-12),step()*1.8,'triangle',0.32,null,dt,this.mus);
+          if(s===6||s===10||s===14) this.tone(mtof(r),step()*1.2,'triangle',0.22,null,dt,this.mus);
+          const p=pat[(s+(Math.floor(n/64)%2)*3)%16];
+          if(p>=0){ const note=r+24+(p===3?12:ch[p]); this.tone(mtof(note),step()*0.9,'square',0.055,null,dt,this.mus); }
+          if(s%4===0) this.tone(150,0.12,'sine',0.35,45,dt,this.mus);
+          if(s%4===2) this.noise(0.04,'highpass',7000,null,0.08,1,dt,this.mus);
+          if(s===4||s===12) this.noise(0.1,'bandpass',1800,900,0.18,0.8,dt,this.mus);
+        } else {
+          const bar=Math.floor(n/16)%4, r=iRoots[bar], ch=iChords[bar], st=step();
+          if(s%2===0) this.tone(mtof(r-12+(s%4===2?12:0)),st*1.6,'sawtooth',0.12,null,dt,this.mus);   // octave-hopping bass
+          if(s%4===0) this.tone(mtof(r-24),st*3,'triangle',0.3,null,dt,this.mus);
+          const a=arp[s], note=r+24+(a===3?12:a===4?ch[1]+12:ch[a]);
+          this.tone(mtof(note),st*0.8,'square',0.05,null,dt,this.mus);                                    // 16th arpeggio
+          if(s===0||s===8) this.tone(mtof(r+36+ch[2]),st*3.5,'triangle',0.05,null,dt,this.mus);         // high stab
+          if(s%4===0) this.tone(165,0.11,'sine',0.42,42,dt,this.mus);                                     // kick
+          this.noise(0.03,'highpass',8000,null,s%2?0.05:0.09,1,dt,this.mus);                             // hats
+          if(s===4||s===12) this.noise(0.12,'bandpass',2000,800,0.26,0.8,dt,this.mus);                   // snare
+          if(bar===3&&s>=12) this.noise(0.06,'bandpass',1400+s*120,null,0.16,1,dt,this.mus);           // fill into the loop
+        }
+        n++; next+=step();
       }
     };
+    const step=()=>60/(this.intense?168:132)/4;
     setInterval(tick,25);
   }
 }
@@ -1043,11 +1074,11 @@ class Arena {
     for(const [i,j,type] of PLOTS){
       const x=tileC(i), z=tileC(j), g=new THREE.Group(); g.position.set(x,0.16,z); this.root.add(g);
       M(BOX(0.78,0.06,0.62),PAL.loamS,0,0.02,0,g,false);
-      const glow=M(CYL(0.56,0.56,0.02,16),PAL.corn,0,0.05,0,g,false,{emissive:0xFFC93C,emissiveIntensity:0.6,transparent:true,opacity:0.55});
+      const glow=M(CYL(0.56,0.56,0.02,16),PAL.corn,0,0.05,0,g,false,{emissive:0xFFC93C,emissiveIntensity:0.4,transparent:true,opacity:0.32});
       // pickup beacon: a soft gold light pillar and a ripple ring that keeps expanding outward
-      const beam=new THREE.Mesh(CYL(0.36,0.46,2.4,14,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.8,transparent:true,opacity:0.16,side:THREE.DoubleSide,depthWrite:false}));
+      const beam=new THREE.Mesh(CYL(0.36,0.46,2.4,14,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.5,transparent:true,opacity:0.08,side:THREE.DoubleSide,depthWrite:false}));
       beam.position.y=1.2; g.add(beam);
-      const ripple=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:1,transparent:true,opacity:0.8,side:THREE.DoubleSide,depthWrite:false}));
+      const ripple=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.6,transparent:true,opacity:0.5,side:THREE.DoubleSide,depthWrite:false}));
       ripple.rotation.x=-Math.PI/2; ripple.position.y=0.07; g.add(ripple);
       const st=[new THREE.Group(),new THREE.Group(),new THREE.Group(),new THREE.Group()]; st.forEach(s=>g.add(s));
       // stage 0 — sprout
@@ -1057,7 +1088,7 @@ class Arena {
       for(let k=0;k<4;k++){ const l=M(BOX(0.18,0.025,0.08),PAL.sprout,Math.cos(k*1.57)*0.08,0.16+k*0.015,Math.sin(k*1.57)*0.08,st[1]); l.rotation.y=-k*1.57; l.rotation.z=0.35; }
       // stage 2 — young plant; stage 3 — ripe
       this.vegModel(type,st[2],0.6); this.vegModel(type,st[3],1.5); addOutlines(st[3],0.016,0.12);
-      const pool=lightPool(g,0xFFB84A,1.05,0.06,0.75);
+      const pool=lightPool(g,0xFFB84A,0.95,0.06,0.45);
       this.plots.push({i,j,x,z,type,g,st,glow,beam,ripple,pool,stage:3,t:0});
     }
   }
@@ -1077,18 +1108,18 @@ class Arena {
     const R=this.root;
     M(CYL(1.0,1.1,0.12,10),PAL.pebbleS,0,0.06,0,R,false); M(CYL(0.8,0.8,0.14,10),PAL.pebble,0,0.07,0,R,false);
     for(let k=0;k<6;k++){ const a=k/6*Math.PI*2; M(BOX(0.18,0.3,0.18),PAL.pebbleS,Math.cos(a)*1.0,0.15,Math.sin(a)*1.0,R); }
-    this.seedLight=new THREE.PointLight(0x8FF5C0,6,5,1.5); this.seedLight.position.set(0,1.0,0); R.add(this.seedLight);
+    this.seedLight=new THREE.PointLight(0x8FF5C0,4,5,1.5); this.seedLight.position.set(0,1.0,0); R.add(this.seedLight);
     this.cluster=new THREE.Group(); R.add(this.cluster);
     this.clusterMat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.8});
     for(let k=0;k<5;k++){ const m=new THREE.Mesh(ICO(0.09,0),this.clusterMat); m.scale.set(1,1.4,1); m.userData.a=k/5*Math.PI*2; this.cluster.add(m); }
-    lightPool(R,0x5FF0B0,2.4,0.16,0.4);
+    lightPool(R,0x5FF0B0,2.2,0.16,0.26);
   }
   // Berry bushes: block their tile; a hurt critter that touches a ripe bush eats it (BERRY_HEAL), then it regrows.
   buildBerries(){
     this.bushes=[];
     this.berryMat=toonMat({color:0xD8315B,emissive:0xFF4F7A,emissiveIntensity:0.18});
     this.unripeMat=toonMat({color:0xA9C25A,emissive:0x000000});
-    const ringMat=toonMat({color:0xF27A9A,emissive:0xFF5A88,emissiveIntensity:0.9,transparent:true,opacity:0.7,side:THREE.DoubleSide,depthWrite:false});
+    const ringMat=toonMat({color:0xF27A9A,emissive:0xFF5A88,emissiveIntensity:0.55,transparent:true,opacity:0.45,side:THREE.DoubleSide,depthWrite:false});
     const spots=[[0.3,0.32,0.12],[0.12,0.42,0.3],[-0.12,0.36,0.3],[0.33,0.2,-0.12],[-0.02,0.58,0.12],[0.22,0.52,0.05],[-0.3,0.3,0.14],[0.06,0.24,0.36],[0.28,0.42,-0.24],[-0.18,0.5,-0.08]];
     for(const [i,j] of BERRY_BUSHES){ this.blocked[j][i]=1; const x=tileC(i), z=tileC(j), g=new THREE.Group(); g.position.set(x,this.heightAt(x,z),z); this.root.add(g);
       M(CYL(0.44,0.48,0.08,10),PAL.loamS,0,0.04,0,g,false);
@@ -1099,7 +1130,7 @@ class Arena {
       for(const [a,b,c] of spots){ const m=new THREE.Mesh(ICO(0.075,0),this.berryMat); m.position.set(a,b,c); m.castShadow=true; berries.add(m);
         M(BOX(0.02,0.05,0.02),PAL.leaf,a,b+0.07,c,berries,false); }
       const ring=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),ringMat.clone()); ring.rotation.x=-Math.PI/2; ring.position.y=0.06; g.add(ring);
-      const pool=lightPool(g,0xFF5F8A,1.15,0.06,1);
+      const pool=lightPool(g,0xFF5F8A,1.0,0.06,0.55);
       this.bushes.push({i,j,x,z,g,berries,ring,pool,ripe:true,t:0,pop:0});
     }
   }
@@ -1123,23 +1154,23 @@ class Arena {
       if(p.stage<3){ p.t+=dt; if(p.t>=5){ p.t=0; p.stage++; p.pop=0.3; } }
       p.st.forEach((s,k)=>s.visible=k===p.stage);
       const ripe=p.stage===3; p.glow.visible=p.beam.visible=p.ripple.visible=ripe; p.pool.visible=NIGHT.on&&ripe;
-      if(p.pool.visible) p.pool.material.opacity=0.6+Math.sin(time*3+p.i)*0.15;
+      if(p.pool.visible) p.pool.material.opacity=0.38+Math.sin(time*3+p.i)*0.08;
       const sc=p.pop>0?1+Math.sin((0.3-p.pop)/0.3*Math.PI)*0.35:ripe?1+Math.sin(time*4+p.i)*0.06:1;
       p.st[p.stage].scale.set(sc,sc,sc); if(p.pop>0) p.pop-=dt;
-      if(ripe){ const r=(time*0.8+p.i*0.13)%1; p.ripple.scale.setScalar(0.9+r*1.3); p.ripple.material.opacity=0.85*(1-r);
-        p.beam.material.opacity=0.12+Math.sin(time*3+p.i)*0.05; p.glow.material.opacity=0.5+Math.sin(time*4)*0.2;
+      if(ripe){ const r=(time*0.8+p.i*0.13)%1; p.ripple.scale.setScalar(0.9+r*1.0); p.ripple.material.opacity=0.5*(1-r);
+        p.beam.material.opacity=0.07+Math.sin(time*3+p.i)*0.025; p.glow.material.opacity=0.3+Math.sin(time*4)*0.1;
         p.st[3].position.y=0.05+Math.abs(Math.sin(time*2.2+p.i))*0.08; p.st[3].rotation.y=Math.sin(time*1.3+p.i)*0.35; }
       else p.st[3].position.y=0;
     }
     this.cluster.children.forEach((m,k)=>{ const a=m.userData.a+time*0.9; m.position.set(Math.cos(a)*0.45,0.55+Math.sin(time*2.4+k)*0.1,Math.sin(a)*0.45); m.rotation.y=time*2; });
-    const nk=NIGHT.on?1.6:1; this.clusterMat.emissiveIntensity=(0.65+Math.sin(time*3)*0.3)*nk; this.seedLight.intensity=(5+Math.sin(time*3)*2)*nk; this.seedLight.distance=NIGHT.on?7:5;
+    const nk=NIGHT.on?1.35:1; this.clusterMat.emissiveIntensity=(0.55+Math.sin(time*3)*0.2)*nk; this.seedLight.intensity=(3.5+Math.sin(time*3)*1.2)*nk; this.seedLight.distance=NIGHT.on?7:5;
     for(const b of this.bushes){
       if(!b.ripe){ b.t+=dt; const k=b.t/BERRY_REGROW; b.berries.visible=k>0.35; if(k>0.35) b.berries.scale.setScalar(0.4+0.5*(k-0.35)/0.65);
         if(b.t>=BERRY_REGROW){ b.ripe=true; b.pop=0.35; this.setBerryLook(b); } }
       else if(b.pop>0){ b.pop-=dt; b.berries.scale.setScalar(1+Math.sin((0.35-b.pop)/0.35*Math.PI)*0.35); }
       b.ring.visible=b.ripe; b.pool.visible=NIGHT.on&&b.ripe;
-      if(b.ripe){ const r=(time*0.7+b.i*0.21)%1; b.ring.scale.setScalar(0.95+r*1.1); b.ring.material.opacity=0.75*(1-r); if(b.pool.visible) b.pool.material.opacity=0.85+Math.sin(time*2.6+b.j)*0.15; } }
-    this.berryMat.emissiveIntensity=(NIGHT.on?0.75:0.18)+Math.sin(time*3)*(NIGHT.on?0.2:0.05);
+      if(b.ripe){ const r=(time*0.7+b.i*0.21)%1; b.ring.scale.setScalar(0.95+r*0.9); b.ring.material.opacity=0.45*(1-r); if(b.pool.visible) b.pool.material.opacity=0.5+Math.sin(time*2.6+b.j)*0.1; } }
+    this.berryMat.emissiveIntensity=(NIGHT.on?0.5:0.14)+Math.sin(time*3)*(NIGHT.on?0.12:0.04);
     if(NIGHT.on){ const a=this.ff.geometry.attributes.position; for(let k=0;k<this.ffSeed.length;k++){ const [x,z,y,ph,sp]=this.ffSeed[k];
         a.setXYZ(k,x+Math.sin(time*sp+ph)*0.8,y+Math.sin(time*sp*2.3+ph*2)*0.25,z+Math.cos(time*sp*0.8+ph)*0.8); }
       a.needsUpdate=true; this.ff.material.opacity=0.75+Math.sin(time*1.7)*0.2; }
@@ -1265,15 +1296,16 @@ class FX {
 /* =====================================================================
    SECTION 9 — SEED SYSTEM (centre spawns, pools, scatter, 12-seed surge)
    ===================================================================== */
+const seedGlowAt=t=>(0.5+Math.sin(t*4)*0.18)*(NIGHT.on?1.15:1); // loose-seed shimmer (shared by host and Online guest)
 class SeedSystem {
   constructor(game){
     this.game=game; this.max=90; this.seeds=[];
-    this.mat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.9});
+    this.mat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.6});
     this.im=new THREE.InstancedMesh(ICO(0.17,0),this.mat,this.max); this.im.castShadow=true; this.im.frustumCulled=false; scene.add(this.im);
     // a glowing halo on the ground under every loose seed, so they read at a glance
-    this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:1,transparent:true,opacity:0.55,depthWrite:false});
+    this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:0.6,transparent:true,opacity:0.32,depthWrite:false});
     this.halo=new THREE.InstancedMesh(G('seedhalo',()=>new THREE.RingGeometry(0.16,0.3,16).rotateX(-Math.PI/2)),this.haloMat,this.max); this.halo.frustumCulled=false; scene.add(this.halo);
-    this.pools=new THREE.InstancedMesh(POOL_GEO,glowMat(0x4FE0A0,0.42),this.max); this.pools.frustumCulled=false; this.pools.renderOrder=2; this.pools.visible=false; scene.add(this.pools);
+    this.pools=new THREE.InstancedMesh(POOL_GEO,glowMat(0x4FE0A0,0.26),this.max); this.pools.frustumCulled=false; this.pools.renderOrder=2; this.pools.visible=false; scene.add(this.pools);
     this.sid=0; this.reset();
   }
   reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; this.render(0); }
@@ -1297,7 +1329,7 @@ class SeedSystem {
       if(s.state==='float'){ s.y=lerp(s.y,ar.heightAt(s.x,s.z)+0.32+Math.sin(time*3+s.ph)*0.07,0.15); }
       if(active && s.pick<=0) for(const c of this.game.chars){ if(c.ko) continue; if(dist2(c.pos.x,c.pos.z,s.x,s.z)<0.42){ this.collect(c,k); break; } }
     }
-    this.mat.emissiveIntensity=(0.7+Math.sin(time*4)*0.3)*(NIGHT.on?1.25:1);
+    this.mat.emissiveIntensity=seedGlowAt(time);
     this.render(time);
   }
   collect(c,k){
@@ -1310,7 +1342,7 @@ class SeedSystem {
     if(this.pool[c.team]>=SEED_GOAL) this.game.seedSurge(c.team);
   }
   render(time){
-    const ar=this.game.arena, hs=1+Math.sin(time*5)*0.18;
+    const ar=this.game.arena, hs=1+Math.sin(time*5)*0.1;
     for(let k=0;k<this.max;k++){ const s=this.seeds[k];
       if(s){ _e.set(0,time*2+s.ph,0.3); _q.setFromEuler(_e); _m4.compose(_v.set(s.x,s.y,s.z),_q,_s.set(1,1.45,1)); }
       else _m4.makeScale(0,0,0);
@@ -1319,7 +1351,7 @@ class SeedSystem {
       this.halo.setMatrixAt(k,_m4);
       if(NIGHT.on){ if(s){ const ps=1.25*hs; _m4.makeScale(ps,1,ps).setPosition(s.x,ar.heightAt(s.x,s.z)+0.07,s.z); } else _m4.makeScale(0,0,0); this.pools.setMatrixAt(k,_m4); } }
     this.im.instanceMatrix.needsUpdate=true; this.halo.instanceMatrix.needsUpdate=true; this.pools.visible=NIGHT.on; if(NIGHT.on) this.pools.instanceMatrix.needsUpdate=true;
-    this.haloMat.opacity=0.45+Math.sin(time*5)*0.15;
+    this.haloMat.opacity=0.28+Math.sin(time*5)*0.07;
   }
   nearest(x,z,avoid=[]){ let best=null,bd=1e9; for(const s of this.seeds){ if(s.state==='fly') continue; let d=Math.sqrt(dist2(x,z,s.x,s.z));
       for(const e of avoid) if(!e.ko && dist2(e.pos.x,e.pos.z,s.x,s.z)<4) d+=2.5; if(d<bd){bd=d;best=s;} } return best; }
@@ -1363,7 +1395,7 @@ class Character {
   }
   spawnAt(x,z){ this.pos.set(x,this.game.arena.heightAt(x,z),z); this.facing=this.team===0?Math.PI*0.25:-Math.PI*0.75; this.syncModel(); }
   setWeapon(key,uses=Infinity){
-    this.weapon=key; this.durability=key===this.sig?Infinity:uses; this.bulwarkT=0;
+    this.weapon=key; this.durability=key===this.sig?Infinity:uses; this.bulwarkT=0; this.celeryHits=0;
     for(const w of this.weaponMeshes) w.parent.remove(w); this.weaponMeshes=[];
     const a=makeWeapon(key); this.m.handR.add(a); this.weaponMeshes.push(a);
     if(key==='kunai'){ const b=makeWeapon(key); this.m.handL.add(b); this.weaponMeshes.push(b); }
@@ -1538,7 +1570,13 @@ class Weapon {
         if(g.arena.isBlocked(i,j)){ dead=true; const h=g.arena.hedgeAt(i,j); if(h) g.arena.damageHedge(h);
           g.fx.burst(new V3(p.x,0.6,p.z),p.type==='kunai'?[PAL.potato,PAL.potatoS,PAL.white]:[PAL.celery,PAL.mint],5,2); audio.play('crunch'); break; }
         for(const e of g.chars){ if(e.team===p.owner.team||e.ko) continue; if(dist2(e.pos.x,e.pos.z,p.x,p.z)<0.3){
-          const l=Math.hypot(p.vx,p.vz); g.damage(e,p.dmg,p.owner,new V3(p.vx/l,0,p.vz/l),p.knock,true,p.type); dead=true; break; } } }
+          dead=true;
+          // potatoes can't stack: a critter hit by one ignores any other potato for POTATO_GAP s (so a 3-potato Spud Spread lands once)
+          if(p.type==='kunai' && g.time-(e.potatoAt??-9)<POTATO_GAP){ g.fx.burst(new V3(p.x,0.6,p.z),[PAL.potato,PAL.potatoS],4,1.8); break; }
+          const l=Math.hypot(p.vx,p.vz), hit=g.damage(e,p.dmg,p.owner,new V3(p.vx/l,0,p.vz/l),p.knock,true,p.type);
+          if(hit && p.type==='kunai') e.potatoAt=g.time;
+          if(hit && p.type==='staff') g.celeryHit(p.owner);
+          break; } } }
       p.mesh.position.x=p.x; p.mesh.position.z=p.z; if(p.type==='kunai'){ p.mesh.children[0].rotation.x+=dt*18; p.mesh.children[0].rotation.z+=dt*7; } else p.mesh.rotation.x+=dt*10;
       if(dead){ scene.remove(p.mesh); this.proj.splice(k,1); } }
   }
@@ -1822,7 +1860,7 @@ class HUD {
     const W=pl.W, en=Math.floor(clamp(pl.energy,0,100));
     if(this.fill._w!==en){ this.fill._w=en; this.fill.style.width=en+'%'; setText(this.enNum,en+' / 100'); }
     if(this.enCost._c!==W.spCost){ this.enCost._c=W.spCost; this.enCost.style.left='calc('+W.spCost+'% - 1px)'; }
-    const ready=en>=W.spCost; if(this.enBox._r!==ready){ this.enBox._r=ready; this.enBox.classList.toggle('ready',ready); } setText($('pl-weapon'),W.name+(pl.durability===Infinity?' ★':' · '+pl.durability+' LEFT'));
+    const ready=en>=W.spCost; if(this.enBox._r!==ready){ this.enBox._r=ready; this.enBox.classList.toggle('ready',ready); } setText($('pl-weapon'),W.name+(pl.durability===Infinity?' ★':' · '+pl.durability+' LEFT')+(pl.weapon==='staff'?' · HEAL '+(pl.celeryHits|0)+'/'+CELERY_HEAL_EVERY:''));
     setText($('pl-special'),'R-CLICK '+W.spName+' · '+W.spCost+' ENERGY');
     setText($('pl-hedges'),'Q HEDGE '+pl.hedges.length+'/'+HEDGE_MAX+' · 20');
     // seed counters
@@ -1877,7 +1915,7 @@ class Tutorial {
     this.marker=new THREE.Group(); scene.add(this.marker); this.marker.visible=false;
     const ring=new THREE.Mesh(G('tutring',()=>new THREE.RingGeometry(0.42,0.56,28).rotateX(-Math.PI/2)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:1,transparent:true,opacity:0.9,depthWrite:false,side:THREE.DoubleSide}));
     ring.position.y=0.22; this.marker.add(ring); this.ring=ring;
-    const beam=new THREE.Mesh(CYL(0.45,0.5,3,16,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.8,transparent:true,opacity:0.18,depthWrite:false,side:THREE.DoubleSide}));
+    const beam=new THREE.Mesh(CYL(0.45,0.5,3,16,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.6,transparent:true,opacity:0.12,depthWrite:false,side:THREE.DoubleSide}));
     beam.position.y=1.5; this.marker.add(beam);
     const arrow=M(CONE(0.2,0.36,4),PAL.corn,0,2.2,0,this.marker,false,{emissive:0xFFC93C,emissiveIntensity:0.7}); arrow.rotation.x=Math.PI; this.arrow=arrow;
     this.el={k:$('tut-k'),n:$('tut-n'),d:$('tut-d'),pr:$('tut-pr'),bar:$('tut-bar'),btns:$('tut-btns'),end:$('tut-end'),box:$('tut')};
@@ -2021,6 +2059,13 @@ class Game {
     pv.P=buildCharacter(this.choice); addCosmetic(pv.P,this.choice,this.cosmetics[this.choice]||'none'); pv.sc.add(pv.P.root); }
   renderPreview(dt){ const pv=this.prev; if(!pv||!pv.P) return; pv.ang+=dt*0.9; pv.P.rig.rotation.y=Math.sin(pv.ang)*0.75+0.25; pv.r.render(pv.sc,pv.cam); }
   // a hurt critter touching a ripe berry bush eats it
+  celeryHit(c){ // Celery Staff bolts refill energy on every hit; every 4th hit also heals the wielder
+    if(c.ko) return; c.energy=Math.min(100,c.energy+CELERY_ENERGY); c.celeryHits=(c.celeryHits|0)+1;
+    if(c.celeryHits>=CELERY_HEAL_EVERY){ c.celeryHits=0; const had=c.hp; c.hp=Math.min(MAX_HP,c.hp+CELERY_HEAL);
+      this.fx.float((c.hp>had?'+'+CELERY_HEAL+' HP  ':'')+'+'+CELERY_ENERGY+' EN',new V3(c.pos.x,1.7,c.pos.z),'heal',0.8);
+      this.fx.burst(new V3(c.pos.x,0.9,c.pos.z),[PAL.celery,PAL.mint,PAL.white],6,2,1.5,0.6); audio.play('seed'); }
+    else this.personal(c,()=>this.fx.float('+'+CELERY_ENERGY+' EN',new V3(c.pos.x,1.7,c.pos.z),'heal',0.55));
+  }
   tryBerry(c){ if(c.ko || c.hp>=MAX_HP) return false; const r2=BERRY_R*BERRY_R;
     for(const b of this.arena.bushes){ if(!b.ripe || dist2(b.x,b.z,c.pos.x,c.pos.z)>r2) continue;
       const before=c.hp; c.hp=Math.min(MAX_HP,c.hp+BERRY_HEAL); this.arena.eatBush(b); c.stats.berries++; c.squash=0.15;
@@ -2374,11 +2419,11 @@ class RemoteController {
 }
 const r1=v=>Math.round(v*10)/10, r2=v=>Math.round(v*100)/100, r3=v=>Math.round(v*1000)/1000;
 // Per-critter snapshot fields, in order. Continuous ones are blended on the guest; timers count down between snapshots.
-const CF=['x','y','z','f','vx','vz','hp','en','ko','rs','wp','du','bf','bw','iv','gr','aa','ad','ak','sp','lg','dg','fl','sq','hk','pp','df','sl'];
+const CF=['x','y','z','f','vx','vz','hp','en','ko','rs','wp','du','bf','bw','iv','gr','aa','ad','ak','sp','lg','dg','fl','sq','hk','pp','df','sl','cs'];
 const CF_TIMERS=['rs','bf','bw','iv','aa','sp','lg','dg','fl','sq','hk','df','sl'];
 function packChar(c){ return [r2(c.pos.x),r2(c.pos.y),r2(c.pos.z),r2(c.facing),r2(c.vel.x),r2(c.vel.z),r1(c.hp),r1(c.energy),c.ko?1:0,r2(c.respawnT),WEAPON_ORDER.indexOf(c.weapon),
   c.durability===Infinity?-1:c.durability,r2(c.buffT),r2(c.bulwarkT),r2(c.invuln),c.respawnGrace?1:0,r2(c.atkAnim),r2(c.atkDur||0.3),c.atkKind?WEAPON_ORDER.indexOf(c.atkKind):-1,
-  r2(c.spinT),r2(c.lungeT),r2(c.dodgeT),r2(c.flinch),r2(c.squash),r2(c.honkT),r2(c.popT),r2(c.dropFlash),r2(c.slowT)]; }
+  r2(c.spinT),r2(c.lungeT),r2(c.dodgeT),r2(c.flinch),r2(c.squash),r2(c.honkT),r2(c.popT),r2(c.dropFlash),r2(c.slowT),c.celeryHits|0]; }
 function unpackChar(a){ const o={}; CF.forEach((k,i)=>o[k]=a[i]); return o; }
 
 class Online {
@@ -2565,7 +2610,7 @@ class Online {
       if(Math.abs(this.corr.x)+Math.abs(this.corr.z)<0.003) this.corr.set(0,0,0); } }
   applyChar(c,A,B,k,self){ // discrete state from A (the moment we're showing), motion blended A→B
     if(!self){ c.pos.set(lerp(A.x,B.x,k),lerp(A.y,B.y,k),lerp(A.z,B.z,k)); c.facing=A.f+angDiff(A.f,B.f)*k; c.vel.set(lerp(A.vx,B.vx,k),0,lerp(A.vz,B.vz,k)); }
-    const w=WEAPON_ORDER[A.wp]||c.sig; if(c.weapon!==w) c.setWeapon(w); c.durability=A.du<0?Infinity:A.du;
+    const w=WEAPON_ORDER[A.wp]||c.sig; if(c.weapon!==w) c.setWeapon(w); c.durability=A.du<0?Infinity:A.du; c.celeryHits=A.cs|0;
     c.hp=lerp(A.hp,B.hp,k); c.energy=lerp(A.en,B.en,k); c.ko=!!A.ko; c.respawnGrace=!!A.gr; c.atkDur=A.ad; c.atkKind=A.ak<0?null:WEAPON_ORDER[A.ak];
     const tl=(a,b)=>b<=a?lerp(a,b,k):a; // countdown timers: blend while counting down, jump when one restarts
     c.respawnT=tl(A.rs,B.rs); c.buffT=tl(A.bf,B.bf); c.bulwarkT=tl(A.bw,B.bw); c.invuln=tl(A.iv,B.iv); c.atkAnim=tl(A.aa,B.aa); c.spinT=tl(A.sp,B.sp); c.lungeT=tl(A.lg,B.lg);
@@ -2610,7 +2655,7 @@ class Online {
     for(const [id,m] of this.proj) if(!live.has(id)){ scene.remove(m); this.proj.delete(id); }
     // 4) animate and draw-side updates (no gameplay runs here)
     for(const ch of g.chars){ if(ch!==c&&ch.ko) ch.vel.set(0,0,0); ch.animate(dt); }
-    g.arena.update(dt,g.time); g.seeds.mat.emissiveIntensity=(0.7+Math.sin(g.time*4)*0.3)*(NIGHT.on?1.25:1); g.seeds.render(g.time); g.fx.update(dt);
+    g.arena.update(dt,g.time); g.seeds.mat.emissiveIntensity=seedGlowAt(g.time); g.seeds.render(g.time); g.fx.update(dt);
     // 5) the match is over once we've shown everything the host sent before the results
     if(this.pendingRes&&this.renderT>=L.T-0.001){ const r=this.pendingRes; this.pendingRes=null; this.endMatch();
       g.wins=r.w; (r.stats||[]).forEach((s,n)=>{ if(g.chars[n]) g.chars[n].stats={...g.chars[n].stats,...s}; }); g.showResults(); }
@@ -2628,6 +2673,8 @@ function step(now,draw){
   let dt=(now-last)/1000; last=now; if(dt<0) dt=0; if(dt>0.25) dt=0.25; acc+=dt;
   let n=0; while(acc>=FIXED_DT && n<8){ game.fixedUpdate(FIXED_DT); acc-=FIXED_DT; n++; } if(n>=8) acc=0;
   if(draw) game.render(dt);
+  // final-stretch music: driven by the synced round clock, so it also kicks in for an Online Play guest; any other state (round end, results, title, tutorial) drops back to the calm loop
+  audio.setIntense(game.state==='playing' && !game.tut && game.roundTime<=FINAL_STRETCH);
 }
 let lastRaf=performance.now();
 function frame(now){ requestAnimationFrame(frame); lastRaf=performance.now(); step(now,true); }
