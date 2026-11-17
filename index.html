@@ -47,8 +47,8 @@
       became a plain blue bar with a number and a marker at the current special's cost. Interactive TUTORIAL from
       the title screen: movement, attacks, specials, seeds, seed surges, hedges, the Pumpkin Shield and Bulwark.
   22. Berries, night, cosmetics (Nov 17): four BERRY BUSHES (two side lanes, two neutral corners, point-symmetric).
-      Philman asked for "5 HP"; health is hearts here (10 HP each, halves shown), so a bush heals 25 HP = 5 half-hearts
-      = 2½ hearts, five times a seed. You eat by walking into a ripe bush (or E) only when hurt, so full-health players
+      A bush heals 1 full heart (10 HP, twice a seed), per Philman. You eat by walking into a ripe bush, and only when
+      hurt, so full-health players
       can't waste it; it regrows in 20 s. NIGHT MODE (Settings, saved in `eyv-settings-v1`): moonlight and cool tones;
       seeds, ripe plots, berries and the centre plaza cast additive light pools, plus fireflies. No extra real lights
       are added (light count drives shader cost), so frame rate holds. COSMETICS: one per character, picked on the
@@ -354,7 +354,7 @@ body.night #nightvig{display:block}
       <b>ESC</b><span>Pause</span>
       <b>M</b><span>Mute / unmute</span>
       <b>POTATOES</b><span>Thrown potatoes knock enemy shots out of the air (both break).</span>
-      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. Berry bushes heal 2½ hearts when you're hurt. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
+      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. Berry bushes heal 1 heart when you're hurt. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
       <b>PUMPKIN</b><span>Pumpkin Shield (tank): blocks most damage from the front. Bulwark special shields you and nearby allies and eats enemy shots.</span>
     </div>
     <div class="row" style="margin-top:20px"><button class="btn" id="btn-controls-back">Back</button></div>
@@ -376,7 +376,7 @@ body.night #nightvig{display:block}
         <p>Getting hit makes your team <b>drop seeds</b>, so don't get greedy.</p></div>
       <div class="tip" style="--tc:var(--tomato)"><h3>HEALTH</h3>
         <p>You have <b>8 hearts</b>. There's no slow regen, so heal on purpose:</p>
-        <p>Every seed you pick up heals <b>half a heart</b>. Walk into a <b>berry bush</b> to heal <b>2½ hearts</b> (it regrows in 20 s).</p>
+        <p>Every seed you pick up heals <b>half a heart</b>. Walk into a <b>berry bush</b> to heal <b>1 heart</b> (it regrows in 20 s).</p>
         <p>Knocked out? You're back in <b>4 s</b> at full health. A <b>Pumpkin Shield</b> blocks most hits from the front.</p></div>
       <div class="tip" style="--tc:#63C8F2"><h3>ENERGY</h3>
         <p>The blue Energy bar pays for your weapon <b>special</b> (right-click) and <b>hedges</b> (Q, 20 each, up to 3).</p>
@@ -439,8 +439,8 @@ const WEAPONS = {
           spName:'BULWARK', spCost:35, aiRange:1.1, veg:'pumpkin' },
 };
 const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5, ENERGY_PER_SEED=5, HEDGE_MAX=3, LUNGE_SPEED=13.6;
-// Berry bushes: walk into a ripe bush (or press E) while hurt to eat. 25 HP = 2½ hearts (five half-hearts), 5× a seed.
-const BERRY_HEAL=25, BERRY_REGROW=20, BERRY_R=1.1;
+// Berry bushes: walk into a ripe bush while hurt to eat. 10 HP = 1 full heart, twice a seed.
+const BERRY_HEAL=10, BERRY_REGROW=20, BERRY_R=1.1;
 const BERRY_BUSHES=[[3,6],[12,9],[13,0],[2,15]]; // [i, j] tiles, point-symmetric about the centre
 // Cosmetics: one per character, purely visual. 'only' limits an item to one critter.
 const COSMETICS = {
@@ -1782,7 +1782,7 @@ const TUT_STEPS=[
   {id:'special', n:'SPECIAL MOVE', d:'<b>Right-click</b> for your weapon special. The Rabbit\'s <b>Lunge Slash</b> dashes forward. Specials cost <b>Energy</b>: the blue bar at the top left. The gold tick on it marks the cost.'},
   {id:'dodge', n:'DODGE ROLL', d:'Press <b>SPACE</b> to dodge roll. You can\'t be hurt mid-roll. It recharges in 1.5 s.'},
   {id:'seeds', n:'MAGIC SEEDS', d:'You\'re hurt! Walk over the glowing <b>magic seeds</b>. Each one heals <b>half a heart</b> and gives <b>+5 Energy</b>. Watch your hearts and the blue bar.', goal:4, unit:'SEEDS'},
-  {id:'berries', n:'BERRY BUSHES', d:'Still hurt? <b>Berry bushes</b> heal <b>2½ hearts</b> (25 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
+  {id:'berries', n:'BERRY BUSHES', d:'Still hurt? <b>Berry bushes</b> heal <b>1 full heart</b> (10 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
   {id:'surge', n:'SEED SURGE', d:'Every seed goes into your team\'s pot (top centre). Bank <b>12</b> for a <b>SEED SURGE</b>: faster running and attacks for 10 s. <b>Most surges wins the round.</b> Grab the last few!'},
   {id:'hedge', n:'HEDGES', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
   {id:'shield', n:'PICK UP A WEAPON', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
