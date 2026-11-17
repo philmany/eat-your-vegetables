@@ -33,6 +33,10 @@
       Passive: hits from the front take 60% less damage, from behind 20% less; carrier moves 8% slower.
       Special BULWARK (35 Energy): 3 s of 75% damage reduction, a dome that eats enemy projectiles,
       allies inside it take 50% less damage, and nearby AI enemies are drawn to attack the carrier (taunt).
+  20. Balance pass 2 (Nov 17): Lunge Slash travels 20% less far (speed 17 -> 13.6, same duration and hit window).
+      Each seed also restores 5 Energy. Players may keep 3 hedges. Every character shows small health and energy
+      bars over its head. A skippable tips card (seed surges, health, energy) shows before a match from the
+      character select; "don't show again" is remembered in localStorage.
   19. Achievements: earned by the human player only, saved in localStorage (fails silently if blocked).
       KO credit goes to the weapon that landed the final hit (a projectile keeps the weapon it was thrown with).
 -->
@@ -156,6 +160,21 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .divider{width:6px;height:70px;background:var(--corn);transform:skewX(-14deg);margin:0 10px;position:relative}
 .divider:after{content:"VS";position:absolute;top:-24px;left:50%;transform:translateX(-50%) skewX(14deg);font-family:var(--display);font-size:18px;color:var(--corn)}
 #floaters{position:absolute;inset:0;overflow:hidden}
+#overbars{position:absolute;inset:0;overflow:hidden}
+.ob{position:absolute;width:56px;transform:translate(-50%,-100%);display:flex;flex-direction:column;gap:2px;filter:drop-shadow(0 2px 0 rgba(26,32,48,.7))}
+.ob i{display:block;height:7px;background:#1A2030;border:2px solid #1A2030;box-sizing:content-box;overflow:hidden}
+.ob i.en{height:4px}
+.ob b{display:block;height:100%;width:100%}
+.ob .en b{background:#FFB066}
+.ob.ko{display:none}
+#tips .panel{max-width:min(860px,94vw)}
+.tipcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:4px 0 6px}
+.tip{background:#2A3757;padding:12px 16px 14px;border-top:6px solid var(--tc);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.tip h3{font-family:var(--display);font-size:24px;margin:0 0 6px;color:var(--tc);letter-spacing:1px}
+.tip p{margin:0 0 6px;font-size:15px;line-height:1.35;color:#E3E6EE;font-family:var(--ui)}
+.tip p b{color:var(--corn);font-weight:normal}
+#tips label{font-family:var(--num);font-size:20px;letter-spacing:2px;display:flex;align-items:center;gap:8px;cursor:pointer}
+#tips input{width:20px;height:20px;accent-color:#F2B51E}
 .fl{position:absolute;font-family:var(--num);font-weight:700;font-size:34px;line-height:1;transform:translate(-50%,-50%);white-space:nowrap;
   text-shadow:0 3px 0 var(--navy),0 0 2px var(--navy)}
 .fl.dmg{color:#fff}
@@ -204,10 +223,11 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 
 <!-- ================= HUD OVERLAY ================= -->
 <div id="hud" class="hidden">
+  <div id="overbars"></div>
   <div id="floaters"></div>
   <div id="hud-tl">
     <div class="pframe" id="pframe"><img id="pl-portrait" alt=""></div>
-    <div class="side"><div id="pl-name">RABBIT</div><div id="pl-weapon">CARROT SWORD</div><div id="pl-special"></div><div id="pl-hedges">HEDGES 0/2</div></div>
+    <div class="side"><div id="pl-name">RABBIT</div><div id="pl-weapon">CARROT SWORD</div><div id="pl-special"></div><div id="pl-hedges">HEDGES 0/3</div></div>
     <div id="hearts"></div>
     <div class="elabel">Energy</div>
     <div id="energy">
@@ -267,11 +287,11 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
       <b>LEFT CLICK</b><span>Attack (hold to keep swinging)</span>
       <b>RIGHT CLICK</b><span>Weapon special (costs Energy)</span>
       <b>E</b><span>Pick up a ripe vegetable (swaps your weapon) or nearby seeds</span>
-      <b>Q</b><span>Plant a hedge on the tile you face (20 Energy, max 2)</span>
+      <b>Q</b><span>Plant a hedge on the tile you face (20 Energy, max 3)</span>
       <b>SPACE</b><span>Dodge roll (brief invulnerability, 1.5 s cooldown)</span>
       <b>ESC</b><span>Pause</span>
       <b>M</b><span>Mute / unmute</span>
-      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
+      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
       <b>PUMPKIN</b><span>Pumpkin Shield (tank): blocks most damage from the front. Bulwark special shields you and nearby allies and eats enemy shots.</span>
     </div>
     <div class="row" style="margin-top:20px"><button class="btn" id="btn-controls-back">Back</button></div>
@@ -281,6 +301,28 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
   <h2>PICK YOUR WARRIOR</h2>
   <div class="cards" id="cards"></div>
   <div class="row"><button class="btn ghost" id="btn-select-back">Back</button><button class="btn" id="btn-fight">Fight!</button></div>
+</div>
+<div id="tips" class="screen dim hidden">
+  <div class="panel">
+    <h2>BEFORE YOU BRAWL</h2>
+    <div class="tipcards">
+      <div class="tip" style="--tc:var(--corn)"><h3>SEED SURGES</h3>
+        <p>Magic seeds pop out of the <b>centre plaza</b>. Walk over them (or press <b>E</b>) to bank them for your team.</p>
+        <p>Bank <b>12</b> and your team gets a <b>SEED SURGE</b>: faster running and faster attacks for 10 s. Most surges wins the round.</p>
+        <p>Getting hit makes your team <b>drop seeds</b>, so don't get greedy.</p></div>
+      <div class="tip" style="--tc:var(--tomato)"><h3>HEALTH</h3>
+        <p>You have <b>8 hearts</b>. There's no slow regen, so heal on purpose:</p>
+        <p>Every seed you pick up heals <b>half a heart</b>.</p>
+        <p>Knocked out? You're back in <b>4 s</b> at full health. A <b>Pumpkin Shield</b> blocks most hits from the front.</p></div>
+      <div class="tip" style="--tc:#FFB066"><h3>ENERGY</h3>
+        <p>The carrot meter pays for your weapon <b>special</b> (right-click) and <b>hedges</b> (Q, 20 each, up to 3).</p>
+        <p>It refills slowly on its own, faster when you <b>land hits</b>, and every seed gives <b>+5</b>.</p></div>
+    </div>
+    <div class="row" style="margin-top:16px;align-items:center;justify-content:space-between">
+      <label><input type="checkbox" id="tips-skip"> DON'T SHOW AGAIN</label>
+      <button class="btn" id="btn-tips-go">Let's go!</button>
+    </div>
+  </div>
 </div>
 <div id="pause" class="screen dim hidden">
   <div class="panel" style="display:flex;flex-direction:column;gap:14px;align-items:center">
@@ -331,7 +373,7 @@ const WEAPONS = {
   shield:{ name:'PUMPKIN SHIELD', kind:'melee', dmg:8, cd:0.6, range:1.35, arc:Math.PI*0.7, knock:6.5, windup:0.1, anim:0.32,
           spName:'BULWARK', spCost:35, aiRange:1.1, veg:'pumpkin' },
 };
-const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5;
+const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5, ENERGY_PER_SEED=5, HEDGE_MAX=3, LUNGE_SPEED=13.6;
 const CHARS = {
   rabbit:{ name:'RABBIT', team:0, weapon:'sword', blurb:'Knighted by the Radish Council. Takes it far too seriously.', fur:0xEDE3D3 },
   raccoon:{ name:'RACCOON', team:0, weapon:'kunai', blurb:'Steals your snacks, then your seeds. Never apologizes.', fur:0x9A96A6 },
@@ -833,7 +875,7 @@ class Arena {
   placeHedge(owner,i,j){
     const g=makeHedgeModel(this.root,tileC(i),tileC(j),true); g.scale.set(0.01,0.01,0.01);
     const h={i,j,g,hp:3,owner,pop:0,shake:0}; this.hedges.push(h); this.blocked[j][i]=2; owner.hedges.push(h);
-    if(owner.hedges.length>2) this.removeHedge(owner.hedges[0],true);
+    if(owner.hedges.length>HEDGE_MAX) this.removeHedge(owner.hedges[0],true);
     return h;
   }
   hedgeAt(i,j){ return this.hedges.find(h=>h.i===i&&h.j===j); }
@@ -969,7 +1011,9 @@ class SeedSystem {
   }
   collect(c,k){
     const s=this.seeds[k]; this.seeds.splice(k,1); this.pool[c.team]++; c.stats.seeds++;
-    if(c.hp<MAX_HP){ c.hp=Math.min(MAX_HP,c.hp+HEAL_PER_SEED); this.game.fx.float('+'+HEAL_PER_SEED+' HP',new V3(c.pos.x,1.7,c.pos.z),'heal',0.7); }
+    const gain=[]; if(c.hp<MAX_HP){ c.hp=Math.min(MAX_HP,c.hp+HEAL_PER_SEED); gain.push('+'+HEAL_PER_SEED+' HP'); }
+    if(c.energy<100){ c.energy=Math.min(100,c.energy+ENERGY_PER_SEED); gain.push('+'+ENERGY_PER_SEED+' EN'); }
+    if(gain.length) this.game.fx.float(gain.join('  '),new V3(c.pos.x,1.7,c.pos.z),'heal',0.7);
     this.game.fx.float('+1',new V3(s.x,1.3,s.z),'seed',0.8); this.game.fx.burst(new V3(s.x,s.y,s.z),[PAL.corn,PAL.white],4,1.5,1.5,0.6);
     audio.play('seed');
     if(this.pool[c.team]>=SEED_GOAL) this.game.seedSurge(c.team);
@@ -1045,7 +1089,7 @@ class Character {
     // slow fields
     for(const f of g.arena.fields) if(f.team!==this.team && dist2(f.x,f.z,this.pos.x,this.pos.z)<4) this.slowT=0.25;
     // movement
-    if(this.lungeT>0){ this.lungeT-=dt; const fx=Math.sin(this.facing), fz=Math.cos(this.facing); this.vel.set(fx*17,0,fz*17);
+    if(this.lungeT>0){ this.lungeT-=dt; const fx=Math.sin(this.facing), fz=Math.cos(this.facing); this.vel.set(fx*LUNGE_SPEED,0,fz*LUNGE_SPEED);
       for(const e of g.chars) if(e.team!==this.team && !e.ko && !this.lungeHit.has(e) && dist2(e.pos.x,e.pos.z,this.pos.x,this.pos.z)<0.9){
         this.lungeHit.add(e); g.damage(e,16*this.dmgMul,this,new V3(fx,0,fz),5,false); }
     } else if(this.dodgeT>0){ this.dodgeT-=dt; this.vel.copy(this.dodgeDir).multiplyScalar(12.5); }
@@ -1426,7 +1470,22 @@ class HUD {
       const d=document.createElement('div'); d.className='sp'+(c.isPlayer?' me':''); d.style.setProperty('--team',TEAM_CSS[c.team]);
       d.innerHTML=`<img src="${g.portraits[c.key]}" alt=""><div class="hb"><b></b></div><div class="cd"></div><div class="sd"></div><div class="bf">SURGE</div>`;
       bc.appendChild(d); this.sp.push({c,el:d,bar:d.querySelector('.hb b'),cd:d.querySelector('.cd'),sd:d.querySelector('.sd'),bf:d.querySelector('.bf'),last:{}}); }
+    const ob=$('overbars'); ob.innerHTML=''; this.ob=[];
+    for(const c of g.chars){ const d=document.createElement('div'); d.className='ob';
+      d.innerHTML='<i class="hp"><b></b></i><i class="en"><b></b></i>'; ob.appendChild(d);
+      this.ob.push({c,el:d,hp:d.querySelector('.hp b'),en:d.querySelector('.en b'),last:{}}); }
     this.renderWins();
+  }
+  updateOverbars(){ // small health + energy bars over every critter's head
+    if(!this.ob) return; const w=innerWidth, h=innerHeight;
+    for(const o of this.ob){ const c=o.c, L=o.last;
+      if(L.ko!==c.ko){ L.ko=c.ko; o.el.classList.toggle('ko',c.ko); } if(c.ko) continue;
+      _v.set(c.pos.x,c.pos.y+(c.key==='rabbit'?2.05:1.85),c.pos.z).project(camera);
+      const x=Math.round((_v.x+1)/2*w), y=Math.round((1-_v.y)/2*h);
+      if(L.x!==x||L.y!==y){ L.x=x; L.y=y; o.el.style.left=x+'px'; o.el.style.top=y+'px'; }
+      const hp=Math.round(clamp(c.hp/MAX_HP,0,1)*100), en=Math.round(clamp(c.energy,0,100));
+      if(L.hp!==hp){ L.hp=hp; o.hp.style.width=hp+'%'; o.hp.style.background=c.team?'#F28A2A':'#6CC24A'; }
+      if(L.en!==en){ L.en=en; o.en.style.width=en+'%'; } }
   }
   renderWins(){ const w=$('wins'), g=this.game; let h=''; for(let k=0;k<2;k++) h+=`<i class="${g.wins[0]>k?'g':''}"></i>`; h+='&nbsp;'; for(let k=0;k<2;k++) h+=`<i class="${g.wins[1]>k?'o':''}"></i>`; w.innerHTML=h; }
   show(on){ this.el.classList.toggle('hidden',!on); }
@@ -1441,7 +1500,7 @@ class HUD {
     const e=clamp(pl.energy,0,100)/100, w=(e*196).toFixed(1); if(this.fill._w!==w){ this.fill._w=w; this.fill.setAttribute('width',w); this.fillHi.setAttribute('width',(e*196*0.9).toFixed(1)); }
     const W=pl.W; setText($('pl-weapon'),W.name+(pl.durability===Infinity?' ★':' · '+pl.durability+' LEFT'));
     setText($('pl-special'),'R-CLICK '+W.spName+' · '+W.spCost);
-    setText($('pl-hedges'),'Q HEDGE '+pl.hedges.length+'/2 · 20');
+    setText($('pl-hedges'),'Q HEDGE '+pl.hedges.length+'/'+HEDGE_MAX+' · 20');
     // seed counters
     const pool=g.seeds.pool;
     for(let t=0;t<2;t++){ const s=this.sc[t]; if(s.last!==pool[t]){ s.last=pool[t]; s.num.textContent=pool[t]; s.icons.forEach((i,k)=>i.classList.toggle('on',k<pool[t])); }
@@ -1494,14 +1553,15 @@ class Game {
     click('btn-ach',()=>this.openAch('title')); click('btn-res-ach',()=>this.openAch('results'));
     click('btn-ach-back',()=>this.showScreen(this.achBack||'title'));
     click('btn-controls',()=>this.showScreen('controls')); click('btn-controls-back',()=>this.showScreen('title'));
-    click('btn-select-back',()=>this.showScreen('title')); click('btn-fight',()=>this.startMatch());
+    click('btn-select-back',()=>this.showScreen('title')); click('btn-fight',()=>this.beginMatch());
+    click('btn-tips-go',()=>{ if($('tips-skip').checked){ try{ localStorage.setItem('eyv-tips-off','1'); }catch(e){} } this.startMatch(); });
     click('btn-resume',()=>this.togglePause()); click('btn-restart',()=>{ this.paused=false; this.startMatch(); });
     click('btn-quit',()=>this.toTitle()); click('btn-rematch',()=>this.startMatch()); click('btn-res-title',()=>this.toTitle());
     const cards=$('cards');
     for(const k of CHAR_ORDER){ const d=CHARS[k], el=document.createElement('div'); el.className='card'+(k===this.choice?' sel':''); el.style.setProperty('--team',TEAM_CSS[d.team]); el.dataset.key=k;
       el.innerHTML=`<img src="${this.portraits[k]}" alt=""><div class="nm">${d.name}</div><div class="tm">${TEAM_NAME[d.team]}</div><div class="wp">${WEAPONS[d.weapon].name}</div><div class="bl">${d.blurb}</div>`;
       el.addEventListener('click',()=>{ audio.init(); audio.play('click'); this.choice=k; cards.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',c.dataset.key===k)); });
-      el.addEventListener('dblclick',()=>this.startMatch()); cards.appendChild(el); }
+      el.addEventListener('dblclick',()=>this.beginMatch()); cards.appendChild(el); }
     addEventListener('keydown',e=>{
       if(e.code==='Escape') this.togglePause();
       if(e.code==='KeyM'){ audio.init(); audio.setMuted(!audio.muted); $('mute').classList.toggle('hidden',!audio.muted); }
@@ -1510,7 +1570,10 @@ class Game {
     addEventListener('keydown',()=>audio.init(),{once:true});
   }
   openAch(from){ this.achBack=from; this.ach.render(); this.showScreen('achievements'); }
-  showScreen(name){ for(const s of ['title','controls','select','pause','results','achievements']) $(s).classList.toggle('hidden',s!==name); }
+  beginMatch(){ // onboarding tips before the first fight (skippable, remembered)
+    let off=this.autoplay; try{ off=off||localStorage.getItem('eyv-tips-off')==='1'; }catch(e){}
+    if(off) this.startMatch(); else this.showScreen('tips'); }
+  showScreen(name){ for(const s of ['title','controls','select','pause','results','achievements','tips']) $(s).classList.toggle('hidden',s!==name); }
   toTitle(){ this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.placeTitleChars(); this.showScreen('title'); }
   startMatch(){
     this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0];
@@ -1643,7 +1706,7 @@ class Game {
       if(this.shakeA>0.001){ camera.position.x+=rand(-1,1)*this.shakeA; camera.position.y+=rand(-1,1)*this.shakeA; camera.position.z+=rand(-1,1)*this.shakeA; this.shakeA*=Math.exp(-dt*14); }
     }
     renderer.render(scene,camera);
-    if(this.state!=='title'&&this.state!=='results'&&this.player) this.hud.update(dt);
+    if(this.state!=='title'&&this.state!=='results'&&this.player){ this.hud.update(dt); this.hud.updateOverbars(); }
     this.fx.updateFloats(dt);
   }
 }
