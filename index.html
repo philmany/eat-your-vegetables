@@ -46,6 +46,14 @@
       plots and magic seeds are larger, with glow beams, ripples and ground halos. The carrot-shaped energy meter
       became a plain blue bar with a number and a marker at the current special's cost. Interactive TUTORIAL from
       the title screen: movement, attacks, specials, seeds, seed surges, hedges, the Pumpkin Shield and Bulwark.
+  22. Berries, night, cosmetics (Nov 17): four BERRY BUSHES (two side lanes, two neutral corners, point-symmetric).
+      Philman asked for "5 HP"; health is hearts here (10 HP each, halves shown), so a bush heals 25 HP = 5 half-hearts
+      = 2½ hearts, five times a seed. You eat by walking into a ripe bush (or E) only when hurt, so full-health players
+      can't waste it; it regrows in 20 s. NIGHT MODE (Settings, saved in `eyv-settings-v1`): moonlight and cool tones;
+      seeds, ripe plots, berries and the centre plaza cast additive light pools, plus fireflies. No extra real lights
+      are added (light count drives shader cost), so frame rate holds. COSMETICS: one per character, picked on the
+      character select, purely visual, remembered per character in `eyv-cosmetics-v1`. The skull helmet is an
+      original design (horned cranium, cracked brow, eye holes) and is Raccoon-only. AI critters roll a random one.
 -->
 <html lang="en">
 <head>
@@ -250,12 +258,28 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #tut.pop{animation:tutIn .4s cubic-bezier(.2,1.5,.4,1)}
 @keyframes tutIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
 #hud.tutorial #hud-tr{display:none}
+/* ---------- Cosmetics picker, night vignette ---------- */
+.cosrow{display:flex;align-items:center;gap:14px;background:rgba(26,32,48,.94);padding:6px 18px 6px 6px;max-width:min(940px,94vw);
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+#cos-prev{width:96px;height:110px;flex:none;background:radial-gradient(circle at 50% 70%,#3A4A3A,#1A2030 70%)}
+.coslbl{font-family:var(--display);font-size:20px;color:var(--white);letter-spacing:1px;margin-bottom:6px}
+.coslbl span{color:var(--corn)}
+.coslbl small{font-family:var(--num);font-size:16px;letter-spacing:2px;color:#9AA3B8;margin-left:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font-family:var(--num);font-size:19px;letter-spacing:1.5px;line-height:1;padding:7px 12px 5px;border:0;cursor:pointer;color:var(--white);background:#2A3757;box-shadow:inset 0 -4px 0 #11182A}
+.chip:hover{background:#34446A}
+.chip.special{color:#EFE6D2}
+.chip.sel{background:var(--corn);color:var(--navy);box-shadow:inset 0 -4px 0 var(--corn-s,#C8861A)}
+#nightvig{position:fixed;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 45%,rgba(3,8,26,.6) 100%)}
+body.night #nightvig{display:block}
+@media (max-height:760px){ .card img{width:150px;margin:0 auto} .card{padding:10px 12px 12px} #select h2{font-size:42px} #select{gap:10px} }
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:30px;color:var(--navy);z-index:50;background:#1F3226;color:var(--white)}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="nightvig"></div>
 <div id="loading">GROWING THE GARDEN…</div>
 
 <!-- ================= HUD OVERLAY ================= -->
@@ -303,6 +327,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
   <div class="panel">
     <h2>SETTINGS</h2>
     <div class="setrow"><div><div class="lbl">SCREEN SHAKE</div><div class="sub">The camera jolts when you get hit, land big hits, or someone is knocked out.</div></div><button class="btn" id="btn-set-shake">On</button></div>
+    <div class="setrow"><div><div class="lbl">NIGHT MODE</div><div class="sub">A moonlit garden. Seeds, berries and ripe plots glow in the dark.</div></div><button class="btn" id="btn-set-night">Off</button></div>
     <div class="setrow"><div><div class="lbl">PRE-MATCH TIPS</div><div class="sub">Show the tips card after you pick your warrior.</div></div><button class="btn" id="btn-set-tips">On</button></div>
     <div class="row" style="margin-top:18px"><button class="btn" id="btn-settings-back">Back</button></div>
   </div>
@@ -329,7 +354,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
       <b>ESC</b><span>Pause</span>
       <b>M</b><span>Mute / unmute</span>
       <b>POTATOES</b><span>Thrown potatoes knock enemy shots out of the air (both break).</span>
-      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
+      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. Berry bushes heal 2½ hearts when you're hurt. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
       <b>PUMPKIN</b><span>Pumpkin Shield (tank): blocks most damage from the front. Bulwark special shields you and nearby allies and eats enemy shots.</span>
     </div>
     <div class="row" style="margin-top:20px"><button class="btn" id="btn-controls-back">Back</button></div>
@@ -338,6 +363,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 <div id="select" class="screen dim hidden">
   <h2>PICK YOUR WARRIOR</h2>
   <div class="cards" id="cards"></div>
+  <div class="cosrow"><canvas id="cos-prev"></canvas><div class="cosbox"><div class="coslbl">COSMETIC FOR <span id="cos-who">RABBIT</span><small>ONE ITEM · JUST FOR LOOKS</small></div><div class="chips" id="cos-chips"></div></div></div>
   <div class="row"><button class="btn ghost" id="btn-select-back">Back</button><button class="btn" id="btn-fight">Fight!</button></div>
 </div>
 <div id="tips" class="screen dim hidden">
@@ -350,7 +376,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
         <p>Getting hit makes your team <b>drop seeds</b>, so don't get greedy.</p></div>
       <div class="tip" style="--tc:var(--tomato)"><h3>HEALTH</h3>
         <p>You have <b>8 hearts</b>. There's no slow regen, so heal on purpose:</p>
-        <p>Every seed you pick up heals <b>half a heart</b>.</p>
+        <p>Every seed you pick up heals <b>half a heart</b>. Walk into a <b>berry bush</b> to heal <b>2½ hearts</b> (it regrows in 20 s).</p>
         <p>Knocked out? You're back in <b>4 s</b> at full health. A <b>Pumpkin Shield</b> blocks most hits from the front.</p></div>
       <div class="tip" style="--tc:#63C8F2"><h3>ENERGY</h3>
         <p>The blue Energy bar pays for your weapon <b>special</b> (right-click) and <b>hedges</b> (Q, 20 each, up to 3).</p>
@@ -413,6 +439,16 @@ const WEAPONS = {
           spName:'BULWARK', spCost:35, aiRange:1.1, veg:'pumpkin' },
 };
 const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5, ENERGY_PER_SEED=5, HEDGE_MAX=3, LUNGE_SPEED=13.6;
+// Berry bushes: walk into a ripe bush (or press E) while hurt to eat. 25 HP = 2½ hearts (five half-hearts), 5× a seed.
+const BERRY_HEAL=25, BERRY_REGROW=20, BERRY_R=1.1;
+const BERRY_BUSHES=[[3,6],[12,9],[13,0],[2,15]]; // [i, j] tiles, point-symmetric about the centre
+// Cosmetics: one per character, purely visual. 'only' limits an item to one critter.
+const COSMETICS = {
+  none:{ name:'NONE' }, overalls:{ name:'OVERALLS' }, pants:{ name:'PANTS' }, hat:{ name:'STRAW HAT' },
+  boots:{ name:'BIG RED BOOTS' }, skull:{ name:'SKULL HELMET', only:'raccoon' },
+};
+const COS_ORDER=['none','overalls','pants','hat','boots','skull'];
+const cosmeticsFor=k=>COS_ORDER.filter(id=>!COSMETICS[id].only||COSMETICS[id].only===k);
 const CHARS = {
   rabbit:{ name:'RABBIT', team:0, weapon:'sword', blurb:'Knighted by the Radish Council. Takes it far too seriously.', fur:0xEDE3D3 },
   raccoon:{ name:'RACCOON', team:0, weapon:'kunai', blurb:'Steals your snacks, then your seeds. Never apologizes.', fur:0x9A96A6 },
@@ -514,6 +550,19 @@ const hemi=new THREE.HemisphereLight(0xD8E6C8, 0x4A3A22, 1.25); scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xFFE6B8, 2.6); sun.position.set(-5,16,10); sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048); Object.assign(sun.shadow.camera,{left:-15,right:15,top:15,bottom:-15,near:1,far:50});
 sun.shadow.bias=-0.0006; sun.shadow.normalBias=0.03; scene.add(sun); scene.add(sun.target);
+// Night mode: glowing things cast additive "light pools" on the ground. These are cheap textured quads, not real
+// lights (every extra real light makes every toon material more expensive to draw), so night costs almost nothing.
+const GLOW_TEX=(()=>{ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d');
+  const gr=x.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(0.3,'rgba(255,255,255,0.5)');
+  gr.addColorStop(0.65,'rgba(255,255,255,0.14)'); gr.addColorStop(1,'rgba(255,255,255,0)'); x.fillStyle=gr; x.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(c); })();
+const NIGHT={on:false, pools:[]};
+const POOL_GEO=new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2);
+const glowMat=(color,op=0.8)=>new THREE.MeshBasicMaterial({map:GLOW_TEX,color,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false});
+function lightPool(parent,color,r,y=0.07,op=0.8){ const m=new THREE.Mesh(POOL_GEO,glowMat(color,op)); m.scale.set(r*2,1,r*2); m.position.y=y;
+  m.renderOrder=2; m.visible=NIGHT.on; parent.add(m); NIGHT.pools.push(m); return m; }
+const SKY={ day:{bg:PAL.forest, sky:0xD8E6C8, gnd:0x4A3A22, hi:1.25, sun:0xFFE6B8, si:2.6, pos:[-5,16,10]},
+            night:{bg:0x0A1220, sky:0x6A80B8, gnd:0x1A182C, hi:0.8, sun:0xB4C8FF, si:1.1, pos:[7,16,-3]} };
 
 /* =====================================================================
    SECTION 4 — AUDIO (all synthesized with Web Audio)
@@ -557,6 +606,7 @@ class Audio {
       case 'hit': this.tone(180,0.12,'square',0.22,60); this.noise(0.08,'lowpass',1800,300,0.4); break;
       case 'crunch': for(let i=0;i<3;i++) this.noise(0.04,'highpass',2500+i*900,null,0.3,1,i*0.025); break;
       case 'seed': [1568,1976,2349].forEach((f,i)=>this.tone(f,0.16,'sine',0.11,null,i*0.045)); this.tone(3136,0.25,'triangle',0.04,null,0.12); break;
+      case 'berry': this.noise(0.12,'bandpass',900,280,0.4,1.4); [659,880,1175].forEach((f,i)=>this.tone(f,0.13,'triangle',0.11,f*1.06,0.05+i*0.055)); break;
       case 'scatter': [1200,1000,820,660].forEach((f,i)=>this.tone(f,0.08,'triangle',0.1,f*0.8,i*0.04)); break;
       case 'hedge': this.noise(0.22,'lowpass',600,150,0.6,1); this.noise(0.18,'bandpass',3000,1500,0.15,0.7,0.03); this.tone(90,0.18,'sine',0.25,50); break;
       case 'hedgehit': this.noise(0.12,'bandpass',1800,700,0.3,1); break;
@@ -773,6 +823,71 @@ function buildCharacter(key){
   addOutlines(root);
   return P;
 }
+// ---- Cosmetics: built onto a critter's rig parts so they move with it. Returns [parent, object] pairs to remove later.
+// Per-critter fit: body centre / radius / scale, head radius, and whether ears poke through hats.
+const COS_FIT = {
+  rabbit:{ by:0.48, bz:0,     r:0.3,  s:[1,1.05,0.9],  hr:0.3,  hy:0,    earsOut:true },
+  raccoon:{by:0.48, bz:0,     r:0.31, s:[1.05,1,0.95], hr:0.29, hy:0,    earsOut:false },
+  goose:{  by:0.46, bz:-0.02, r:0.33, s:[1,0.85,1.2],  hr:0.17, hy:0.02, earsOut:true },
+  possum:{ by:0.47, bz:0,     r:0.3,  s:[1,0.95,1.05], hr:0.25, hy:0,    earsOut:false },
+};
+const COS_COL = { denim:0x4D6A94, denimS:0x37506F, denimL:0x7C95B8, brass:0xE0A93A, pants:0x8A5A34, pantsS:0x5E3A22, belt:0x3A2A1E,
+  straw:0xE6C77A, strawS:0xB8944C, band:0xC23B2E, boot:0xD23A2A, bootS:0x8E2018, sole:0x2E2228, bone:0xEFE6D2, boneS:0xC9BBA0, crack:0x5A4A3E };
+function addCosmetic(P,key,id){
+  const out=[], f=COS_FIT[key], C=COS_COL;
+  if(!id||id==='none'||!COSMETICS[id]) return out;
+  const grp=parent=>{ const g=new THREE.Group(); parent.add(g); out.push([parent,g]); return g; };
+  // the lower half of a slightly larger body shell: shorts/trouser seat that hugs the round body
+  const seat=(g,col,from)=>{ const geo=G('seat'+from,()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,Math.PI*from,Math.PI*(1-from)));
+    const m=M(geo,col,0,f.by,f.bz,g); m.scale.set(f.r*f.s[0]*1.07,f.r*f.s[1]*1.07,f.r*f.s[2]*1.07); return m; };
+  const legTubes=(col,cuff)=>{ for(const leg of [P.legL,P.legR]){ const g=grp(leg); M(CYL(0.085,0.08,0.13,8),col,0,-0.03,0,g); if(cuff) M(CYL(0.095,0.095,0.035,8),cuff,0,-0.09,0,g); } };
+  const front=f.r*f.s[2]*0.93+f.bz;
+  if(id==='overalls'){
+    const g=grp(P.B); seat(g,C.denim,0.5);
+    const bib=M(BOX(0.26,0.2,0.04),C.denim,0,f.by+0.07,front,g); bib.rotation.x=-0.18;
+    M(BOX(0.1,0.06,0.02),C.denimS,0,f.by+0.06,front+0.025,g,false); // bib pocket
+    for(const sx of [-1,1]){
+      const st=M(BOX(0.05,0.035,f.r*f.s[2]*1.75),C.denimS,sx*0.1,f.by+f.r*f.s[1]*0.8,f.bz,g); st.rotation.x=0.05;
+      M(ICO(0.03,0),C.brass,sx*0.1,f.by+0.16,front+0.01,g,false); }
+    legTubes(C.denim,C.denimL);
+  } else if(id==='pants'){
+    const g=grp(P.B); seat(g,C.pants,0.55);
+    const belt=M(CYL(1,1,0.05,14),C.belt,0,f.by+0.015,f.bz,g); belt.scale.set(f.r*f.s[0]*1.06,1,f.r*f.s[2]*1.06);
+    M(BOX(0.08,0.06,0.03),C.brass,0,f.by+0.015,front+0.02,g,false);
+    legTubes(C.pants,C.pantsS);
+  } else if(id==='hat'){
+    const g=grp(P.head), hr=f.hr; g.position.set(0,f.hy+hr*0.62,0); g.rotation.set(-0.12,0,0.12);
+    M(CYL(hr*1.75,hr*1.85,0.035,14),C.straw,0,0,0,g);
+    M(CYL(hr*0.78,hr*0.88,hr*0.55,12),C.straw,0,hr*0.28,0,g);
+    M(CYL(hr*0.9,hr*0.9,0.05,12),C.band,0,0.045,0,g,false);
+    M(CYL(hr*0.7,hr*0.78,0.03,12),C.strawS,0,hr*0.56,0,g,false); // crown top weave
+    if(!f.earsOut) for(const e of P.ears) e.visible=false;
+  } else if(id==='boots'){
+    for(const leg of [P.legL,P.legR]){ const g=grp(leg);
+      M(BOX(0.2,0.12,0.32),C.boot,0,-0.13,0.06,g); M(BOX(0.215,0.035,0.34),C.sole,0,-0.195,0.06,g);
+      M(CYL(0.095,0.09,0.15,8),C.boot,0,-0.03,0,g); M(CYL(0.11,0.11,0.04,8),C.bootS,0,0.05,0,g,false);
+      M(ICO(0.05,0),C.boot,0,-0.1,0.2,g).scale.set(1.6,1,1); }
+  } else if(id==='skull'){
+    // Original design: a bone mask with deep sockets, a muzzle guard, a crest, curled horns and a crack over one brow.
+    const g=grp(P.head);
+    const shell=M(G('skullshell',()=>new THREE.SphereGeometry(1,14,8,0,Math.PI*2,0,Math.PI*0.66)),C.bone,0,0.02,0,g); shell.scale.set(0.4,0.325,0.365);
+    for(const sx of [-1,1]){
+      const so=M(CYL(0.08,0.072,0.03,10),0x1A1520,sx*0.12,0.05,0.33,g,false); so.rotation.set(Math.PI/2,0,0); so.rotation.y=sx*0.38; so.scale.set(1,1,1.2);
+      M(ICO(0.024,0),0xFFF3C8,sx*0.114,0.064,0.352,g,false);                                   // eye glint inside the socket
+      const horn=new THREE.Group(); horn.position.set(sx*0.21,0.24,-0.04); horn.rotation.set(-0.35,0,-sx*0.85); g.add(horn);
+      M(CONE(0.05,0.13,6),C.boneS,0,0.06,0,horn); const tip=M(CONE(0.03,0.09,5),C.bone,0,0.14,0.03,horn,false); tip.rotation.x=0.7;
+      const fang=M(CONE(0.024,0.065,4),C.bone,sx*0.075,-0.155,0.4,g,false); fang.rotation.x=Math.PI; }
+    const muz=M(CONE(0.14,0.23,7),C.bone,0,-0.05,0.35,g); muz.rotation.x=Math.PI/2; muz.scale.set(1,1,0.8);   // muzzle guard
+    for(const sx of [-1,1]) M(BOX(0.024,0.014,0.05),0x1A1520,sx*0.032,0.0,0.42,g,false).rotation.x=0.4;  // nostril slots
+    M(BOX(0.035,0.06,0.3),C.boneS,0,0.33,-0.02,g).rotation.x=0.1;                               // crest
+    const c1=M(BOX(0.02,0.11,0.02),C.crack,0.09,0.22,0.295,g,false); c1.rotation.set(-0.5,0,0.45);
+    const c2=M(BOX(0.016,0.06,0.02),C.crack,0.125,0.17,0.315,g,false); c2.rotation.set(-0.35,0,-0.5);
+    for(const e of P.ears) e.visible=false;
+  }
+  for(const [,o] of out) addOutlines(o,0.02,0.07);
+  return out;
+}
+function removeCosmetic(P,list){ for(const [p,o] of list) p.remove(o); for(const e of P.ears) e.visible=true; }
 function makeHedgeModel(parent, x, z, player=false){
   const g=new THREE.Group(); g.position.set(x,0,z); parent.add(g);
   const h=player?0.75:0.95, col=player?PAL.sproutS:PAL.hedge;
@@ -790,7 +905,7 @@ class Arena {
     this.game=game; this.root=new THREE.Group(); scene.add(this.root);
     this.blocked=Array.from({length:N},()=>new Uint8Array(N));
     this.plots=[]; this.hedges=[]; this.fields=[];
-    this.buildGround(); this.buildFence(); this.buildCover(); this.buildDecor(); this.buildPlots(); this.buildCentre();
+    this.buildGround(); this.buildFence(); this.buildCover(); this.buildDecor(); this.buildPlots(); this.buildCentre(); this.buildBerries(); this.buildFireflies();
   }
   heightAt(x,z){ const j=tileOf(z); if(j<0||j>=N) return 0; const t=ROWS[j]; return t==='D'?0.16:(t==='S'||t==='P')?0.05:0; }
   isBlocked(i,j){ return i<0||j<0||i>=N||j>=N||this.blocked[j][i]>0; }
@@ -867,7 +982,8 @@ class Arena {
       for(let k=0;k<4;k++){ const l=M(BOX(0.18,0.025,0.08),PAL.sprout,Math.cos(k*1.57)*0.08,0.16+k*0.015,Math.sin(k*1.57)*0.08,st[1]); l.rotation.y=-k*1.57; l.rotation.z=0.35; }
       // stage 2 — young plant; stage 3 — ripe
       this.vegModel(type,st[2],0.6); this.vegModel(type,st[3],1.5); addOutlines(st[3],0.016,0.12);
-      this.plots.push({i,j,x,z,type,g,st,glow,beam,ripple,stage:3,t:0});
+      const pool=lightPool(g,0xFFB84A,1.05,0.06,0.75);
+      this.plots.push({i,j,x,z,type,g,st,glow,beam,ripple,pool,stage:3,t:0});
     }
   }
   vegModel(type,g,s){
@@ -890,9 +1006,40 @@ class Arena {
     this.cluster=new THREE.Group(); R.add(this.cluster);
     this.clusterMat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.8});
     for(let k=0;k<5;k++){ const m=new THREE.Mesh(ICO(0.09,0),this.clusterMat); m.scale.set(1,1.4,1); m.userData.a=k/5*Math.PI*2; this.cluster.add(m); }
+    lightPool(R,0x5FF0B0,2.4,0.16,0.4);
   }
+  // Berry bushes: block their tile; a hurt critter that touches a ripe bush eats it (BERRY_HEAL), then it regrows.
+  buildBerries(){
+    this.bushes=[];
+    this.berryMat=toonMat({color:0xD8315B,emissive:0xFF4F7A,emissiveIntensity:0.18});
+    this.unripeMat=toonMat({color:0xA9C25A,emissive:0x000000});
+    const ringMat=toonMat({color:0xF27A9A,emissive:0xFF5A88,emissiveIntensity:0.9,transparent:true,opacity:0.7,side:THREE.DoubleSide,depthWrite:false});
+    const spots=[[0.3,0.32,0.12],[0.12,0.42,0.3],[-0.12,0.36,0.3],[0.33,0.2,-0.12],[-0.02,0.58,0.12],[0.22,0.52,0.05],[-0.3,0.3,0.14],[0.06,0.24,0.36],[0.28,0.42,-0.24],[-0.18,0.5,-0.08]];
+    for(const [i,j] of BERRY_BUSHES){ this.blocked[j][i]=1; const x=tileC(i), z=tileC(j), g=new THREE.Group(); g.position.set(x,this.heightAt(x,z),z); this.root.add(g);
+      M(CYL(0.44,0.48,0.08,10),PAL.loamS,0,0.04,0,g,false);
+      for(const [a,b,c,r] of [[0,0.3,0,0.36],[-0.2,0.24,0.14,0.26],[0.22,0.22,-0.12,0.27],[0.14,0.26,0.2,0.24],[-0.14,0.46,-0.1,0.24],[0.08,0.52,0.08,0.2]])
+        M(ICO(r,0),r>0.3?0x3E6A30:0x588A38,a,b,c,g).scale.set(1,0.85,1);
+      addOutlines(g,0.02,0.2);
+      const berries=new THREE.Group(); g.add(berries);
+      for(const [a,b,c] of spots){ const m=new THREE.Mesh(ICO(0.075,0),this.berryMat); m.position.set(a,b,c); m.castShadow=true; berries.add(m);
+        M(BOX(0.02,0.05,0.02),PAL.leaf,a,b+0.07,c,berries,false); }
+      const ring=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),ringMat.clone()); ring.rotation.x=-Math.PI/2; ring.position.y=0.06; g.add(ring);
+      const pool=lightPool(g,0xFF5F8A,1.15,0.06,1);
+      this.bushes.push({i,j,x,z,g,berries,ring,pool,ripe:true,t:0,pop:0});
+    }
+  }
+  setBerryLook(b){ const m=b.ripe?this.berryMat:this.unripeMat; b.berries.children.forEach(o=>{ if(o.geometry.type==='IcosahedronGeometry') o.material=m; });
+    b.berries.visible=b.ripe; b.berries.scale.setScalar(1); }
+  eatBush(b){ b.ripe=false; b.t=0; this.setBerryLook(b); }
+  nearestBush(x,z){ let best=null,bd=1e9; for(const b of this.bushes){ if(!b.ripe) continue; const d=dist2(x,z,b.x,b.z); if(d<bd){bd=d;best=b;} } return best; }
+  buildFireflies(){ // night only: little drifting sparks over the garden
+    const n=36, pos=new Float32Array(n*3); this.ffSeed=[]; for(let k=0;k<n;k++) this.ffSeed.push([rand(-9,9),rand(-9,9),rand(0.4,1.6),rand(0,6.28),rand(0.3,0.8)]);
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    this.ff=new THREE.Points(geo,new THREE.PointsMaterial({map:GLOW_TEX,color:0xF4F29A,size:11*renderer.getPixelRatio(),sizeAttenuation:false,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
+    this.ff.frustumCulled=false; this.ff.visible=false; this.ff.renderOrder=3; scene.add(this.ff); }
   resetForRound(){
     this.plots.forEach((p,k)=>{ p.stage=[3,2,3,1,3][k%5]; p.t=rand(0,3); });
+    for(const b of this.bushes){ b.ripe=true; b.t=0; this.setBerryLook(b); }
     for(const h of [...this.hedges]) this.removeHedge(h,false);
     for(const f of this.fields) scene.remove(f.mesh); this.fields=[];
   }
@@ -900,7 +1047,8 @@ class Arena {
     for(const p of this.plots){
       if(p.stage<3){ p.t+=dt; if(p.t>=5){ p.t=0; p.stage++; p.pop=0.3; } }
       p.st.forEach((s,k)=>s.visible=k===p.stage);
-      const ripe=p.stage===3; p.glow.visible=p.beam.visible=p.ripple.visible=ripe;
+      const ripe=p.stage===3; p.glow.visible=p.beam.visible=p.ripple.visible=ripe; p.pool.visible=NIGHT.on&&ripe;
+      if(p.pool.visible) p.pool.material.opacity=0.6+Math.sin(time*3+p.i)*0.15;
       const sc=p.pop>0?1+Math.sin((0.3-p.pop)/0.3*Math.PI)*0.35:ripe?1+Math.sin(time*4+p.i)*0.06:1;
       p.st[p.stage].scale.set(sc,sc,sc); if(p.pop>0) p.pop-=dt;
       if(ripe){ const r=(time*0.8+p.i*0.13)%1; p.ripple.scale.setScalar(0.9+r*1.3); p.ripple.material.opacity=0.85*(1-r);
@@ -909,7 +1057,17 @@ class Arena {
       else p.st[3].position.y=0;
     }
     this.cluster.children.forEach((m,k)=>{ const a=m.userData.a+time*0.9; m.position.set(Math.cos(a)*0.45,0.55+Math.sin(time*2.4+k)*0.1,Math.sin(a)*0.45); m.rotation.y=time*2; });
-    this.clusterMat.emissiveIntensity=0.65+Math.sin(time*3)*0.3; this.seedLight.intensity=5+Math.sin(time*3)*2;
+    const nk=NIGHT.on?1.6:1; this.clusterMat.emissiveIntensity=(0.65+Math.sin(time*3)*0.3)*nk; this.seedLight.intensity=(5+Math.sin(time*3)*2)*nk; this.seedLight.distance=NIGHT.on?7:5;
+    for(const b of this.bushes){
+      if(!b.ripe){ b.t+=dt; const k=b.t/BERRY_REGROW; b.berries.visible=k>0.35; if(k>0.35) b.berries.scale.setScalar(0.4+0.5*(k-0.35)/0.65);
+        if(b.t>=BERRY_REGROW){ b.ripe=true; b.pop=0.35; this.setBerryLook(b); } }
+      else if(b.pop>0){ b.pop-=dt; b.berries.scale.setScalar(1+Math.sin((0.35-b.pop)/0.35*Math.PI)*0.35); }
+      b.ring.visible=b.ripe; b.pool.visible=NIGHT.on&&b.ripe;
+      if(b.ripe){ const r=(time*0.7+b.i*0.21)%1; b.ring.scale.setScalar(0.95+r*1.1); b.ring.material.opacity=0.75*(1-r); if(b.pool.visible) b.pool.material.opacity=0.85+Math.sin(time*2.6+b.j)*0.15; } }
+    this.berryMat.emissiveIntensity=(NIGHT.on?0.75:0.18)+Math.sin(time*3)*(NIGHT.on?0.2:0.05);
+    if(NIGHT.on){ const a=this.ff.geometry.attributes.position; for(let k=0;k<this.ffSeed.length;k++){ const [x,z,y,ph,sp]=this.ffSeed[k];
+        a.setXYZ(k,x+Math.sin(time*sp+ph)*0.8,y+Math.sin(time*sp*2.3+ph*2)*0.25,z+Math.cos(time*sp*0.8+ph)*0.8); }
+      a.needsUpdate=true; this.ff.material.opacity=0.75+Math.sin(time*1.7)*0.2; }
     for(const h of this.hedges){ if(h.pop<1){ h.pop=Math.min(1,h.pop+dt*3.2); const t=h.pop; const s=t<1?1+Math.sin(t*Math.PI*1.5)*(1-t)*0.6:1;
         h.g.scale.set(t<0.4?t/0.4*1.25:1/Math.sqrt(s),t<0.4?t/0.4*0.6:s,t<0.4?t/0.4*1.25:1/Math.sqrt(s)); }
       if(h.shake>0){ h.shake-=dt; h.g.position.x=tileC(h.i)+Math.sin(h.shake*80)*0.05; } }
@@ -1040,6 +1198,7 @@ class SeedSystem {
     // a glowing halo on the ground under every loose seed, so they read at a glance
     this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:1,transparent:true,opacity:0.55,depthWrite:false});
     this.halo=new THREE.InstancedMesh(G('seedhalo',()=>new THREE.RingGeometry(0.16,0.3,16).rotateX(-Math.PI/2)),this.haloMat,this.max); this.halo.frustumCulled=false; scene.add(this.halo);
+    this.pools=new THREE.InstancedMesh(POOL_GEO,glowMat(0x4FE0A0,0.42),this.max); this.pools.frustumCulled=false; this.pools.renderOrder=2; this.pools.visible=false; scene.add(this.pools);
     this.reset();
   }
   reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; this.render(0); }
@@ -1063,7 +1222,7 @@ class SeedSystem {
       if(s.state==='float'){ s.y=lerp(s.y,ar.heightAt(s.x,s.z)+0.32+Math.sin(time*3+s.ph)*0.07,0.15); }
       if(active && s.pick<=0) for(const c of this.game.chars){ if(c.ko) continue; if(dist2(c.pos.x,c.pos.z,s.x,s.z)<0.42){ this.collect(c,k); break; } }
     }
-    this.mat.emissiveIntensity=0.7+Math.sin(time*4)*0.3;
+    this.mat.emissiveIntensity=(0.7+Math.sin(time*4)*0.3)*(NIGHT.on?1.25:1);
     this.render(time);
   }
   collect(c,k){
@@ -1082,8 +1241,9 @@ class SeedSystem {
       else _m4.makeScale(0,0,0);
       this.im.setMatrixAt(k,_m4);
       if(s && s.state!=='fly') _m4.makeScale(hs,1,hs).setPosition(s.x,ar.heightAt(s.x,s.z)+0.06,s.z); else _m4.makeScale(0,0,0);
-      this.halo.setMatrixAt(k,_m4); }
-    this.im.instanceMatrix.needsUpdate=true; this.halo.instanceMatrix.needsUpdate=true;
+      this.halo.setMatrixAt(k,_m4);
+      if(NIGHT.on){ if(s){ const ps=1.25*hs; _m4.makeScale(ps,1,ps).setPosition(s.x,ar.heightAt(s.x,s.z)+0.07,s.z); } else _m4.makeScale(0,0,0); this.pools.setMatrixAt(k,_m4); } }
+    this.im.instanceMatrix.needsUpdate=true; this.halo.instanceMatrix.needsUpdate=true; this.pools.visible=NIGHT.on; if(NIGHT.on) this.pools.instanceMatrix.needsUpdate=true;
     this.haloMat.opacity=0.45+Math.sin(time*5)*0.15;
   }
   nearest(x,z,avoid=[]){ let best=null,bd=1e9; for(const s of this.seeds){ if(s.state==='fly') continue; let d=Math.sqrt(dist2(x,z,s.x,s.z));
@@ -1114,9 +1274,11 @@ class Character {
     this.stars.visible=false;
     this.weaponMeshes=[]; this.isPlayer=false; this.controller=null;
     this.pos=new V3(); this.vel=new V3(); this.kb=new V3(); this.facing=0;
-    this.hedges=[]; this.resetStats(); this.resetState();
+    this.hedges=[]; this.cos=[]; this.cosmetic='none'; this.resetStats(); this.resetState();
   }
-  resetStats(){ this.stats={ko:0,seeds:0,hedges:0,deaths:0,dmg:0,blocked:0}; }
+  setCosmetic(id){ if(!cosmeticsFor(this.key).includes(id)) id='none'; if(this.cosmetic===id) return;
+    removeCosmetic(this.m,this.cos); this.cos=addCosmetic(this.m,this.key,id); this.cosmetic=id; }
+  resetStats(){ this.stats={ko:0,seeds:0,hedges:0,deaths:0,dmg:0,blocked:0,berries:0}; }
   resetState(){
     this.hp=MAX_HP; this.energy=30; this.ko=false; this.respawnT=0; this.invuln=0; this.atkCd=0; this.atkAnim=0; this.atkKind=null;
     this.pending=null; this.dodgeCd=0; this.dodgeT=0; this.dodgeDir=new V3(); this.lungeT=0; this.lungeHit=null; this.spinT=0; this.spinTick=0;
@@ -1364,6 +1526,8 @@ class AIController {
         this.moveTo(it,c.pos.x+fx,c.pos.z+fz); if(T && ed<1.6) this.fight(it,T,ed,false); break; }
       case 'seek_seeds': {
         const s=this.goal; if(!s || !g.seeds.seeds.includes(s)){ this.think=0; break; } this.moveTo(it,s.x,s.z); if(T && ed<this.c.W.aiRange+0.5) this.fight(it,T,ed,false); break; }
+      case 'seek_berry': {
+        const b=this.goal; if(!b || !b.ripe || c.hp>=MAX_HP){ this.think=0; break; } this.moveTo(it,b.x,b.z); if(T && ed<1.6) this.fight(it,T,ed,false); break; }
       case 'seek_veg': {
         const pl=this.goal; if(!pl || pl.stage!==3){ this.think=0; break; } this.moveTo(it,pl.x,pl.z);
         if(dist2(c.pos.x,c.pos.z,pl.x,pl.z)<0.8) it.pickup=true; if(T && ed<1.8) this.fight(it,T,ed,false); break; }
@@ -1396,6 +1560,8 @@ class AIController {
     const hpF=c.hp/MAX_HP;
     if(c.hurtRanged>0 && c.energy>=HEDGE_COST+5 && this.hedgeCd<=0 && c.lastAttacker && !c.lastAttacker.ko && Math.random()<p.hedge){
       this.state='place_hedge'; this.hedgeFrom=c.lastAttacker; this.hedgeCd=7; return; }
+    if(hpF<0.55){ const b=g.arena.nearestBush(c.pos.x,c.pos.z); // hurt: a ripe berry bush close by beats running home
+      if(b){ const bd=Math.hypot(b.x-c.pos.x,b.z-c.pos.z); if(bd<8 && (ed>2.2 || hpF<0.3) && bd<ed+4){ this.state='seek_berry'; this.goal=b; return; } } }
     if(hpF<0.3 && ed<4.5 && Math.random()>p.aggr*0.4){ this.state='retreat'; return; }
     if(c.weapon==='shield' && hpF>0.35){ // tank duty: peel for the most threatened teammate
       let ga=null, gt=null, gs=1e9;
@@ -1616,6 +1782,7 @@ const TUT_STEPS=[
   {id:'special', n:'SPECIAL MOVE', d:'<b>Right-click</b> for your weapon special. The Rabbit\'s <b>Lunge Slash</b> dashes forward. Specials cost <b>Energy</b>: the blue bar at the top left. The gold tick on it marks the cost.'},
   {id:'dodge', n:'DODGE ROLL', d:'Press <b>SPACE</b> to dodge roll. You can\'t be hurt mid-roll. It recharges in 1.5 s.'},
   {id:'seeds', n:'MAGIC SEEDS', d:'You\'re hurt! Walk over the glowing <b>magic seeds</b>. Each one heals <b>half a heart</b> and gives <b>+5 Energy</b>. Watch your hearts and the blue bar.', goal:4, unit:'SEEDS'},
+  {id:'berries', n:'BERRY BUSHES', d:'Still hurt? <b>Berry bushes</b> heal <b>2½ hearts</b> (25 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
   {id:'surge', n:'SEED SURGE', d:'Every seed goes into your team\'s pot (top centre). Bank <b>12</b> for a <b>SEED SURGE</b>: faster running and attacks for 10 s. <b>Most surges wins the round.</b> Grab the last few!'},
   {id:'hedge', n:'HEDGES', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
   {id:'shield', n:'PICK UP A WEAPON', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
@@ -1660,6 +1827,9 @@ class Tutorial {
       case 'attack': { this.place(goose,clamp(pl.pos.x+1.6,-7,7),clamp(pl.pos.z+1.4,-7,7)); break; }
       case 'special': pl.energy=100; break;
       case 'seeds': this.park(goose); pl.hp=Math.min(pl.hp,40); pl.energy=Math.min(pl.energy,30); this.base=pl.stats.seeds; this.dropSeeds(4); break;
+      case 'berries': { this.park(goose); pl.hp=Math.min(pl.hp,35); this.base=pl.stats.berries;
+        const b=[...g.arena.bushes].sort((a,c)=>dist2(a.x,a.z,pl.pos.x,pl.pos.z)-dist2(c.x,c.z,pl.pos.x,pl.pos.z))[0];
+        b.ripe=true; b.t=0; g.arena.setBerryLook(b); this.bush=b; this.setMarker(b.x,b.z); break; }
       case 'surge': g.seeds.pool[0]=Math.max(g.seeds.pool[0],9); this.dropSeeds(4); break;
       case 'hedge': pl.energy=100; this.base=pl.stats.hedges; break;
       case 'shield': { if(pl.weapon==='shield') pl.setWeapon(pl.sig); const p=g.arena.plots.filter(q=>q.type==='shield').sort((a,b)=>dist2(a.x,a.z,pl.pos.x,pl.pos.z)-dist2(b.x,b.z,pl.pos.x,pl.pos.z))[0];
@@ -1700,6 +1870,7 @@ class Tutorial {
       case 'special': case 'bulwark': ok=this.cnt>=1 && (st.id==='special'||this.t>0.3); break;
       case 'dodge': ok=pl.dodgeT>0; break;
       case 'seeds': this.cnt=pl.stats.seeds-this.base; ok=this.cnt>=st.goal; if(!ok && !g.seeds.seeds.length) this.dropSeeds(st.goal-this.cnt); break;
+      case 'berries': ok=pl.stats.berries>this.base; if(!ok){ if(pl.hp>MAX_HP-20) pl.hp=MAX_HP-30; if(!this.bush.ripe){ this.bush.ripe=true; g.arena.setBerryLook(this.bush); } } break;
       case 'surge': ok=g.bonus[0]>=1; if(!ok && !g.seeds.seeds.length) this.dropSeeds(12-g.seeds.pool[0]); break;
       case 'hedge': ok=pl.stats.hedges>this.base; if(pl.energy<HEDGE_COST) pl.energy=HEDGE_COST; break;
       case 'shield': ok=pl.weapon==='shield'; if(this.plot.stage!==3 && !ok){ this.plot.stage=3; this.plot.t=0; } break;
@@ -1723,10 +1894,12 @@ class Game {
     this.camTarget=new V3(); this.titleAng=0; this.autoplay=new URLSearchParams(location.search).has('autoplay');
     this.arena=new Arena(this); this.fx=new FX(); this.seeds=new SeedSystem(this); this.weapons=new Weapon(this);
     this.chars=CHAR_ORDER.map(k=>new Character(this,k));
+    this.cosmetics={}; try{ const d=JSON.parse(localStorage.getItem('eyv-cosmetics-v1')||'{}'); if(d&&typeof d==='object') for(const k of CHAR_ORDER) if(cosmeticsFor(k).includes(d[k])) this.cosmetics[k]=d[k]; }catch(e){}
     this.portraits=this.makePortraits();
     this.ach=new Achievements(); this.achOn=false;
     this.hud=new HUD(this); this.wins=[0,0]; this.bonus=[0,0]; this.round=1; this.roundTime=ROUND_TIME;
-    this.settings={shake:true}; try{ const d=JSON.parse(localStorage.getItem('eyv-settings-v1')||'{}'); if(d&&typeof d.shake==='boolean') this.settings.shake=d.shake; }catch(e){}
+    this.settings={shake:true,night:false}; try{ const d=JSON.parse(localStorage.getItem('eyv-settings-v1')||'{}'); if(d&&typeof d.shake==='boolean') this.settings.shake=d.shake; if(d&&typeof d.night==='boolean') this.settings.night=d.night; }catch(e){}
+    this.applyNight();
     this.tutorial=new Tutorial(this); this.tut=null; this.spinV=0.12;
     this.placeTitleChars(); this.bindUI(); this.showScreen('title');
     this.fps=60; this.fpsAcc=0; this.fpsN=0;
@@ -1740,17 +1913,50 @@ class Game {
       r.setClearColor(TEAM_HEX[CHARS[k].team],1); r.render(sc,cam); out[k]=r.domElement.toDataURL('image/png'); sc.remove(P.root); }
     r.dispose(); r.forceContextLoss(); return out;
   }
-  placeTitleChars(){ this.chars.forEach((c,k)=>{ const a=k/4*Math.PI*2+0.4; c.resetState(); c.spawnAt(Math.cos(a)*2.2,Math.sin(a)*2.2); c.facing=Math.atan2(-c.pos.x,-c.pos.z); c.controller=null; c.isPlayer=false; }); }
+  // ---- night mode: swap sun for moon, cool the sky light, switch on light pools and fireflies ----
+  applyNight(){ const n=!!this.settings.night, L=n?SKY.night:SKY.day; NIGHT.on=n;
+    scene.background.setHex(L.bg); hemi.color.setHex(L.sky); hemi.groundColor.setHex(L.gnd); hemi.intensity=L.hi;
+    sun.color.setHex(L.sun); sun.intensity=L.si; sun.position.set(...L.pos);
+    for(const m of NIGHT.pools) m.visible=n; this.arena.ff.visible=n; document.body.classList.toggle('night',n); }
+  // ---- cosmetics ----
+  saveCosmetics(){ try{ localStorage.setItem('eyv-cosmetics-v1',JSON.stringify(this.cosmetics)); }catch(e){} }
+  applySavedCosmetics(){ for(const c of this.chars) c.setCosmetic(this.cosmetics[c.key]||'none'); }
+  renderCosmetics(){
+    const k=this.choice, cur=this.cosmetics[k]||'none', box=$('cos-chips'); box.innerHTML='';
+    setText($('cos-who'),CHARS[k].name);
+    for(const id of cosmeticsFor(k)){ const b=document.createElement('button'); b.className='chip'+(id===cur?' sel':''); b.textContent=COSMETICS[id].name;
+      if(COSMETICS[id].only) b.classList.add('special');
+      b.addEventListener('click',e=>{ e.currentTarget.blur(); audio.init(); audio.play('click'); this.cosmetics[k]=id; this.saveCosmetics();
+        const c=this.chars.find(q=>q.key===k); c.setCosmetic(id); this.renderCosmetics(); });
+      box.appendChild(b); }
+    this.buildPreview(); }
+  buildPreview(){ // a small turntable of the chosen critter wearing the chosen cosmetic
+    if(!this.prev){ const cv=$('cos-prev'), r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true}); r.setPixelRatio(Math.min(devicePixelRatio||1,2)); r.setSize(cv.clientWidth||132,cv.clientHeight||150,false);
+      const sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xD8E6C8,0x4A3A22,1.5)); const dl=new THREE.DirectionalLight(0xFFE6B8,2.6); dl.position.set(-2,4,5); sc.add(dl);
+      const cam=new THREE.OrthographicCamera(-0.8,0.8,0.98,-0.88,0.1,20); cam.position.set(0,1.4,4); cam.lookAt(0,0.85,0);
+      this.prev={r,sc,cam,P:null,ang:0.5}; }
+    const pv=this.prev; if(pv.P) pv.sc.remove(pv.P.root);
+    pv.P=buildCharacter(this.choice); addCosmetic(pv.P,this.choice,this.cosmetics[this.choice]||'none'); pv.sc.add(pv.P.root); }
+  renderPreview(dt){ const pv=this.prev; if(!pv||!pv.P) return; pv.ang+=dt*0.9; pv.P.rig.rotation.y=Math.sin(pv.ang)*0.75+0.25; pv.r.render(pv.sc,pv.cam); }
+  // a hurt critter touching a ripe berry bush eats it
+  tryBerry(c){ if(c.ko || c.hp>=MAX_HP) return false; const r2=BERRY_R*BERRY_R;
+    for(const b of this.arena.bushes){ if(!b.ripe || dist2(b.x,b.z,c.pos.x,c.pos.z)>r2) continue;
+      const before=c.hp; c.hp=Math.min(MAX_HP,c.hp+BERRY_HEAL); this.arena.eatBush(b); c.stats.berries++; c.squash=0.15;
+      this.fx.float('+'+Math.round(c.hp-before)+' HP',new V3(c.pos.x,1.8,c.pos.z),'heal',0.9);
+      this.fx.burst(new V3(b.x,0.6,b.z),[0xD8315B,0xE85A7A,PAL.leaf],12,2.5,2.5,0.8); audio.play('berry'); return true; }
+    return false; }
+  placeTitleChars(){ this.applySavedCosmetics(); this.chars.forEach((c,k)=>{ const a=k/4*Math.PI*2+0.4; c.resetState(); c.spawnAt(Math.cos(a)*2.2,Math.sin(a)*2.2); c.facing=Math.atan2(-c.pos.x,-c.pos.z); c.controller=null; c.isPlayer=false; }); }
   bindUI(){
     const click=(id,fn)=>$(id).addEventListener('click',e=>{ e.currentTarget.blur(); audio.init(); audio.play('click'); fn(); });
-    click('btn-play',()=>this.showScreen('select'));
+    click('btn-play',()=>{ this.showScreen('select'); this.renderCosmetics(); });
+    click('btn-set-night',()=>{ this.settings.night=!this.settings.night; this.saveSettings(); this.applyNight(); this.renderSettings(); });
     click('btn-tutorial',()=>this.startTutorial());
     click('btn-settings',()=>{ this.renderSettings(); this.showScreen('settings'); }); click('btn-settings-back',()=>this.showScreen('title'));
     click('btn-set-shake',()=>{ this.settings.shake=!this.settings.shake; this.saveSettings(); this.renderSettings(); if(this.settings.shake) this.shakeA=0; });
     click('btn-set-tips',()=>{ try{ if(this.tipsOn()) localStorage.setItem('eyv-tips-off','1'); else localStorage.removeItem('eyv-tips-off'); }catch(e){} this.renderSettings(); });
     click('btn-tut-skip',()=>{ if(this.tut){ if(this.tut.step.id==='surge'&&this.bonus[0]<1) this.seedSurge(0); this.tut.next(); } });
     click('btn-tut-quit',()=>this.toTitle()); click('btn-tut-title',()=>this.toTitle());
-    click('btn-tut-play',()=>{ this.toTitle(); this.showScreen('select'); });
+    click('btn-tut-play',()=>{ this.toTitle(); this.showScreen('select'); this.renderCosmetics(); });
     click('btn-diff',()=>{ const o=['easy','normal','hard']; this.difficulty=o[(o.indexOf(this.difficulty)+1)%3]; $('btn-diff').textContent='Difficulty: '+DIFF[this.difficulty].label; });
     click('btn-ach',()=>this.openAch('title')); click('btn-res-ach',()=>this.openAch('results'));
     click('btn-ach-back',()=>this.showScreen(this.achBack||'title'));
@@ -1762,7 +1968,7 @@ class Game {
     const cards=$('cards');
     for(const k of CHAR_ORDER){ const d=CHARS[k], el=document.createElement('div'); el.className='card'+(k===this.choice?' sel':''); el.style.setProperty('--team',TEAM_CSS[d.team]); el.dataset.key=k;
       el.innerHTML=`<img src="${this.portraits[k]}" alt=""><div class="nm">${d.name}</div><div class="tm">${TEAM_NAME[d.team]}</div><div class="wp">${WEAPONS[d.weapon].name}</div><div class="bl">${d.blurb}</div>`;
-      el.addEventListener('click',()=>{ audio.init(); audio.play('click'); this.choice=k; cards.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',c.dataset.key===k)); });
+      el.addEventListener('click',()=>{ audio.init(); audio.play('click'); this.choice=k; cards.querySelectorAll('.card').forEach(c=>c.classList.toggle('sel',c.dataset.key===k)); this.renderCosmetics(); });
       el.addEventListener('dblclick',()=>this.beginMatch()); cards.appendChild(el); }
     addEventListener('keydown',e=>{
       if(e.code==='Escape') this.togglePause();
@@ -1774,7 +1980,7 @@ class Game {
   tipsOn(){ try{ return localStorage.getItem('eyv-tips-off')!=='1'; }catch(e){ return true; } }
   saveSettings(){ try{ localStorage.setItem('eyv-settings-v1',JSON.stringify(this.settings)); }catch(e){} }
   renderSettings(){
-    for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); } }
+    for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()],['btn-set-night',this.settings.night]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); } }
   startTutorial(){ // learn-by-doing sandbox: you play the Rabbit, everyone else is a training partner
     this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME;
     this.player=this.chars.find(c=>c.key==='rabbit'); this.achOn=false; this.ach.startMatch();
@@ -1795,7 +2001,8 @@ class Game {
     this.player=this.chars.find(c=>c.key===this.choice);
     this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[];
-      c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'normal':this.difficulty); }
+      c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'normal':this.difficulty);
+      const opts=cosmeticsFor(c.key); c.setCosmetic(c.isPlayer?(this.cosmetics[c.key]||'none'):opts[randi(0,opts.length-1)]); }
     this.hud.setup(); this.hud.show(true); this.startRound();
   }
   startRound(){
@@ -1906,7 +2113,7 @@ class Game {
     if(this.tut){ this.tut.update(dt); this.seeds.spawnT=1e9; }
     else { this.roundTime-=dt; if(this.roundTime<=0){ this.roundTime=0; this.endRound(); return; } }
     if(!this.tut && this.roundTime<=10 && Math.ceil(this.roundTime)!==this.lastBeep){ this.lastBeep=Math.ceil(this.roundTime); audio.play('beep'); }
-    for(const c of this.chars){ const it=c.controller?c.controller.update(dt):blankIntent(); c.update(dt,it); c.energy=Math.min(100,c.energy+dt*4); if(c.invuln<=0) c.respawnGrace=false; }
+    for(const c of this.chars){ const it=c.controller?c.controller.update(dt):blankIntent(); c.update(dt,it); c.energy=Math.min(100,c.energy+dt*4); if(c.invuln<=0) c.respawnGrace=false; this.tryBerry(c); }
     // soft character separation
     for(let a=0;a<4;a++) for(let b=a+1;b<4;b++){ const A=this.chars[a], B=this.chars[b]; if(A.ko||B.ko) continue; const dx=B.pos.x-A.pos.x, dz=B.pos.z-A.pos.z, d=Math.hypot(dx,dz);
       if(d<0.62 && d>1e-4){ const p=(0.62-d)/2; A.pos.x-=dx/d*p; A.pos.z-=dz/d*p; B.pos.x+=dx/d*p; B.pos.z+=dz/d*p; this.arena.collide(A.pos); this.arena.collide(B.pos); } }
@@ -1924,6 +2131,7 @@ class Game {
       if(this.shakeA>0.001){ camera.position.x+=rand(-1,1)*this.shakeA; camera.position.y+=rand(-1,1)*this.shakeA; camera.position.z+=rand(-1,1)*this.shakeA; this.shakeA*=Math.exp(-dt*14); }
     }
     renderer.render(scene,camera);
+    if(this.screen==='select') this.renderPreview(dt);
     if(this.state!=='title'&&this.state!=='results'&&this.player){ this.hud.update(dt); this.hud.updateOverbars(); }
     this.fx.updateFloats(dt);
   }
