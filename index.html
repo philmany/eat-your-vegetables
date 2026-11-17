@@ -7,8 +7,8 @@
      The gameplay camera never rotates, giving the "2D sprites on a fixed angle / 2.5D" look Philman asked
      for while following the spec's Three.js mandate. Only the title screen orbits.
   2. Health is 8 hearts = 80 HP internally (10 HP per heart) so hearts can show halves. Damage numbers show HP.
-  3. Carrot plots come in two varieties: a single big carrot (Carrot Sword) and a twin bunch of baby carrots
-     (Carrot Kunai). Beets give the Beet Flail, celery gives the Celery Staff.
+  3. Carrot plots grow a single big carrot (Carrot Sword); potato plots grow Potato Toss (thrown potatoes, formerly
+     the Carrot Kunai). Beets give the Beet Flail, celery gives the Celery Staff.
   4. "The opposing team's pool loses them" is read as: the hit character's own team pool loses the dropped seeds
      (matches the acceptance criterion "lowers that team's counter").
   5. Each plot stage lasts 5 s, so a harvested plot is ripe again 15 s later. Durability = 12 uses; a special
@@ -39,6 +39,13 @@
       character select; "don't show again" is remembered in localStorage.
   19. Achievements: earned by the human player only, saved in localStorage (fails silently if blocked).
       KO credit goes to the weapon that landed the final hit (a projectile keeps the weapon it was thrown with).
+  21. Polish pass (Nov 17): the Carrot Kunai became POTATO TOSS (new potato models; internal key stays 'kunai' so
+      saved achievement progress carries over). Its +30% damage buff was removed (7.8 -> 6). Potatoes collide with
+      enemy projectiles: both are destroyed. New SETTINGS screen (screen shake, pre-match tips) saved in localStorage
+      key `eyv-settings-v1`. The title camera only orbits on the title screen itself, never behind a menu. Ripe
+      plots and magic seeds are larger, with glow beams, ripples and ground halos. The carrot-shaped energy meter
+      became a plain blue bar with a number and a marker at the current special's cost. Interactive TUTORIAL from
+      the title screen: movement, attacks, specials, seeds, seed surges, hedges, the Pumpkin Shield and Bulwark.
 -->
 <html lang="en">
 <head>
@@ -120,7 +127,12 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #hearts{display:flex;gap:3px;margin-top:8px}
 #hearts svg{width:28px;height:24px;filter:drop-shadow(0 2px 0 var(--navy))}
 .elabel{font-family:var(--ui);font-variant:small-caps;letter-spacing:3px;font-size:14px;margin-top:6px;text-shadow:0 2px 0 var(--navy)}
-#energy svg{width:240px;height:48px;display:block;filter:drop-shadow(0 0 6px rgba(255,176,102,.55)) drop-shadow(0 3px 0 rgba(26,32,48,.8))}
+#energy{position:relative;width:240px;height:16px;background:#11182A;border:3px solid var(--navy);box-sizing:content-box;margin-top:3px;filter:drop-shadow(0 3px 0 rgba(26,32,48,.8))}
+#energy-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#3E9BD1;transition:width .12s}
+#energy.ready #energy-fill{background:#63C8F2;box-shadow:0 0 10px #63C8F2}
+#energy .tick{position:absolute;top:0;bottom:0;width:2px;background:rgba(26,32,48,.55)}
+#energy-cost{position:absolute;top:-5px;bottom:-5px;width:3px;background:var(--corn);box-shadow:0 0 0 1px var(--navy)}
+#en-num{font-family:var(--num);font-size:20px;letter-spacing:1px;color:#8FD8F5;margin-left:6px;font-variant:normal}
 #hud-tc{position:absolute;left:50%;top:12px;transform:translateX(-50%);text-align:center}
 .slabel{font-family:var(--display);font-size:18px;letter-spacing:4px;text-shadow:0 3px 0 var(--navy)}
 .scounters{display:flex;gap:14px;margin-top:4px}
@@ -163,9 +175,9 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #overbars{position:absolute;inset:0;overflow:hidden}
 .ob{position:absolute;width:56px;transform:translate(-50%,-100%);display:flex;flex-direction:column;gap:2px;filter:drop-shadow(0 2px 0 rgba(26,32,48,.7))}
 .ob i{display:block;height:7px;background:#1A2030;border:2px solid #1A2030;box-sizing:content-box;overflow:hidden}
-.ob i.en{height:4px}
+.ob i.en{height:5px}
 .ob b{display:block;height:100%;width:100%}
-.ob .en b{background:#FFB066}
+.ob .en b{background:#63C8F2}
 .ob.ko{display:none}
 #tips .panel{max-width:min(860px,94vw)}
 .tipcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:4px 0 6px}
@@ -213,6 +225,31 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .ach .w{font-family:var(--num);font-size:15px;letter-spacing:2px;color:var(--wc,var(--mint));line-height:1}
 #ach-sum{font-family:var(--num);font-size:24px;letter-spacing:3px;color:var(--white);margin:-6px 0 12px}
 #res-new{font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--corn);text-align:center;max-width:90vw}
+/* ---------- Settings, small menu buttons, tutorial ---------- */
+.btn.small{font-size:17px;min-width:0;padding:10px 20px 8px}
+#title .row{margin-top:4px}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:10px 0;border-top:2px solid rgba(255,255,255,.08);min-width:min(520px,80vw)}
+.setrow:first-of-type{border-top:0}
+.setrow .lbl{font-family:var(--display);font-size:22px;color:var(--white);letter-spacing:1px}
+.setrow .sub{font-size:13px;color:#C9CFDD;line-height:1.3;max-width:300px}
+.setrow .btn{min-width:130px}
+.btn.off{background:#5A6178;box-shadow:inset 0 -6px 0 #3A4058;color:var(--white)}
+.btn.off:active{box-shadow:inset 0 -2px 0 #3A4058}
+#tut{position:absolute;right:18px;top:14px;width:min(380px,calc(100vw - 36px));background:rgba(26,32,48,.95);padding:14px 18px 14px;border-left:8px solid var(--corn);
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%);pointer-events:auto}
+#tut .k{font-family:var(--num);font-size:18px;letter-spacing:3px;color:var(--corn);line-height:1}
+#tut .n{font-family:var(--display);font-size:26px;line-height:1.1;color:var(--white);margin:2px 0 6px}
+#tut .d{font-size:15px;line-height:1.4;color:#E3E6EE;font-family:var(--ui)}
+#tut .d b{color:var(--corn);font-weight:normal}
+#tut .pr{font-family:var(--num);font-size:24px;letter-spacing:2px;color:var(--mint);margin-top:6px;line-height:1}
+#tut .pr.done{color:#7CF08A}
+#tut .bar{height:5px;background:#11182A;margin-top:10px}
+#tut .bar b{display:block;height:100%;background:var(--corn);transition:width .3s}
+#tut .row{justify-content:flex-start;margin-top:12px;gap:10px}
+#tut .btn{font-size:15px;padding:8px 14px 6px;min-width:0}
+#tut.pop{animation:tutIn .4s cubic-bezier(.2,1.5,.4,1)}
+@keyframes tutIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+#hud.tutorial #hud-tr{display:none}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:30px;color:var(--navy);z-index:50;background:#1F3226;color:var(--white)}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
@@ -229,20 +266,8 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
     <div class="pframe" id="pframe"><img id="pl-portrait" alt=""></div>
     <div class="side"><div id="pl-name">RABBIT</div><div id="pl-weapon">CARROT SWORD</div><div id="pl-special"></div><div id="pl-hedges">HEDGES 0/3</div></div>
     <div id="hearts"></div>
-    <div class="elabel">Energy</div>
-    <div id="energy">
-      <svg viewBox="0 0 240 48">
-        <defs><clipPath id="carrotClip"><path d="M40 7 L222 21 Q234 24 222 27 L40 41 Q30 24 40 7 Z"/></clipPath></defs>
-        <polygon points="6,10 30,18 24,6" fill="#3E8E4F"/><polygon points="2,24 32,22 10,32" fill="#7ED957"/><polygon points="8,40 32,28 28,44" fill="#3E8E4F"/>
-        <path d="M40 7 L222 21 Q234 24 222 27 L40 41 Q30 24 40 7 Z" fill="#5A3416"/>
-        <g clip-path="url(#carrotClip)">
-          <rect id="energy-fill" x="28" y="0" width="0" height="48" fill="#FFB066"/>
-          <rect id="energy-fill-hi" x="28" y="7" width="0" height="8" fill="#FFD3A1"/>
-          <g stroke="#B9531A" stroke-width="3"><line x1="80" y1="14" x2="80" y2="24"/><line x1="120" y1="26" x2="120" y2="36"/><line x1="160" y1="17" x2="160" y2="25"/><line x1="196" y1="25" x2="196" y2="30"/></g>
-        </g>
-        <path d="M40 7 L222 21 Q234 24 222 27 L40 41 Q30 24 40 7 Z" fill="none" stroke="#1F2A44" stroke-width="3"/>
-      </svg>
-    </div>
+    <div class="elabel">Energy<span id="en-num">30</span></div>
+    <div id="energy"><b id="energy-fill"></b><i class="tick" style="left:20%"></i><i class="tick" style="left:40%"></i><i class="tick" style="left:60%"></i><i class="tick" style="left:80%"></i><i id="energy-cost"></i></div>
   </div>
   <div id="hud-tc">
     <div class="slabel">MAGIC SEEDS</div>
@@ -255,6 +280,10 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
   <div id="hud-bc"></div>
   <div id="hint"></div>
   <div id="banner"></div>
+  <div id="tut" class="hidden"><div class="k" id="tut-k"></div><div class="n" id="tut-n"></div><div class="d" id="tut-d"></div><div class="pr" id="tut-pr"></div>
+    <div class="bar"><b id="tut-bar"></b></div>
+    <div class="row" id="tut-btns"><button class="btn ghost" id="btn-tut-skip">Skip step</button><button class="btn ghost" id="btn-tut-quit">Exit tutorial</button></div>
+    <div class="row hidden" id="tut-end"><button class="btn" id="btn-tut-play">Play a match</button><button class="btn ghost" id="btn-tut-title">Title</button></div></div>
 </div>
 <div id="mute" class="hidden">MUTED (M)</div>
 <div id="fps" class="hidden"></div>
@@ -266,9 +295,17 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
   <h1>EAT YOUR<span>VEGETABLES</span></h1>
   <div class="tag">2 V 2 GARDEN BRAWL</div>
   <button class="btn" id="btn-play">Play</button>
+  <button class="btn green" id="btn-tutorial">Tutorial</button>
   <button class="btn green" id="btn-diff">Difficulty: Normal</button>
-  <button class="btn ghost" id="btn-controls">Controls</button>
-  <button class="btn ghost" id="btn-ach">Achievements</button>
+  <div class="row"><button class="btn ghost small" id="btn-controls">Controls</button><button class="btn ghost small" id="btn-ach">Achievements</button><button class="btn ghost small" id="btn-settings">Settings</button></div>
+</div>
+<div id="settings" class="screen dim hidden">
+  <div class="panel">
+    <h2>SETTINGS</h2>
+    <div class="setrow"><div><div class="lbl">SCREEN SHAKE</div><div class="sub">The camera jolts when you get hit, land big hits, or someone is knocked out.</div></div><button class="btn" id="btn-set-shake">On</button></div>
+    <div class="setrow"><div><div class="lbl">PRE-MATCH TIPS</div><div class="sub">Show the tips card after you pick your warrior.</div></div><button class="btn" id="btn-set-tips">On</button></div>
+    <div class="row" style="margin-top:18px"><button class="btn" id="btn-settings-back">Back</button></div>
+  </div>
 </div>
 <div id="achievements" class="screen dim hidden">
   <div class="panel">
@@ -291,6 +328,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
       <b>SPACE</b><span>Dodge roll (brief invulnerability, 1.5 s cooldown)</span>
       <b>ESC</b><span>Pause</span>
       <b>M</b><span>Mute / unmute</span>
+      <b>POTATOES</b><span>Thrown potatoes knock enemy shots out of the air (both break).</span>
       <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
       <b>PUMPKIN</b><span>Pumpkin Shield (tank): blocks most damage from the front. Bulwark special shields you and nearby allies and eats enemy shots.</span>
     </div>
@@ -314,12 +352,13 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
         <p>You have <b>8 hearts</b>. There's no slow regen, so heal on purpose:</p>
         <p>Every seed you pick up heals <b>half a heart</b>.</p>
         <p>Knocked out? You're back in <b>4 s</b> at full health. A <b>Pumpkin Shield</b> blocks most hits from the front.</p></div>
-      <div class="tip" style="--tc:#FFB066"><h3>ENERGY</h3>
-        <p>The carrot meter pays for your weapon <b>special</b> (right-click) and <b>hedges</b> (Q, 20 each, up to 3).</p>
+      <div class="tip" style="--tc:#63C8F2"><h3>ENERGY</h3>
+        <p>The blue Energy bar pays for your weapon <b>special</b> (right-click) and <b>hedges</b> (Q, 20 each, up to 3).</p>
         <p>It refills slowly on its own, faster when you <b>land hits</b>, and every seed gives <b>+5</b>.</p></div>
     </div>
     <div class="row" style="margin-top:16px;align-items:center;justify-content:space-between">
       <label><input type="checkbox" id="tips-skip"> DON'T SHOW AGAIN</label>
+      <span style="font-family:var(--num);font-size:20px;letter-spacing:2px;color:var(--mint)">NEW? TRY THE TUTORIAL FROM THE TITLE</span>
       <button class="btn" id="btn-tips-go">Let's go!</button>
     </div>
   </div>
@@ -352,7 +391,7 @@ const PAL = {
   sand:0xBA8F48, sandS:0x9C7438, pond:0x2F6E6A, mint:0x9FF5C8, carrot:0xE86B17, carrotS:0xA9460F, tomato:0xD9412F, beet:0xAD1550, beetS:0x6E0F36,
   corn:0xF2B51E, cornS:0xC8861A, navy:0x1A2030, white:0xF5EFDC, grass:0x6C8637, grassD:0x385A2F, wood:0x865234, woodS:0x5E3A28,
   leaf:0x4E7A2A, hedge:0x56702F, hedgeS:0x3A5A28, hedgeT:0x82A32E, celery:0xA6CC45, celeryS:0x6F9430, dark:0x2A2730, forest:0x1F3226,
-  seed:0x9FF5C8, seedGlow:0x4FE0A0, outline:0x1C1512
+  seed:0x9FF5C8, seedGlow:0x4FE0A0, outline:0x1C1512, potato:0xC4955A, potatoS:0x8E6236, potatoD:0x5E3F24
 };
 const TEAM_HEX = [0x6CC24A, 0xF28A2A];
 const TEAM_NAME = ['GREEN TEAM', 'ORANGE TEAM'];
@@ -364,8 +403,8 @@ const BASE_SPEED = 4.4, CHAR_R = 0.32;
 const WEAPONS = {
   sword:{ name:'CARROT SWORD', kind:'melee', dmg:10, cd:0.42, range:1.65, arc:Math.PI*0.8, knock:3, windup:0.07, anim:0.3,
           spName:'LUNGE SLASH', spCost:30, aiRange:1.2, veg:'carrot' },
-  kunai:{ name:'CARROT KUNAI', kind:'proj', dmg:7.8, cd:0.26, speed:15, life:0.6, knock:1.2, anim:0.18,
-          spName:'KUNAI FAN', spCost:25, aiRange:5, veg:'carrot' },
+  kunai:{ name:'POTATO TOSS', kind:'proj', dmg:6, cd:0.26, speed:15, life:0.6, knock:1.2, anim:0.18,
+          spName:'SPUD SPREAD', spCost:25, aiRange:5, veg:'potato' },
   flail:{ name:'BEET FLAIL', kind:'melee', dmg:18, cd:0.95, range:1.9, arc:Math.PI*0.95, knock:7, windup:0.3, anim:0.55,
           spName:'360 SPIN', spCost:40, aiRange:1.4, veg:'beet' },
   staff:{ name:'CELERY STAFF', kind:'proj', dmg:9, cd:0.55, speed:9.5, life:1.0, knock:1.6, anim:0.3,
@@ -603,6 +642,14 @@ function eyes(parent,y,z,sep,r=0.085,tilt=0){
     const p=M(CYL(r*0.45,r*0.45,0.036,8),PAL.navy,s*sep*1.02,y+0.004,z+0.012,parent,false); p.rotation.x=Math.PI/2;
   }
 }
+// A lumpy potato: a squashed low-poly blob, a couple of bumps and dark "eyes". Used in hand, in flight and in plots.
+function potatoModel(g,s=1){
+  M(ICO(0.13*s,1),PAL.potato,0,0,0,g).scale.set(1,0.8,1.3);
+  M(ICO(0.07*s,0),PAL.potato,0.07*s,0.03*s,0.08*s,g,false);
+  M(ICO(0.06*s,0),PAL.potatoS,-0.06*s,-0.02*s,-0.1*s,g,false);
+  for(const [x,y,z] of [[0.09,0.06,0.02],[-0.06,0.08,0.09],[0.02,0.09,-0.1],[-0.1,0.01,-0.02]]) M(ICO(0.018*s,0),PAL.potatoD,x*s,y*s,z*s,g,false);
+  return g;
+}
 function makeWeapon(key){
   const g=new THREE.Group();
   if(key==='sword'){
@@ -611,11 +658,8 @@ function makeWeapon(key){
     M(BOX(0.24,0.05,0.06),PAL.woodS,0,0,0.1,g);
     for(const a of [-0.5,0,0.5]){ const l=M(CONE(0.04,0.22,4),PAL.leaf,Math.sin(a)*0.06,0,-0.05,g); l.rotation.x=-Math.PI/2; l.rotation.z=a; }
     g.rotation.x=-0.8;
-  } else if(key==='kunai'){
-    const b=M(CONE(0.05,0.36,5),PAL.carrot,0,0,0.24,g); b.rotation.x=Math.PI/2;
-    const r=M(CYL(0.05,0.05,0.03,6),PAL.carrotS,0,0,0.07,g,false); r.rotation.x=Math.PI/2;
-    for(const a of [-0.4,0.4]){ const l=M(CONE(0.03,0.14,4),PAL.leaf,0,0,-0.02,g); l.rotation.x=-Math.PI/2; l.rotation.z=a; }
-    g.rotation.x=-0.3;
+  } else if(key==='kunai'){ // a lumpy potato held in the paw
+    potatoModel(g,1); g.position.z=0.06;
   } else if(key==='flail'){
     const h=M(CYL(0.035,0.035,0.4,6),PAL.wood,0,0,0.12,g); h.rotation.x=Math.PI/2;
     M(ICO(0.035),PAL.navy,0,0,0.36,g); M(ICO(0.035),PAL.navy,0,0,0.43,g);
@@ -809,7 +853,12 @@ class Arena {
     for(const [i,j,type] of PLOTS){
       const x=tileC(i), z=tileC(j), g=new THREE.Group(); g.position.set(x,0.16,z); this.root.add(g);
       M(BOX(0.78,0.06,0.62),PAL.loamS,0,0.02,0,g,false);
-      const glow=M(CYL(0.42,0.42,0.02,12),PAL.corn,0,0.05,0,g,false,{emissive:0xFFC93C,emissiveIntensity:0.6,transparent:true,opacity:0.55});
+      const glow=M(CYL(0.56,0.56,0.02,16),PAL.corn,0,0.05,0,g,false,{emissive:0xFFC93C,emissiveIntensity:0.6,transparent:true,opacity:0.55});
+      // pickup beacon: a soft gold light pillar and a ripple ring that keeps expanding outward
+      const beam=new THREE.Mesh(CYL(0.36,0.46,2.4,14,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.8,transparent:true,opacity:0.16,side:THREE.DoubleSide,depthWrite:false}));
+      beam.position.y=1.2; g.add(beam);
+      const ripple=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:1,transparent:true,opacity:0.8,side:THREE.DoubleSide,depthWrite:false}));
+      ripple.rotation.x=-Math.PI/2; ripple.position.y=0.07; g.add(ripple);
       const st=[new THREE.Group(),new THREE.Group(),new THREE.Group(),new THREE.Group()]; st.forEach(s=>g.add(s));
       // stage 0 — sprout
       for(const s of [-1,1]){ const c=M(CONE(0.04,0.14,4),PAL.sprout,s*0.04,0.08,0,st[0]); c.rotation.z=-s*0.5; }
@@ -817,14 +866,15 @@ class Arena {
       M(CYL(0.02,0.02,0.18,4),PAL.sproutS,0,0.1,0,st[1]);
       for(let k=0;k<4;k++){ const l=M(BOX(0.18,0.025,0.08),PAL.sprout,Math.cos(k*1.57)*0.08,0.16+k*0.015,Math.sin(k*1.57)*0.08,st[1]); l.rotation.y=-k*1.57; l.rotation.z=0.35; }
       // stage 2 — young plant; stage 3 — ripe
-      this.vegModel(type,st[2],0.6); this.vegModel(type,st[3],1);
-      this.plots.push({i,j,x,z,type,g,st,glow,stage:3,t:0});
+      this.vegModel(type,st[2],0.6); this.vegModel(type,st[3],1.5); addOutlines(st[3],0.016,0.12);
+      this.plots.push({i,j,x,z,type,g,st,glow,beam,ripple,stage:3,t:0});
     }
   }
   vegModel(type,g,s){
     const leaf=(x,z,h,a,col=PAL.leaf)=>{ const l=M(CONE(0.06*s,h*s,4),col,x*s,h*s/2+0.05,z*s,g); l.rotation.set(Math.sin(a)*0.5,0,Math.cos(a)*0.5); };
     if(type==='sword'){ M(CYL(0.13*s,0.11*s,0.12*s,8),PAL.carrot,0,0.06,0,g); for(let k=0;k<5;k++) leaf(0,0,0.42,k*1.25); }
-    else if(type==='kunai'){ for(const o of [-0.12,0.12]){ M(CYL(0.08*s,0.07*s,0.1*s,7),PAL.carrot,o*s,0.05,0,g); for(let k=0;k<3;k++) leaf(o,0,0.3,k*2.1+o); } }
+    else if(type==='kunai'){ for(const [o,z] of [[-0.13,0.04],[0.12,-0.03]]){ const pg=new THREE.Group(); pg.position.set(o*s,0.07*s,z*s); pg.rotation.y=o*6; g.add(pg); potatoModel(pg,s); }
+      for(let k=0;k<4;k++) leaf(0,-0.12,0.3,k*1.57+0.3); M(ICO(0.06*s,0),PAL.leaf,0,0.32*s,-0.12*s,g); }
     else if(type==='flail'){ M(ICO(0.17*s,0),PAL.beet,0,0.09*s,0,g); for(let k=0;k<4;k++){ leaf(0,0,0.32,k*1.57+0.4,PAL.beetS); M(BOX(0.13*s,0.02,0.2*s),PAL.leaf,Math.sin(k*1.57+0.4)*0.14*s,0.34*s,Math.cos(k*1.57+0.4)*0.14*s,g).rotation.y=k*1.57+0.4; } }
     else if(type==='shield'){ const pk=M(ICO(0.2*s,1),PAL.carrot,0,0.14*s,0,g); pk.scale.set(1.15,0.75,1.15);
       for(let k=0;k<6;k++){ const a=k/6*Math.PI*2, r=M(BOX(0.04*s,0.24*s,0.06*s),PAL.carrotS,Math.cos(a)*0.215*s,0.14*s,Math.sin(a)*0.215*s,g,false); r.rotation.y=-a; }
@@ -850,9 +900,13 @@ class Arena {
     for(const p of this.plots){
       if(p.stage<3){ p.t+=dt; if(p.t>=5){ p.t=0; p.stage++; p.pop=0.3; } }
       p.st.forEach((s,k)=>s.visible=k===p.stage);
-      const ripe=p.stage===3; p.glow.visible=ripe;
-      const sc=p.pop>0?1+Math.sin((0.3-p.pop)/0.3*Math.PI)*0.35:ripe?1+Math.sin(time*4+p.i)*0.05:1;
+      const ripe=p.stage===3; p.glow.visible=p.beam.visible=p.ripple.visible=ripe;
+      const sc=p.pop>0?1+Math.sin((0.3-p.pop)/0.3*Math.PI)*0.35:ripe?1+Math.sin(time*4+p.i)*0.06:1;
       p.st[p.stage].scale.set(sc,sc,sc); if(p.pop>0) p.pop-=dt;
+      if(ripe){ const r=(time*0.8+p.i*0.13)%1; p.ripple.scale.setScalar(0.9+r*1.3); p.ripple.material.opacity=0.85*(1-r);
+        p.beam.material.opacity=0.12+Math.sin(time*3+p.i)*0.05; p.glow.material.opacity=0.5+Math.sin(time*4)*0.2;
+        p.st[3].position.y=0.05+Math.abs(Math.sin(time*2.2+p.i))*0.08; p.st[3].rotation.y=Math.sin(time*1.3+p.i)*0.35; }
+      else p.st[3].position.y=0;
     }
     this.cluster.children.forEach((m,k)=>{ const a=m.userData.a+time*0.9; m.position.set(Math.cos(a)*0.45,0.55+Math.sin(time*2.4+k)*0.1,Math.sin(a)*0.45); m.rotation.y=time*2; });
     this.clusterMat.emissiveIntensity=0.65+Math.sin(time*3)*0.3; this.seedLight.intensity=5+Math.sin(time*3)*2;
@@ -982,7 +1036,10 @@ class SeedSystem {
   constructor(game){
     this.game=game; this.max=90; this.seeds=[];
     this.mat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.9});
-    this.im=new THREE.InstancedMesh(ICO(0.12,0),this.mat,this.max); this.im.castShadow=true; this.im.frustumCulled=false; scene.add(this.im);
+    this.im=new THREE.InstancedMesh(ICO(0.17,0),this.mat,this.max); this.im.castShadow=true; this.im.frustumCulled=false; scene.add(this.im);
+    // a glowing halo on the ground under every loose seed, so they read at a glance
+    this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:1,transparent:true,opacity:0.55,depthWrite:false});
+    this.halo=new THREE.InstancedMesh(G('seedhalo',()=>new THREE.RingGeometry(0.16,0.3,16).rotateX(-Math.PI/2)),this.haloMat,this.max); this.halo.frustumCulled=false; scene.add(this.halo);
     this.reset();
   }
   reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; this.render(0); }
@@ -1019,11 +1076,15 @@ class SeedSystem {
     if(this.pool[c.team]>=SEED_GOAL) this.game.seedSurge(c.team);
   }
   render(time){
+    const ar=this.game.arena, hs=1+Math.sin(time*5)*0.18;
     for(let k=0;k<this.max;k++){ const s=this.seeds[k];
       if(s){ _e.set(0,time*2+s.ph,0.3); _q.setFromEuler(_e); _m4.compose(_v.set(s.x,s.y,s.z),_q,_s.set(1,1.45,1)); }
       else _m4.makeScale(0,0,0);
-      this.im.setMatrixAt(k,_m4); }
-    this.im.instanceMatrix.needsUpdate=true;
+      this.im.setMatrixAt(k,_m4);
+      if(s && s.state!=='fly') _m4.makeScale(hs,1,hs).setPosition(s.x,ar.heightAt(s.x,s.z)+0.06,s.z); else _m4.makeScale(0,0,0);
+      this.halo.setMatrixAt(k,_m4); }
+    this.im.instanceMatrix.needsUpdate=true; this.halo.instanceMatrix.needsUpdate=true;
+    this.haloMat.opacity=0.45+Math.sin(time*5)*0.15;
   }
   nearest(x,z,avoid=[]){ let best=null,bd=1e9; for(const s of this.seeds){ if(s.state==='fly') continue; let d=Math.sqrt(dist2(x,z,s.x,s.z));
       for(const e of avoid) if(!e.ko && dist2(e.pos.x,e.pos.z,s.x,s.z)<4) d+=2.5; if(d<bd){bd=d;best=s;} } return best; }
@@ -1078,7 +1139,7 @@ class Character {
   useDurability(){
     if(this.durability===Infinity) return; this.durability--;
     if(this.durability<=0){ this.setWeapon(this.sig); this.game.fx.float('SNAPPED!',new V3(this.pos.x,1.6,this.pos.z),'info'); audio.play('break');
-      this.game.fx.burst(new V3(this.pos.x,0.8,this.pos.z),[PAL.carrot,PAL.leaf,PAL.beet,PAL.celery],10,3); }
+      this.game.fx.burst(new V3(this.pos.x,0.8,this.pos.z),[PAL.carrot,PAL.leaf,PAL.beet,PAL.celery,PAL.potato],10,3); }
   }
   update(dt,it){
     const g=this.game;
@@ -1190,7 +1251,7 @@ class Weapon {
       const dx=tx-c.pos.x, dz=tz-c.pos.z, L=Math.hypot(dx,dz); if(L>7){ tx=c.pos.x+dx/L*7; tz=c.pos.z+dz/L*7; }
       tx=clamp(tx,-7.5,7.5); tz=clamp(tz,-7.5,7.5); g.arena.addSlowField(tx,tz,c.team); audio.play('slow');
       for(const e of g.chars) if(e.team!==c.team && !e.ko && dist2(e.pos.x,e.pos.z,tx,tz)<4) g.damage(e,5,c,new V3(e.pos.x-tx,0,e.pos.z-tz).normalize(),1,true); }
-    c.useDurability(); return true;
+    c.useDurability(); if(g.tut) g.tut.onSpecial(c); return true;
   }
   strike(c,range,arc,dmg,knock){ // melee arc check against characters and player hedges
     const g=this.game, fx=Math.sin(c.facing), fz=Math.cos(c.facing); let hit=false;
@@ -1212,18 +1273,32 @@ class Weapon {
     mesh.position.set(c.pos.x+fx*0.45,c.pos.y+0.62,c.pos.z+fz*0.45); mesh.rotation.y=a; scene.add(mesh);
     this.proj.push({mesh,x:mesh.position.x,z:mesh.position.z,vx:fx*W.speed,vz:fz*W.speed,life:W.life,owner:c,dmg:W.dmg*(c.weapon===type&&c.sig===type?1.1:1)*(type===c.weapon?1:1),knock:W.knock,type});
   }
+  // Potatoes knock enemy shots out of the air. Uses closest approach over this step so fast head-on pairs can't tunnel.
+  collideProjectiles(dt){
+    const P=this.proj, R=0.34;
+    for(let a=0;a<P.length;a++){ const A=P[a]; if(A.dead) continue;
+      for(let b=a+1;b<P.length;b++){ const B=P[b]; if(B.dead || A.owner.team===B.owner.team) continue;
+        if(A.type!=='kunai' && B.type!=='kunai') continue;
+        const rx=B.x-A.x, rz=B.z-A.z, vx=(B.vx-A.vx)*dt, vz=(B.vz-A.vz)*dt, vv=vx*vx+vz*vz;
+        const t=vv>1e-9?clamp(-(rx*vx+rz*vz)/vv,0,1):0, cx=rx+vx*t, cz=rz+vz*t;
+        if(cx*cx+cz*cz<R*R){ A.dead=B.dead=true; const mx=A.x+A.vx*dt*t+cx/2, mz=A.z+A.vz*dt*t+cz/2;
+          this.game.fx.burst(new V3(mx,0.7,mz),[PAL.potato,PAL.potatoS,PAL.white,B.type==='kunai'?PAL.potato:PAL.celery],10,3,2.5);
+          this.game.fx.float('BLOCKED!',new V3(mx,1.3,mz),'info',0.6); audio.play('block'); audio.play('crunch');
+          for(const o of [A.owner,B.owner]) if(o.stats) o.stats.shotsBlocked=(o.stats.shotsBlocked||0)+1;
+          break; } } }
+  }
   update(dt){
-    const g=this.game;
-    for(let k=this.proj.length-1;k>=0;k--){ const p=this.proj[k]; p.life-=dt; let dead=p.life<=0;
+    const g=this.game; this.collideProjectiles(dt);
+    for(let k=this.proj.length-1;k>=0;k--){ const p=this.proj[k]; p.life-=dt; let dead=p.life<=0||p.dead;
       for(const e of g.chars){ if(dead) break; if(e.team===p.owner.team||e.ko||e.bulwarkT<=0) continue; if(dist2(e.pos.x,e.pos.z,p.x,p.z)<BULWARK_R*BULWARK_R){ dead=true;
           g.fx.burst(new V3(p.x,0.7,p.z),[PAL.carrot,PAL.corn,PAL.white],6,2.5); audio.play('block'); } }
       const steps=2; for(let s=0;s<steps&&!dead;s++){ p.x+=p.vx*dt/steps; p.z+=p.vz*dt/steps;
         const i=tileOf(p.x), j=tileOf(p.z);
         if(g.arena.isBlocked(i,j)){ dead=true; const h=g.arena.hedgeAt(i,j); if(h) g.arena.damageHedge(h);
-          g.fx.burst(new V3(p.x,0.6,p.z),p.type==='kunai'?[PAL.carrot,PAL.carrotS]:[PAL.celery,PAL.mint],5,2); audio.play('crunch'); break; }
+          g.fx.burst(new V3(p.x,0.6,p.z),p.type==='kunai'?[PAL.potato,PAL.potatoS,PAL.white]:[PAL.celery,PAL.mint],5,2); audio.play('crunch'); break; }
         for(const e of g.chars){ if(e.team===p.owner.team||e.ko) continue; if(dist2(e.pos.x,e.pos.z,p.x,p.z)<0.3){
           const l=Math.hypot(p.vx,p.vz); g.damage(e,p.dmg,p.owner,new V3(p.vx/l,0,p.vz/l),p.knock,true,p.type); dead=true; break; } } }
-      p.mesh.position.x=p.x; p.mesh.position.z=p.z; if(p.type==='kunai') p.mesh.children[0].rotation.z+=dt*30; else p.mesh.rotation.x+=dt*10;
+      p.mesh.position.x=p.x; p.mesh.position.z=p.z; if(p.type==='kunai'){ p.mesh.children[0].rotation.x+=dt*18; p.mesh.children[0].rotation.z+=dt*7; } else p.mesh.rotation.x+=dt*10;
       if(dead){ scene.remove(p.mesh); this.proj.splice(k,1); } }
   }
   clear(){ for(const p of this.proj) scene.remove(p.mesh); this.proj=[]; }
@@ -1382,10 +1457,10 @@ class AIController {
    SECTION 12b — ACHIEVEMENTS (player knockouts, saved in localStorage)
    ===================================================================== */
 const WEAPON_ORDER=['sword','kunai','flail','staff','shield'];
-const WEAPON_CSS={sword:'#FF8A2B',kunai:'#FFB066',flail:'#B65AB7',staff:'#A6E36F',shield:'#F2A03D'};
+const WEAPON_CSS={sword:'#FF8A2B',kunai:'#D2A464',flail:'#B65AB7',staff:'#A6E36F',shield:'#F2A03D'};
 const ACH_TIERS={ // [goal, name, blurb] for 1, 10 and 25 knockouts with each weapon
   sword: [[1,'CARROT KNIGHT','Knighted on the spot.'],[10,'ROOT OF ALL EVIL','A sharp orange reputation.'],[25,'SIR LANCE-A-LOT','The Radish Council salutes you.']],
-  kunai: [[1,'BABY CARROT NINJA','Small, fast, rude.'],[10,'CARROT TOP SECRET','Nobody saw it coming.'],[25,'SHADOW OF THE PATCH','Thrown things, landed.']],
+  kunai: [[1,'SMALL FRY','Everybody starts somewhere.'],[10,'HOT POTATO','Too hot to handle. Literally thrown.'],[25,'TATER TERROR','Mash first, ask questions later.']],
   flail: [[1,'BEET DROP','Wait for it...'],[10,'BEET DOWN','Absolutely tenderized.'],[25,"CAN'T BEET THIS",'Stop. Beet time.']],
   staff: [[1,'STALK TALK','Celery says hello.'],[10,'STALK MARKET','Your stock is rising.'],[25,'GRAND CELERIAN','Archmage of the crudité platter.']],
   shield:[[1,'SQUASHED IT','Bonked with a gourd.'],[10,'GOURD OF HONOUR','The best offence is a pumpkin.'],[25,'PUMPKIN SPICE WALL','Seasonal. Unstoppable.']],
@@ -1459,7 +1534,7 @@ class HUD {
     this.sc=[$('sc0'),$('sc1')].map(el=>{ const ic=el.querySelector('.icons'); const icons=[]; for(let k=0;k<12;k++){ const i=document.createElement('i'); ic.appendChild(i); icons.push(i); }
       return {el,num:el.querySelector('.num span'),icons,bonus:el.querySelector('.bonus'),last:-1}; });
     this.timer=$('timer'); this.roundLabel=$('round-label'); this.banner=$('banner'); this.bannerT=0;
-    this.fill=$('energy-fill'); this.fillHi=$('energy-fill-hi');
+    this.fill=$('energy-fill'); this.enBox=$('energy'); this.enNum=$('en-num'); this.enCost=$('energy-cost');
   }
   setup(){
     const g=this.game, pl=g.player; $('pl-portrait').src=g.portraits[pl.key]; $('pframe').style.background=TEAM_CSS[pl.team];
@@ -1496,10 +1571,12 @@ class HUD {
     // hearts (half-heart resolution)
     const halves=Math.ceil(Math.max(0,pl.hp)/5);
     for(let k=0;k<8;k++){ const s=clamp(halves-k*2,0,2); if(this.hState[k]!==s){ this.hState[k]=s; this.hearts.children[k].innerHTML=heartSVG(s); } }
-    // carrot energy meter
-    const e=clamp(pl.energy,0,100)/100, w=(e*196).toFixed(1); if(this.fill._w!==w){ this.fill._w=w; this.fill.setAttribute('width',w); this.fillHi.setAttribute('width',(e*196*0.9).toFixed(1)); }
-    const W=pl.W; setText($('pl-weapon'),W.name+(pl.durability===Infinity?' ★':' · '+pl.durability+' LEFT'));
-    setText($('pl-special'),'R-CLICK '+W.spName+' · '+W.spCost);
+    // energy bar: plain fill, a number, and a gold marker at what the current special costs
+    const W=pl.W, en=Math.floor(clamp(pl.energy,0,100));
+    if(this.fill._w!==en){ this.fill._w=en; this.fill.style.width=en+'%'; setText(this.enNum,en+' / 100'); }
+    if(this.enCost._c!==W.spCost){ this.enCost._c=W.spCost; this.enCost.style.left='calc('+W.spCost+'% - 1px)'; }
+    const ready=en>=W.spCost; if(this.enBox._r!==ready){ this.enBox._r=ready; this.enBox.classList.toggle('ready',ready); } setText($('pl-weapon'),W.name+(pl.durability===Infinity?' ★':' · '+pl.durability+' LEFT'));
+    setText($('pl-special'),'R-CLICK '+W.spName+' · '+W.spCost+' ENERGY');
     setText($('pl-hedges'),'Q HEDGE '+pl.hedges.length+'/'+HEDGE_MAX+' · 20');
     // seed counters
     const pool=g.seeds.pool;
@@ -1522,6 +1599,122 @@ class HUD {
 }
 
 /* =====================================================================
+   SECTION 13b — INTERACTIVE TUTORIAL (title screen → learn by doing)
+   ===================================================================== */
+// Training partners: they stand still and face you; in the shield steps the Possum lobs celery at you.
+class TutDummy {
+  constructor(game,c){ this.game=game; this.c=c; this.shoot=false; this.t=1; }
+  reset(){}
+  update(dt){ const it=blankIntent(), c=this.c, p=this.game.player; if(c.ko||!p) return it;
+    it.aim=Math.atan2(p.pos.x-c.pos.x,p.pos.z-c.pos.z);
+    if(this.shoot){ this.t-=dt; if(this.t<=0 && Math.abs(angDiff(c.facing,it.aim))<0.2){ this.t=1.25; it.attack=true; } }
+    return it; }
+}
+const TUT_STEPS=[
+  {id:'move', n:'MOVE', d:'Walk with <b>W A S D</b> (or the arrow keys). Head for the glowing gold marker.'},
+  {id:'attack', n:'ATTACK', d:'Aim with the <b>mouse</b> and <b>left-click</b> to swing your Carrot Sword (hold to keep swinging). Bonk the training Goose 3 times.', goal:3, unit:'HITS'},
+  {id:'special', n:'SPECIAL MOVE', d:'<b>Right-click</b> for your weapon special. The Rabbit\'s <b>Lunge Slash</b> dashes forward. Specials cost <b>Energy</b>: the blue bar at the top left. The gold tick on it marks the cost.'},
+  {id:'dodge', n:'DODGE ROLL', d:'Press <b>SPACE</b> to dodge roll. You can\'t be hurt mid-roll. It recharges in 1.5 s.'},
+  {id:'seeds', n:'MAGIC SEEDS', d:'You\'re hurt! Walk over the glowing <b>magic seeds</b>. Each one heals <b>half a heart</b> and gives <b>+5 Energy</b>. Watch your hearts and the blue bar.', goal:4, unit:'SEEDS'},
+  {id:'surge', n:'SEED SURGE', d:'Every seed goes into your team\'s pot (top centre). Bank <b>12</b> for a <b>SEED SURGE</b>: faster running and attacks for 10 s. <b>Most surges wins the round.</b> Grab the last few!'},
+  {id:'hedge', n:'HEDGES', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
+  {id:'shield', n:'PICK UP A WEAPON', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
+  {id:'block', n:'BLOCK', d:'The Possum is throwing celery at you. <b>Face it</b> with the mouse: the shield blocks most damage from the <b>front</b>. Block 3 shots.', goal:3, unit:'BLOCKS'},
+  {id:'bulwark', n:'BULWARK', d:'<b>Right-click</b> for <b>Bulwark</b>: a dome that eats enemy shots and protects teammates standing inside it.'},
+  {id:'done', n:'YOU\'RE READY!', d:'Bonus tip: the Raccoon\'s <b>Potato Toss</b> knocks enemy shots out of the air. Matches are best of 3 rounds, 2:30 each. Now go eat your vegetables.'},
+];
+class Tutorial {
+  constructor(game){
+    this.game=game; this.i=-1;
+    this.marker=new THREE.Group(); scene.add(this.marker); this.marker.visible=false;
+    const ring=new THREE.Mesh(G('tutring',()=>new THREE.RingGeometry(0.42,0.56,28).rotateX(-Math.PI/2)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:1,transparent:true,opacity:0.9,depthWrite:false,side:THREE.DoubleSide}));
+    ring.position.y=0.22; this.marker.add(ring); this.ring=ring;
+    const beam=new THREE.Mesh(CYL(0.45,0.5,3,16,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.8,transparent:true,opacity:0.18,depthWrite:false,side:THREE.DoubleSide}));
+    beam.position.y=1.5; this.marker.add(beam);
+    const arrow=M(CONE(0.2,0.36,4),PAL.corn,0,2.2,0,this.marker,false,{emissive:0xFFC93C,emissiveIntensity:0.7}); arrow.rotation.x=Math.PI; this.arrow=arrow;
+    this.el={k:$('tut-k'),n:$('tut-n'),d:$('tut-d'),pr:$('tut-pr'),bar:$('tut-bar'),btns:$('tut-btns'),end:$('tut-end'),box:$('tut')};
+  }
+  get step(){ return TUT_STEPS[this.i]; }
+  begin(){ this.i=-1; this.el.box.classList.remove('hidden'); this.next(); }
+  hide(){ this.el.box.classList.add('hidden'); this.marker.visible=false; }
+  ch(key){ return this.game.chars.find(c=>c.key===key); }
+  place(c,x,z,shoot=false){ c.resetState(); c.spawnAt(x,z); c.controller.shoot=shoot; c.controller.t=1.2; }
+  park(c){ const far={goose:[6.8,6.8],possum:[7.0,5.6],raccoon:[-7.0,-5.8]}[c.key]; this.place(c,far[0],far[1]); }
+  setMarker(x,z){ this.marker.visible=true; this.marker.position.set(x,this.game.arena.heightAt(x,z),z); this.mx=x; this.mz=z; }
+  // a free spot about r units from the player, in plain view of them
+  openSpot(r){ const g=this.game, p=g.player.pos; let best=null;
+    for(let k=0;k<16;k++){ const a=k/16*Math.PI*2+0.3, x=clamp(p.x+Math.sin(a)*r,-7,7), z=clamp(p.z+Math.cos(a)*r,-7,7);
+      if(g.arena.blockedAt(x,z) || Math.hypot(x-p.x,z-p.z)<r*0.7) continue;
+      if(g.arena.los(p.x,p.z,x,z,0.3)){ best=[x,z]; break; } }
+    return best||[clamp(p.x+2.5,-7,7),clamp(p.z+2.5,-7,7)]; }
+  dropSeeds(n){ const g=this.game, ar=g.arena, p=g.player.pos; let made=0;
+    for(let k=0;k<40 && made<n;k++){ const a=k*2.399+rand(0,0.3), r=1.5+(k%3)*0.45, x=clamp(p.x+Math.sin(a)*r,-7.3,7.3), z=clamp(p.z+Math.cos(a)*r,-7.3,7.3);
+      if(ar.blockedAt(x,z)) continue; made++;
+      g.seeds.seeds.push({x,z,y:ar.heightAt(x,z)+1.2,tx:x,tz:z,state:'fly',vx:0,vz:0,vy:0,t:0,pick:0.3,ph:rand(0,6)}); }
+    g.fx.burst(new V3(p.x,1,p.z),[PAL.mint,PAL.white],8,3,3); audio.play('scatter'); }
+  next(){
+    const g=this.game, pl=g.player; this.i++; this.cnt=0; this.t=0; this.doneT=0; this.marker.visible=false;
+    const st=this.step, goose=this.ch('goose'), possum=this.ch('possum');
+    switch(st.id){
+      case 'move': this.park(goose); this.park(possum); this.park(this.ch('raccoon')); this.setMarker(-2.5,-4.6); break;
+      case 'attack': { this.place(goose,clamp(pl.pos.x+1.6,-7,7),clamp(pl.pos.z+1.4,-7,7)); break; }
+      case 'special': pl.energy=100; break;
+      case 'seeds': this.park(goose); pl.hp=Math.min(pl.hp,40); pl.energy=Math.min(pl.energy,30); this.base=pl.stats.seeds; this.dropSeeds(4); break;
+      case 'surge': g.seeds.pool[0]=Math.max(g.seeds.pool[0],9); this.dropSeeds(4); break;
+      case 'hedge': pl.energy=100; this.base=pl.stats.hedges; break;
+      case 'shield': { if(pl.weapon==='shield') pl.setWeapon(pl.sig); const p=g.arena.plots.filter(q=>q.type==='shield').sort((a,b)=>dist2(a.x,a.z,pl.pos.x,pl.pos.z)-dist2(b.x,b.z,pl.pos.x,pl.pos.z))[0];
+        p.stage=3; p.t=0; this.plot=p; this.setMarker(p.x,p.z); break; }
+      case 'block': { pl.energy=Math.min(pl.energy,20); const [x,z]=this.openSpot(4.6); this.place(possum,x,z,true); possum.controller.t=1.6; break; }
+      case 'bulwark': pl.energy=100; break;
+      case 'done': possum.controller.shoot=false; try{ localStorage.setItem('eyv-tutorial-done','1'); }catch(e){} audio.play('fanfare');
+        g.hud.showBanner('TUTORIAL COMPLETE<small>GO EAT YOUR VEGETABLES</small>',2.5); break;
+    }
+    this.render(true);
+  }
+  progressText(){ const st=this.step;
+    if(this.doneT>0) return '✓ NICE!';
+    if(st.goal) return st.unit+' '+Math.min(this.cnt,st.goal)+' / '+st.goal;
+    if(st.id==='surge') return 'TEAM POT '+this.game.seeds.pool[0]+' / 12';
+    return ''; }
+  render(isNew){ const e=this.el, st=this.step, last=this.i===TUT_STEPS.length-1;
+    e.k.textContent=last?'TUTORIAL':'TUTORIAL · STEP '+(this.i+1)+' / '+(TUT_STEPS.length-1);
+    e.n.textContent=st.n; e.d.innerHTML=st.d; this.renderProgress();
+    e.bar.style.width=(this.i/(TUT_STEPS.length-1)*100)+'%';
+    e.btns.classList.toggle('hidden',last); e.end.classList.toggle('hidden',!last);
+    if(isNew){ e.box.classList.remove('pop'); void e.box.offsetWidth; e.box.classList.add('pop'); } }
+  renderProgress(){ const t=this.progressText(); setText(this.el.pr,t); this.el.pr.classList.toggle('done',this.doneT>0); }
+  complete(){ if(this.doneT>0) return; this.doneT=1.1; audio.play('achieve'); const p=this.game.player.pos;
+    this.game.fx.burst(new V3(p.x,1.0,p.z),[PAL.corn,PAL.white,PAL.mint],14,3,3); }
+  onHit(t,src,bm){ const st=this.step, pl=this.game.player; if(!st||this.doneT>0) return;
+    if(st.id==='attack' && src===pl && t.key==='goose') this.cnt++;
+    if(st.id==='block' && t===pl && bm<=0.5) this.cnt++; }
+  onSpecial(c){ const st=this.step; if(c!==this.game.player||!st||this.doneT>0) return;
+    if(st.id==='special'||st.id==='bulwark') this.cnt++; }
+  update(dt){
+    const g=this.game, pl=g.player, st=this.step; if(!st) return; this.t+=dt;
+    if(this.marker.visible){ const k=(g.time*0.9)%1; this.ring.scale.setScalar(0.8+k*0.5); this.ring.material.opacity=0.95*(1-k*0.7); this.arrow.position.y=2.1+Math.sin(g.time*5)*0.15; this.arrow.rotation.y=g.time*2; }
+    if(this.doneT>0){ this.doneT-=dt; if(this.doneT<=0) this.next(); else this.renderProgress(); return; }
+    let ok=false;
+    switch(st.id){
+      case 'move': ok=dist2(pl.pos.x,pl.pos.z,this.mx,this.mz)<0.6; break;
+      case 'special': case 'bulwark': ok=this.cnt>=1 && (st.id==='special'||this.t>0.3); break;
+      case 'dodge': ok=pl.dodgeT>0; break;
+      case 'seeds': this.cnt=pl.stats.seeds-this.base; ok=this.cnt>=st.goal; if(!ok && !g.seeds.seeds.length) this.dropSeeds(st.goal-this.cnt); break;
+      case 'surge': ok=g.bonus[0]>=1; if(!ok && !g.seeds.seeds.length) this.dropSeeds(12-g.seeds.pool[0]); break;
+      case 'hedge': ok=pl.stats.hedges>this.base; if(pl.energy<HEDGE_COST) pl.energy=HEDGE_COST; break;
+      case 'shield': ok=pl.weapon==='shield'; if(this.plot.stage!==3 && !ok){ this.plot.stage=3; this.plot.t=0; } break;
+      case 'block': if(pl.energy>WEAPONS.shield.spCost-1) pl.energy=WEAPONS.shield.spCost-1; // save the Bulwark for the next step
+        if(pl.weapon!=='shield') pl.setWeapon('shield',12); ok=this.cnt>=st.goal; break;
+      case 'done': return;
+      default: ok=st.goal?this.cnt>=st.goal:false;
+    }
+    if(st.id==='bulwark' && pl.weapon!=='shield') pl.setWeapon('shield',12);
+    if(ok){ this.cnt=st.goal||1; this.complete(); }
+    this.renderProgress();
+  }
+}
+
+/* =====================================================================
    SECTION 14 — GAME (state machine, rounds, combat resolution, loop)
    ===================================================================== */
 class Game {
@@ -1533,6 +1726,8 @@ class Game {
     this.portraits=this.makePortraits();
     this.ach=new Achievements(); this.achOn=false;
     this.hud=new HUD(this); this.wins=[0,0]; this.bonus=[0,0]; this.round=1; this.roundTime=ROUND_TIME;
+    this.settings={shake:true}; try{ const d=JSON.parse(localStorage.getItem('eyv-settings-v1')||'{}'); if(d&&typeof d.shake==='boolean') this.settings.shake=d.shake; }catch(e){}
+    this.tutorial=new Tutorial(this); this.tut=null; this.spinV=0.12;
     this.placeTitleChars(); this.bindUI(); this.showScreen('title');
     this.fps=60; this.fpsAcc=0; this.fpsN=0;
   }
@@ -1547,15 +1742,22 @@ class Game {
   }
   placeTitleChars(){ this.chars.forEach((c,k)=>{ const a=k/4*Math.PI*2+0.4; c.resetState(); c.spawnAt(Math.cos(a)*2.2,Math.sin(a)*2.2); c.facing=Math.atan2(-c.pos.x,-c.pos.z); c.controller=null; c.isPlayer=false; }); }
   bindUI(){
-    const click=(id,fn)=>$(id).addEventListener('click',()=>{ audio.init(); audio.play('click'); fn(); });
+    const click=(id,fn)=>$(id).addEventListener('click',e=>{ e.currentTarget.blur(); audio.init(); audio.play('click'); fn(); });
     click('btn-play',()=>this.showScreen('select'));
+    click('btn-tutorial',()=>this.startTutorial());
+    click('btn-settings',()=>{ this.renderSettings(); this.showScreen('settings'); }); click('btn-settings-back',()=>this.showScreen('title'));
+    click('btn-set-shake',()=>{ this.settings.shake=!this.settings.shake; this.saveSettings(); this.renderSettings(); if(this.settings.shake) this.shakeA=0; });
+    click('btn-set-tips',()=>{ try{ if(this.tipsOn()) localStorage.setItem('eyv-tips-off','1'); else localStorage.removeItem('eyv-tips-off'); }catch(e){} this.renderSettings(); });
+    click('btn-tut-skip',()=>{ if(this.tut){ if(this.tut.step.id==='surge'&&this.bonus[0]<1) this.seedSurge(0); this.tut.next(); } });
+    click('btn-tut-quit',()=>this.toTitle()); click('btn-tut-title',()=>this.toTitle());
+    click('btn-tut-play',()=>{ this.toTitle(); this.showScreen('select'); });
     click('btn-diff',()=>{ const o=['easy','normal','hard']; this.difficulty=o[(o.indexOf(this.difficulty)+1)%3]; $('btn-diff').textContent='Difficulty: '+DIFF[this.difficulty].label; });
     click('btn-ach',()=>this.openAch('title')); click('btn-res-ach',()=>this.openAch('results'));
     click('btn-ach-back',()=>this.showScreen(this.achBack||'title'));
     click('btn-controls',()=>this.showScreen('controls')); click('btn-controls-back',()=>this.showScreen('title'));
     click('btn-select-back',()=>this.showScreen('title')); click('btn-fight',()=>this.beginMatch());
     click('btn-tips-go',()=>{ if($('tips-skip').checked){ try{ localStorage.setItem('eyv-tips-off','1'); }catch(e){} } this.startMatch(); });
-    click('btn-resume',()=>this.togglePause()); click('btn-restart',()=>{ this.paused=false; this.startMatch(); });
+    click('btn-resume',()=>this.togglePause()); click('btn-restart',()=>{ this.paused=false; if(this.tut) this.startTutorial(); else this.startMatch(); });
     click('btn-quit',()=>this.toTitle()); click('btn-rematch',()=>this.startMatch()); click('btn-res-title',()=>this.toTitle());
     const cards=$('cards');
     for(const k of CHAR_ORDER){ const d=CHARS[k], el=document.createElement('div'); el.className='card'+(k===this.choice?' sel':''); el.style.setProperty('--team',TEAM_CSS[d.team]); el.dataset.key=k;
@@ -1569,14 +1771,27 @@ class Game {
     });
     addEventListener('keydown',()=>audio.init(),{once:true});
   }
+  tipsOn(){ try{ return localStorage.getItem('eyv-tips-off')!=='1'; }catch(e){ return true; } }
+  saveSettings(){ try{ localStorage.setItem('eyv-settings-v1',JSON.stringify(this.settings)); }catch(e){} }
+  renderSettings(){
+    for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); } }
+  startTutorial(){ // learn-by-doing sandbox: you play the Rabbit, everyone else is a training partner
+    this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME;
+    this.player=this.chars.find(c=>c.key==='rabbit'); this.achOn=false; this.ach.startMatch();
+    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.controller=c.isPlayer?new Player(this,c):new TutDummy(this,c); }
+    this.weapons.clear(); this.seeds.reset(); this.seeds.spawnT=1e9; this.arena.resetForRound(); this.fx.clearFloats();
+    const idx=[0,0]; for(const c of this.chars){ c.resetState(); const s=SPAWNS[c.team][idx[c.team]++]; c.spawnAt(s[0],s[1]); }
+    this.tut=this.tutorial; this.hud.setup(); this.hud.show(true); $('hud').classList.add('tutorial');
+    this.state='playing'; this.camTarget.copy(this.player.pos); setView(11.5); this.tut.begin(); }
+  endTutorial(){ if(this.tut){ this.tut.hide(); this.tut=null; } $('hud').classList.remove('tutorial'); }
   openAch(from){ this.achBack=from; this.ach.render(); this.showScreen('achievements'); }
   beginMatch(){ // onboarding tips before the first fight (skippable, remembered)
     let off=this.autoplay; try{ off=off||localStorage.getItem('eyv-tips-off')==='1'; }catch(e){}
     if(off) this.startMatch(); else this.showScreen('tips'); }
-  showScreen(name){ for(const s of ['title','controls','select','pause','results','achievements','tips']) $(s).classList.toggle('hidden',s!==name); }
-  toTitle(){ this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.placeTitleChars(); this.showScreen('title'); }
+  showScreen(name){ this.screen=name; for(const s of ['title','controls','select','pause','results','achievements','tips','settings']) $(s).classList.toggle('hidden',s!==name); }
+  toTitle(){ this.endTutorial(); this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.placeTitleChars(); this.showScreen('title'); }
   startMatch(){
-    this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0];
+    this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0];
     this.player=this.chars.find(c=>c.key===this.choice);
     this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[];
@@ -1609,8 +1824,9 @@ class Game {
       if(bm<=0.5){ this.fx.float('BLOCK',new V3(t.pos.x,1.95,t.pos.z),'info',0.5); this.fx.burst(new V3(t.pos.x+dir.x*-0.4,0.7,t.pos.z+dir.z*-0.4),[PAL.carrot,PAL.corn],5,2.5,1.5,0.7); audio.play('block'); } } t.hp-=amount; t.flinch=0.25; t.lastAttacker=src; if(ranged) t.hurtRanged=1.5;
     t.kb.x+=dir.x*knock; t.kb.z+=dir.z*knock; src.energy=Math.min(100,src.energy+7); t.energy=Math.min(100,t.energy+2); src.stats.dmg+=amount;
     this.fx.float(String(amount),new V3(t.pos.x,1.5,t.pos.z),amount>=15?'big':'dmg');
-    this.fx.burst(new V3(t.pos.x,0.7,t.pos.z),[t.def.fur,PAL.white,WEAPONS[wtype].veg==='beet'?PAL.beet:WEAPONS[wtype].veg==='celery'?PAL.celery:PAL.carrot],10,4,3);
+    this.fx.burst(new V3(t.pos.x,0.7,t.pos.z),[t.def.fur,PAL.white,WEAPONS[wtype].veg==='beet'?PAL.beet:WEAPONS[wtype].veg==='celery'?PAL.celery:WEAPONS[wtype].veg==='potato'?PAL.potato:PAL.carrot],10,4,3);
     audio.play('hit'); audio.play('crunch'); this.hitstop=3; if(t.isPlayer||src.isPlayer) this.shake(t.isPlayer?0.22:0.12);
+    if(this.tut){ if(t.isPlayer) t.hp=Math.max(t.hp,10); else if(t.hp<=20) t.hp=MAX_HP; this.tut.onHit(t,src,bm); }
     const ko=t.hp<=0;
     const pool=this.seeds.pool[t.team];
     if(pool>0){ const n=Math.min(pool,ko?randi(3,4):randi(1,2)); this.seeds.pool[t.team]-=n; this.seeds.scatter(t,n); t.dropFlash=1.0; audio.play('scatter'); }
@@ -1647,7 +1863,7 @@ class Game {
     c.energy-=HEDGE_COST; this.arena.placeHedge(c,i,j); c.stats.hedges++; audio.play('hedge'); this.shake(0.06);
     this.fx.burst(new V3(tileC(i),0.3,tileC(j)),[PAL.loam,PAL.sprout,PAL.leaf],10,2.5,2); return true;
   }
-  shake(a){ this.shakeA=Math.max(this.shakeA,a); }
+  shake(a){ if(this.settings.shake) this.shakeA=Math.max(this.shakeA,a); }
   // ---- round flow ----
   endRound(){
     const b=this.bonus, pl=this.seeds.pool, k=this.teamKO; let w=-1, why='';
@@ -1687,8 +1903,9 @@ class Game {
       if(this.endT<=0) this.afterRound(); input.clearEdges(); return; }
     // playing
     if(this.hitstop>0){ this.hitstop--; this.fx.update(dt*0.2); return; }
-    this.roundTime-=dt; if(this.roundTime<=0){ this.roundTime=0; this.endRound(); return; }
-    if(this.roundTime<=10 && Math.ceil(this.roundTime)!==this.lastBeep){ this.lastBeep=Math.ceil(this.roundTime); audio.play('beep'); }
+    if(this.tut){ this.tut.update(dt); this.seeds.spawnT=1e9; }
+    else { this.roundTime-=dt; if(this.roundTime<=0){ this.roundTime=0; this.endRound(); return; } }
+    if(!this.tut && this.roundTime<=10 && Math.ceil(this.roundTime)!==this.lastBeep){ this.lastBeep=Math.ceil(this.roundTime); audio.play('beep'); }
     for(const c of this.chars){ const it=c.controller?c.controller.update(dt):blankIntent(); c.update(dt,it); c.energy=Math.min(100,c.energy+dt*4); if(c.invuln<=0) c.respawnGrace=false; }
     // soft character separation
     for(let a=0;a<4;a++) for(let b=a+1;b<4;b++){ const A=this.chars[a], B=this.chars[b]; if(A.ko||B.ko) continue; const dx=B.pos.x-A.pos.x, dz=B.pos.z-A.pos.z, d=Math.hypot(dx,dz);
@@ -1698,7 +1915,8 @@ class Game {
   render(dt){
     this.fpsAcc+=dt; this.fpsN++; if(this.fpsAcc>=0.5){ this.fps=this.fpsN/this.fpsAcc; this.fpsAcc=0; this.fpsN=0; setText($('fps'),Math.round(this.fps)+' FPS'); }
     if(this.state==='title'||this.state==='results'||(!this.player)){ // slowly orbit the garden
-      this.titleAng+=dt*0.12; setView(19); camera.position.set(Math.cos(this.titleAng)*20,17,Math.sin(this.titleAng)*20); camera.lookAt(0,0,0);
+      // orbit only on the bare title screen; ease to a stop whenever a menu or panel is open so text stays readable
+      this.spinV=lerp(this.spinV,this.screen==='title'?0.12:0,Math.min(1,dt*3)); this.titleAng+=dt*this.spinV; setView(19); camera.position.set(Math.cos(this.titleAng)*20,17,Math.sin(this.titleAng)*20); camera.lookAt(0,0,0);
     } else {
       const p=this.player.pos; this.camTarget.x=lerp(this.camTarget.x,p.x,Math.min(1,dt*5)); this.camTarget.z=lerp(this.camTarget.z,p.z,Math.min(1,dt*5));
       const lim=7; const tx=clamp(this.camTarget.x,-lim,lim), tz=clamp(this.camTarget.z,-lim,lim);
@@ -1715,7 +1933,7 @@ class Game {
    SECTION 15 — BOOT & MAIN LOOP (fixed timestep separated from rendering)
    ===================================================================== */
 resize();
-const game=new Game(); window.__game=game; window.__renderer=renderer;
+const game=new Game(); window.__game=game; window.__renderer=renderer; window.__cam=camera;
 $('loading').classList.add('hidden');
 let last=performance.now(), acc=0;
 function frame(now){
