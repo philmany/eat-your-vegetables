@@ -54,6 +54,11 @@
       are added (light count drives shader cost), so frame rate holds. COSMETICS: one per character, picked on the
       character select, purely visual, remembered per character in `eyv-cosmetics-v1`. The skull helmet is an
       original design (horned cranium, cracked brow, eye holes) and is Raccoon-only. AI critters roll a random one.
+  23. ONLINE PLAY (Nov 17): 1 human + bot vs 1 human + bot over the internet. Host gets a 4-digit code and an invite
+      link (?join=1234). Peer-to-peer via PeerJS (free cloud matchmaking, no accounts), per Philman. The host's browser
+      is authoritative; the guest sends inputs and draws 20 Hz snapshots ~0.1 s behind, predicts its own walking,
+      and sees the arena from the opposite corner. Online matches never pause, achievements are off, both bots
+      play at Normal. If the friend leaves mid-match a bot takes over. ?net=local tests with two tabs. See SECTION 14b.
 -->
 <html lang="en">
 <head>
@@ -273,6 +278,50 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #nightvig{position:fixed;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 45%,rgba(3,8,26,.6) 100%)}
 body.night #nightvig{display:block}
 @media (max-height:760px){ .card img{width:150px;margin:0 auto} .card{padding:10px 12px 12px} #select h2{font-size:42px} #select{gap:10px} }
+/* ---------- Online Play lobby ---------- */
+#online .panel{width:min(820px,94vw);max-height:94vh;overflow:auto;padding:22px 28px}
+#online .lead{font-size:15px;color:#C9CFDD;margin:-6px 0 16px;line-height:1.4}
+.on-menu{display:flex;flex-direction:column;gap:14px;align-items:center}
+.joinrow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;justify-content:center}
+#on-code{font-family:var(--num);font-size:40px;letter-spacing:12px;width:190px;text-align:center;padding:4px 0 0 12px;border:0;background:#11182A;color:var(--corn);
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);outline:none}
+#on-code::placeholder{color:#3A4560}
+.on-or{font-family:var(--num);font-size:20px;letter-spacing:4px;color:#9AA3B8}
+#on-err{min-height:22px;font-family:var(--num);font-size:22px;letter-spacing:1.5px;color:#FF8A6A;text-align:center}
+#on-kind{font-family:var(--num);font-size:16px;letter-spacing:2px;color:#7F89A3;text-align:center}
+.codebar{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.codebox{background:#11182A;padding:6px 22px 2px;text-align:center;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.codebox small{display:block;font-family:var(--num);font-size:16px;letter-spacing:3px;color:#9AA3B8;line-height:1}
+.codebox b{font-family:var(--num);font-size:58px;letter-spacing:14px;color:var(--corn);line-height:1;font-weight:600;padding-left:14px}
+.linkcol{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1 1 260px;max-width:420px}
+#on-link{font-family:var(--ui);font-size:13px;padding:9px 10px;border:0;background:#11182A;color:#C9CFDD;width:100%;outline:none;user-select:all;-webkit-user-select:all}
+.slots{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch;margin:6px 0 12px}
+.slot{background:#11182A;padding:10px 12px;display:flex;gap:12px;align-items:center;border-left:6px solid var(--team,#3A4560);min-height:96px;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)}
+.slot img{width:72px;height:72px;flex:none;background:var(--team,#2A3757)}
+.slot .who{font-family:var(--num);font-size:17px;letter-spacing:3px;color:#9AA3B8;line-height:1}
+.slot .nm{font-family:var(--display);font-size:24px;line-height:1.1;color:var(--white)}
+.slot .bot{font-size:12px;color:#9AA3B8;margin-top:2px}
+.slot .st{font-family:var(--num);font-size:20px;letter-spacing:2px;line-height:1;margin-top:4px;color:#9AA3B8}
+.slot .st.ok{color:#7CF08A}
+.slot.empty{justify-content:center;text-align:center;color:#9AA3B8;font-family:var(--num);font-size:20px;letter-spacing:2px}
+.slot.empty .dots::after{content:'';animation:dots 1.4s steps(4) infinite}
+@keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+.vs{font-family:var(--display);font-size:30px;color:var(--orange);align-self:center}
+.mcards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
+.mcard{width:108px;background:#11182A;padding:6px 6px 8px;cursor:pointer;text-align:center;border-bottom:5px solid var(--team);position:relative;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.mcard img{width:84px;height:84px;display:block;margin:0 auto;background:var(--team)}
+.mcard .nm{font-family:var(--num);font-size:19px;letter-spacing:2px;line-height:1.1;margin-top:4px}
+.mcard .wp{font-size:10px;color:#9AA3B8;letter-spacing:1px}
+.mcard.sel{background:#2A3757;outline:3px solid var(--corn);outline-offset:-3px}
+.mcard.off{opacity:.3;cursor:not-allowed;filter:grayscale(.8)}
+.mcard .tag{position:absolute;top:4px;left:4px;font-family:var(--num);font-size:13px;letter-spacing:1px;background:var(--corn);color:var(--navy);padding:1px 5px 0}
+.pickhint{font-family:var(--num);font-size:18px;letter-spacing:2px;color:#9AA3B8;text-align:center;margin-bottom:6px}
+#on-status{font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--mint);text-align:center;min-height:26px;margin:4px 0 10px}
+#net-ping{font-family:var(--num);font-size:17px;letter-spacing:2px;color:#C9CFDD;text-align:right;line-height:1;margin-top:2px}
+#net-ping.bad{color:#FF8A6A}
+@media (max-width:640px){ .slots{grid-template-columns:1fr} .vs{justify-self:center;font-size:22px} .codebox b{font-size:44px} .mcard{width:84px} .mcard img{width:64px;height:64px} }
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:30px;color:var(--navy);z-index:50;background:#1F3226;color:var(--white)}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
@@ -300,7 +349,7 @@ body.night #nightvig{display:block}
       <div class="sc" id="sc1" style="--team:var(--orange)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div></div>
     </div>
   </div>
-  <div id="hud-tr"><div id="timer">2:30</div><div id="round-label">ROUND 1</div><div id="wins"></div></div>
+  <div id="hud-tr"><div id="timer">2:30</div><div id="round-label">ROUND 1</div><div id="wins"></div><div id="net-ping" class="hidden"></div></div>
   <div id="hud-bc"></div>
   <div id="hint"></div>
   <div id="banner"></div>
@@ -319,9 +368,35 @@ body.night #nightvig{display:block}
   <h1>EAT YOUR<span>VEGETABLES</span></h1>
   <div class="tag">2 V 2 GARDEN BRAWL</div>
   <button class="btn" id="btn-play">Play</button>
+  <button class="btn" id="btn-online">Online Play</button>
   <button class="btn green" id="btn-tutorial">Tutorial</button>
   <button class="btn green" id="btn-diff">Difficulty: Normal</button>
   <div class="row"><button class="btn ghost small" id="btn-controls">Controls</button><button class="btn ghost small" id="btn-ach">Achievements</button><button class="btn ghost small" id="btn-settings">Settings</button></div>
+</div>
+<div id="online" class="screen dim hidden">
+  <div class="panel">
+    <h2>ONLINE PLAY</h2>
+    <div class="lead">You and a bot teammate vs. a friend and their bot. Host a game and send the code or link, or join a friend's game.</div>
+    <div id="on-menu" class="on-menu">
+      <button class="btn" id="btn-on-host">Host a game</button>
+      <div class="on-or">OR JOIN WITH A CODE</div>
+      <div class="joinrow"><input id="on-code" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="0000" autocomplete="off"><button class="btn green" id="btn-on-join" style="min-width:150px">Join</button></div>
+      <div id="on-err"></div>
+      <button class="btn ghost small" id="btn-on-back">Back</button>
+      <div id="on-kind"></div>
+    </div>
+    <div id="on-room" class="hidden">
+      <div class="codebar">
+        <div class="codebox"><small>ROOM CODE</small><b id="on-codeval">----</b></div>
+        <div class="linkcol"><input id="on-link" readonly><button class="btn small" id="btn-on-copy">Copy invite link</button></div>
+      </div>
+      <div class="slots"><div class="slot" id="slot-me"></div><div class="vs">VS</div><div class="slot" id="slot-them"></div></div>
+      <div class="pickhint" id="on-pickhint">PICK YOUR WARRIOR</div>
+      <div class="mcards" id="on-cards"></div>
+      <div id="on-status"></div>
+      <div class="row"><button class="btn ghost" id="btn-on-leave">Leave</button><button class="btn" id="btn-on-ready">Ready!</button></div>
+    </div>
+  </div>
 </div>
 <div id="settings" class="screen dim hidden">
   <div class="panel">
@@ -1086,7 +1161,7 @@ class Arena {
   }
   placeHedge(owner,i,j){
     const g=makeHedgeModel(this.root,tileC(i),tileC(j),true); g.scale.set(0.01,0.01,0.01);
-    const h={i,j,g,hp:3,owner,pop:0,shake:0}; this.hedges.push(h); this.blocked[j][i]=2; owner.hedges.push(h);
+    const h={i,j,g,hp:3,owner,pop:0,shake:0,id:this.hid=(this.hid||0)+1}; this.hedges.push(h); this.blocked[j][i]=2; owner.hedges.push(h);
     if(owner.hedges.length>HEDGE_MAX) this.removeHedge(owner.hedges[0],true);
     return h;
   }
@@ -1105,7 +1180,7 @@ class Arena {
     M(CYL(2,2,0.04,16),PAL.celery,0,0,0,g,false,{transparent:true,opacity:0.35,emissive:0x6DBA45,emissiveIntensity:0.4,depthWrite:false});
     M(CYL(2,2,0.25,16,true),PAL.mint,0,0.12,0,g,false,{transparent:true,opacity:0.3,emissive:0x5fe8b8,emissiveIntensity:0.6,side:THREE.DoubleSide,depthWrite:false});
     for(let k=0;k<8;k++){ const a=k/8*Math.PI*2; M(CONE(0.08,0.3,4),PAL.celeryS,Math.cos(a)*1.6,0.15,Math.sin(a)*1.6,g,false); }
-    scene.add(g); this.fields.push({x,z,team,t:4,mesh:g});
+    scene.add(g); const f={x,z,team,t:4,mesh:g,id:this.fid=(this.fid||0)+1}; this.fields.push(f); return f;
   }
   // Line of sight on the tile grid, with a little clearance on both sides.
   los(ax,az,bx,bz,clear=0.28){
@@ -1199,17 +1274,17 @@ class SeedSystem {
     this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:1,transparent:true,opacity:0.55,depthWrite:false});
     this.halo=new THREE.InstancedMesh(G('seedhalo',()=>new THREE.RingGeometry(0.16,0.3,16).rotateX(-Math.PI/2)),this.haloMat,this.max); this.halo.frustumCulled=false; scene.add(this.halo);
     this.pools=new THREE.InstancedMesh(POOL_GEO,glowMat(0x4FE0A0,0.42),this.max); this.pools.frustumCulled=false; this.pools.renderOrder=2; this.pools.visible=false; scene.add(this.pools);
-    this.reset();
+    this.sid=0; this.reset();
   }
   reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; this.render(0); }
   spawnBatch(){
     const free=this.max-this.seeds.length, n=Math.min(free,randi(3,4));
     for(let k=0;k<n;k++){ const a=rand(0,Math.PI*2), r=rand(0.35,1.3);
-      this.seeds.push({x:Math.cos(a)*0.1,z:Math.sin(a)*0.1,y:0.6,tx:Math.cos(a)*r,tz:Math.sin(a)*r,state:'rise',t:0,pick:0.35,ph:rand(0,6)}); }
+      this.seeds.push({x:Math.cos(a)*0.1,z:Math.sin(a)*0.1,y:0.6,tx:Math.cos(a)*r,tz:Math.sin(a)*r,state:'rise',t:0,pick:0.35,ph:rand(0,6),id:++this.sid}); }
   }
   scatter(c,n){ // drop n seeds from a character in little arcs
     for(let k=0;k<n;k++){ if(this.seeds.length>=this.max) break; const a=rand(0,Math.PI*2), s=rand(1.6,3.2);
-      this.seeds.push({x:c.pos.x,z:c.pos.z,y:0.8,vx:Math.cos(a)*s,vz:Math.sin(a)*s,vy:rand(4,5.5),state:'fly',t:0,pick:0.55,ph:rand(0,6)}); }
+      this.seeds.push({x:c.pos.x,z:c.pos.z,y:0.8,vx:Math.cos(a)*s,vz:Math.sin(a)*s,vy:rand(4,5.5),state:'fly',t:0,pick:0.55,ph:rand(0,6),id:++this.sid}); }
   }
   update(dt,time,active){
     if(active){ this.spawnT-=dt; if(this.spawnT<=0){ this.spawnT=10; this.spawnBatch(); } }
@@ -1387,6 +1462,11 @@ class Character {
 /* =====================================================================
    SECTION 11 — WEAPON SYSTEM (basic attacks, specials, projectiles)
    ===================================================================== */
+function projMesh(type){ // thrown potato or celery bolt (also used by Online Play guests to draw the host's shots)
+  let mesh; if(type==='kunai'){ mesh=makeWeapon('kunai'); mesh.rotation.set(0,0,0); const w=new THREE.Group(); w.add(mesh); mesh=w; }
+  else { mesh=new THREE.Group(); M(ICO(0.16,0),PAL.celery,0,0,0,mesh,true,{emissive:0x6DE07A,emissiveIntensity:0.7}); M(ICO(0.09,0),PAL.mint,0,0,-0.2,mesh,false,{emissive:0x9FF0D0,emissiveIntensity:0.9}); }
+  return mesh;
+}
 class Weapon {
   constructor(game){ this.game=game; this.proj=[]; }
   basic(c){
@@ -1402,7 +1482,7 @@ class Weapon {
   }
   special(c,target){
     const W=c.W, g=this.game;
-    if(c.energy<W.spCost || c.spinT>0 || c.pending){ if(c.isPlayer){ audio.play('deny'); g.fx.float('NEED ENERGY',new V3(c.pos.x,1.8,c.pos.z),'info',0.6);} return false; }
+    if(c.energy<W.spCost || c.spinT>0 || c.pending){ g.personal(c,()=>{ audio.play('deny'); g.fx.float('NEED ENERGY',new V3(c.pos.x,1.8,c.pos.z),'info',0.6); }); return false; }
     c.energy-=W.spCost; audio.play('special'); c.atkKind=c.weapon; c.atkAnim=c.atkDur=0.3;
     if(c.weapon==='sword'){ c.lungeT=0.22; c.lungeHit=new Set(); c.invuln=Math.max(c.invuln,0.15); audio.play('swing'); }
     else if(c.weapon==='kunai'){ for(const o of [-0.26,0,0.26]) this.fire(c,c.facing+o,'kunai'); audio.play('throw'); }
@@ -1430,10 +1510,9 @@ class Weapon {
     if(c.weapon==='flail'){ this.game.shake(0.12); c.squash=0.15; } }
   fire(c,a,type){
     const W=WEAPONS[type], fx=Math.sin(a), fz=Math.cos(a);
-    let mesh; if(type==='kunai'){ mesh=makeWeapon('kunai'); mesh.rotation.set(0,0,0); const w=new THREE.Group(); w.add(mesh); mesh=w; }
-    else { mesh=new THREE.Group(); M(ICO(0.16,0),PAL.celery,0,0,0,mesh,true,{emissive:0x6DE07A,emissiveIntensity:0.7}); M(ICO(0.09,0),PAL.mint,0,0,-0.2,mesh,false,{emissive:0x9FF0D0,emissiveIntensity:0.9}); }
+    const mesh=projMesh(type);
     mesh.position.set(c.pos.x+fx*0.45,c.pos.y+0.62,c.pos.z+fz*0.45); mesh.rotation.y=a; scene.add(mesh);
-    this.proj.push({mesh,x:mesh.position.x,z:mesh.position.z,vx:fx*W.speed,vz:fz*W.speed,life:W.life,owner:c,dmg:W.dmg*(c.weapon===type&&c.sig===type?1.1:1)*(type===c.weapon?1:1),knock:W.knock,type});
+    this.proj.push({id:this.pid=(this.pid||0)+1,mesh,x:mesh.position.x,z:mesh.position.z,vx:fx*W.speed,vz:fz*W.speed,life:W.life,owner:c,dmg:W.dmg*(c.weapon===type&&c.sig===type?1.1:1)*(type===c.weapon?1:1),knock:W.knock,type});
   }
   // Potatoes knock enemy shots out of the air. Uses closest approach over this step so fast head-on pairs can't tunnel.
   collideProjectiles(dt){
@@ -1475,17 +1554,19 @@ class Player {
   constructor(game,c){ this.game=game; this.c=c; this.lastAim=0; this.padAiming=false; }
   update(){
     const it=blankIntent(), k=input.keys, c=this.c;
+    if(this.game.online && this.game.screen==='pause'){ input.clearEdges(); return it; } // online never pauses; the menu just eats input
     let sx=(k.has('KeyD')||k.has('ArrowRight')?1:0)-(k.has('KeyA')||k.has('ArrowLeft')?1:0);
     let sy=(k.has('KeyW')||k.has('ArrowUp')?1:0)-(k.has('KeyS')||k.has('ArrowDown')?1:0);
     // gamepad (optional)
     const pad=input.pad(); let padAtk=false,padSp=false,padDodge=false,padPick=false,padHedge=false;
     if(pad){ const ax=pad.axes, b=i=>pad.buttons[i]&&pad.buttons[i].pressed, prev=input.padPrev, edge=i=>b(i)&&!prev[i];
       if(Math.hypot(ax[0],ax[1])>0.25){ sx=ax[0]; sy=-ax[1]; }
-      if(Math.hypot(ax[2]||0,ax[3]||0)>0.35){ const rx=ax[2], ry=-ax[3]; this.lastAim=Math.atan2((rx-ry)/Math.SQRT2,(-rx-ry)/Math.SQRT2); this.padAiming=true; }
+      if(Math.hypot(ax[2]||0,ax[3]||0)>0.35){ const rx=ax[2], ry=-ax[3]; this.lastAim=Math.atan2(this.game.view*(rx-ry)/Math.SQRT2,this.game.view*(-rx-ry)/Math.SQRT2); this.padAiming=true; }
       padAtk=b(7); padSp=edge(6)||edge(5); padDodge=edge(0); padPick=edge(2); padHedge=edge(3); if(edge(9)) this.game.togglePause();
       input.padPrev=pad.buttons.map(x=>x.pressed); }
     // screen axes → world: right=(1,0,-1)/√2, up=(-1,0,-1)/√2
-    let mx=(sx-sy)/Math.SQRT2, mz=(-sx-sy)/Math.SQRT2; const L=Math.hypot(mx,mz); if(L>1){ mx/=L; mz/=L; }
+    // an Online Play guest looks at the arena from the opposite corner (view -1), so screen directions flip
+    const V=this.game.view; let mx=V*(sx-sy)/Math.SQRT2, mz=V*(-sx-sy)/Math.SQRT2; const L=Math.hypot(mx,mz); if(L>1){ mx/=L; mz/=L; }
     it.mx=mx; it.mz=mz;
     // mouse aim projected to the ground
     _ndc.set(input.mouse.x/innerWidth*2-1,-(input.mouse.y/innerHeight)*2+1); raycaster.setFromCamera(_ndc,camera);
@@ -1898,10 +1979,11 @@ class Game {
     this.portraits=this.makePortraits();
     this.ach=new Achievements(); this.achOn=false;
     this.hud=new HUD(this); this.wins=[0,0]; this.bonus=[0,0]; this.round=1; this.roundTime=ROUND_TIME;
+    this.view=1; this.net=null;
     this.settings={shake:true,night:false}; try{ const d=JSON.parse(localStorage.getItem('eyv-settings-v1')||'{}'); if(d&&typeof d.shake==='boolean') this.settings.shake=d.shake; if(d&&typeof d.night==='boolean') this.settings.night=d.night; }catch(e){}
     this.applyNight();
     this.tutorial=new Tutorial(this); this.tut=null; this.spinV=0.12;
-    this.placeTitleChars(); this.bindUI(); this.showScreen('title');
+    this.placeTitleChars(); this.bindUI(); this.net=new Online(this); this.showScreen('title');
     this.fps=60; this.fpsAcc=0; this.fpsN=0;
   }
   makePortraits(){ // render each critter's head with a tiny second renderer → data URL (no image files)
@@ -1916,7 +1998,7 @@ class Game {
   // ---- night mode: swap sun for moon, cool the sky light, switch on light pools and fireflies ----
   applyNight(){ const n=!!this.settings.night, L=n?SKY.night:SKY.day; NIGHT.on=n;
     scene.background.setHex(L.bg); hemi.color.setHex(L.sky); hemi.groundColor.setHex(L.gnd); hemi.intensity=L.hi;
-    sun.color.setHex(L.sun); sun.intensity=L.si; sun.position.set(...L.pos);
+    sun.color.setHex(L.sun); sun.intensity=L.si; sun.position.set(L.pos[0]*this.view,L.pos[1],L.pos[2]*this.view);
     for(const m of NIGHT.pools) m.visible=n; this.arena.ff.visible=n; document.body.classList.toggle('night',n); }
   // ---- cosmetics ----
   saveCosmetics(){ try{ localStorage.setItem('eyv-cosmetics-v1',JSON.stringify(this.cosmetics)); }catch(e){} }
@@ -1949,6 +2031,7 @@ class Game {
   bindUI(){
     const click=(id,fn)=>$(id).addEventListener('click',e=>{ e.currentTarget.blur(); audio.init(); audio.play('click'); fn(); });
     click('btn-play',()=>{ this.showScreen('select'); this.renderCosmetics(); });
+    click('btn-online',()=>this.net.openMenu());
     click('btn-set-night',()=>{ this.settings.night=!this.settings.night; this.saveSettings(); this.applyNight(); this.renderSettings(); });
     click('btn-tutorial',()=>this.startTutorial());
     click('btn-settings',()=>{ this.renderSettings(); this.showScreen('settings'); }); click('btn-settings-back',()=>this.showScreen('title'));
@@ -1964,7 +2047,7 @@ class Game {
     click('btn-select-back',()=>this.showScreen('title')); click('btn-fight',()=>this.beginMatch());
     click('btn-tips-go',()=>{ if($('tips-skip').checked){ try{ localStorage.setItem('eyv-tips-off','1'); }catch(e){} } this.startMatch(); });
     click('btn-resume',()=>this.togglePause()); click('btn-restart',()=>{ this.paused=false; if(this.tut) this.startTutorial(); else this.startMatch(); });
-    click('btn-quit',()=>this.toTitle()); click('btn-rematch',()=>this.startMatch()); click('btn-res-title',()=>this.toTitle());
+    click('btn-quit',()=>this.toTitle()); click('btn-rematch',()=>{ if(this.net.t) this.net.backToLobby(); else this.startMatch(); }); click('btn-res-title',()=>this.toTitle());
     const cards=$('cards');
     for(const k of CHAR_ORDER){ const d=CHARS[k], el=document.createElement('div'); el.className='card'+(k===this.choice?' sel':''); el.style.setProperty('--team',TEAM_CSS[d.team]); el.dataset.key=k;
       el.innerHTML=`<img src="${this.portraits[k]}" alt=""><div class="nm">${d.name}</div><div class="tm">${TEAM_NAME[d.team]}</div><div class="wp">${WEAPONS[d.weapon].name}</div><div class="bl">${d.blurb}</div>`;
@@ -1994,8 +2077,24 @@ class Game {
   beginMatch(){ // onboarding tips before the first fight (skippable, remembered)
     let off=this.autoplay; try{ off=off||localStorage.getItem('eyv-tips-off')==='1'; }catch(e){}
     if(off) this.startMatch(); else this.showScreen('tips'); }
-  showScreen(name){ this.screen=name; for(const s of ['title','controls','select','pause','results','achievements','tips','settings']) $(s).classList.toggle('hidden',s!==name); }
-  toTitle(){ this.endTutorial(); this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.placeTitleChars(); this.showScreen('title'); }
+  showScreen(name){ this.screen=name; for(const s of ['title','controls','select','pause','results','achievements','tips','settings','online']) $(s).classList.toggle('hidden',s!==name); }
+  toTitle(){ if(this.net) this.net.leave(); this.resetScene(); this.showScreen('title'); }
+  resetScene(){ // back to the orbiting title garden (also used between Online Play matches)
+    this.endTutorial(); this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); $('net-ping').classList.add('hidden');
+    if(this.view!==1){ this.view=1; this.applyNight(); } for(const c of this.chars) c.remote=false;
+    this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.placeTitleChars(); }
+  get online(){ return !!(this.net&&this.net.inMatch); }
+  // Online Play: the host runs the real match; the guest (role 'guest') only draws snapshots, from the mirrored side.
+  startOnline(cfg,role){
+    this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0];
+    this.player=this.chars.find(c=>c.key===(role==='host'?cfg.host:cfg.guest));
+    this.view=role==='guest'?-1:1; this.applyNight(); this.achOn=false; this.ach.startMatch();
+    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.remote=role==='host'&&c.key===cfg.guest; c.hedges=[]; c.setCosmetic(cfg.cos[c.key]||'none');
+      c.controller=role!=='host'?null:c.isPlayer?new Player(this,c):c.remote?new RemoteController(this,c):new AIController(this,c,'normal'); }
+    this.hud.setup(); this.hud.show(true); $('net-ping').classList.remove('hidden'); this.startRound();
+  }
+  // Run feedback meant for one human only: shown here if c is this browser's player, sent to the guest if c is theirs.
+  personal(c,fn){ const m=c.isPlayer?'local':c.remote?'remote':null; if(!m) return; NET.mode=m; try{ fn(); } finally { NET.mode='both'; } }
   startMatch(){
     this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0];
     this.player=this.chars.find(c=>c.key===this.choice);
@@ -2012,6 +2111,9 @@ class Game {
     this.state='countdown'; this.cdT=0; this.cdStep=-1; this.camTarget.copy(this.player.pos); setView(11.5);
   }
   togglePause(){
+    if(this.online){ if(this.state==='title'||this.state==='results') return; // the match can't stop for one player: just show the menu
+      const on=this.screen!=='pause'; this.showScreen(on?'pause':null); $('btn-restart').classList.toggle('hidden',on); $('btn-quit').textContent=on?'Leave match':'Quit to Title'; input.keys.clear(); input.mouse.l=false; return; }
+    $('btn-restart').classList.remove('hidden'); $('btn-quit').textContent='Quit to Title';
     if(this.state!=='playing'&&this.state!=='countdown'&&!this.paused) return;
     this.paused=!this.paused; this.showScreen(this.paused?'pause':null); input.keys.clear(); input.mouse.l=false;
   }
@@ -2032,7 +2134,7 @@ class Game {
     t.kb.x+=dir.x*knock; t.kb.z+=dir.z*knock; src.energy=Math.min(100,src.energy+7); t.energy=Math.min(100,t.energy+2); src.stats.dmg+=amount;
     this.fx.float(String(amount),new V3(t.pos.x,1.5,t.pos.z),amount>=15?'big':'dmg');
     this.fx.burst(new V3(t.pos.x,0.7,t.pos.z),[t.def.fur,PAL.white,WEAPONS[wtype].veg==='beet'?PAL.beet:WEAPONS[wtype].veg==='celery'?PAL.celery:WEAPONS[wtype].veg==='potato'?PAL.potato:PAL.carrot],10,4,3);
-    audio.play('hit'); audio.play('crunch'); this.hitstop=3; if(t.isPlayer||src.isPlayer) this.shake(t.isPlayer?0.22:0.12);
+    audio.play('hit'); audio.play('crunch'); this.hitstop=3; this.personal(t,()=>this.shake(0.22)); this.personal(src,()=>this.shake(0.12));
     if(this.tut){ if(t.isPlayer) t.hp=Math.max(t.hp,10); else if(t.hp<=20) t.hp=MAX_HP; this.tut.onHit(t,src,bm); }
     const ko=t.hp<=0;
     const pool=this.seeds.pool[t.team];
@@ -2044,7 +2146,7 @@ class Game {
     t.ko=true; t.hp=0; t.respawnT=RESPAWN; t.pending=null; t.spinT=0; t.lungeT=0; t.dodgeT=0; t.bulwarkT=0; src.stats.ko++; t.stats.deaths++; this.teamKO[src.team]++;
     audio.play('ko'); this.fx.burst(new V3(t.pos.x,0.6,t.pos.z),[t.def.fur,PAL.corn,PAL.white],22,6,5); this.hitstop=6; this.shake(0.3);
     this.fx.float('K.O.!',new V3(t.pos.x,2.0,t.pos.z),'big',1.2);
-    if(t.isPlayer) this.hud.showBanner('KNOCKED OUT<small>BACK IN 4 SECONDS</small>',1.6);
+    this.personal(t,()=>this.hud.showBanner('KNOCKED OUT<small>BACK IN 4 SECONDS</small>',1.6));
     if(this.achOn) this.ach.onKO(t,src,wtype,this);
   }
   respawn(c){
@@ -2065,8 +2167,8 @@ class Game {
   }
   tryHedge(c){
     const fx=Math.sin(c.facing), fz=Math.cos(c.facing), i=tileOf(c.pos.x+fx*1.0), j=tileOf(c.pos.z+fz*1.0);
-    if(c.energy<HEDGE_COST){ if(c.isPlayer){ audio.play('deny'); this.fx.float('NEED ENERGY',new V3(c.pos.x,1.8,c.pos.z),'info',0.6);} return false; }
-    if(!this.arena.canPlaceHedge(i,j)){ if(c.isPlayer){ audio.play('deny'); this.fx.float("CAN'T PLANT",new V3(c.pos.x,1.8,c.pos.z),'info',0.6);} return false; }
+    if(c.energy<HEDGE_COST){ this.personal(c,()=>{ audio.play('deny'); this.fx.float('NEED ENERGY',new V3(c.pos.x,1.8,c.pos.z),'info',0.6); }); return false; }
+    if(!this.arena.canPlaceHedge(i,j)){ this.personal(c,()=>{ audio.play('deny'); this.fx.float("CAN'T PLANT",new V3(c.pos.x,1.8,c.pos.z),'info',0.6); }); return false; }
     c.energy-=HEDGE_COST; this.arena.placeHedge(c,i,j); c.stats.hedges++; audio.play('hedge'); this.shake(0.06);
     this.fx.burst(new V3(tileC(i),0.3,tileC(j)),[PAL.loam,PAL.sprout,PAL.leaf],10,2.5,2); return true;
   }
@@ -2078,7 +2180,7 @@ class Game {
     if(w>=0) this.wins[w]++; this.hud.renderWins();
     this.state='roundEnd'; this.endT=3.2; this.weapons.clear();
     this.hud.showBanner(w<0?'DRAW ROUND<small>DEAD EVEN</small>':`<span style="color:${w?'#F28A2A':'#6CC24A'}">${TEAM_NAME[w]}</span> TAKES ROUND ${this.round}<small>${why}</small>`,3);
-    audio.play(w===this.player.team?'win':'ko');
+    for(const c of this.chars) this.personal(c,()=>audio.play(w===c.team?'win':'ko'));
   }
   afterRound(){
     if(this.wins[0]>=2||this.wins[1]>=2||this.round>=5) this.showResults();
@@ -2091,13 +2193,15 @@ class Game {
     setText($('res-sub'),w<0?'NOBODY EATS TONIGHT':(w===this.player.team?'YOU WIN! ':'YOU LOSE. ')+this.wins[0]+' – '+this.wins[1]+' ROUNDS');
     let h='<tr><th></th><th>KNOCKOUTS</th><th>SEEDS</th><th>HEDGES</th><th>DAMAGE</th><th>BLOCKED</th></tr>';
     for(const c of this.chars) h+=`<tr style="--team:${TEAM_CSS[c.team]}"><td><img src="${this.portraits[c.key]}" alt="">${c.def.name}${c.isPlayer?' <span style="color:#FFC93C">(YOU)</span>':''}</td><td>${c.stats.ko}</td><td>${c.stats.seeds}</td><td>${c.stats.hedges}</td><td>${c.stats.dmg}</td><td>${c.stats.blocked}</td></tr>`;
-    $('res-table').innerHTML=h; audio.play(w===this.player.team?'win':'ko');
+    $('res-table').innerHTML=h; audio.play(w===this.player.team?'win':'ko'); $('btn-rematch').textContent=this.net&&this.net.t?'Back to lobby':'Rematch';
+    if(this.net&&this.net.role==='host'&&this.net.inMatch) this.net.hostResults();
     if(this.achOn) this.ach.onMatchEnd(w===this.player.team);
     setText($('res-new'),this.ach.newThisMatch.length?'NEW ACHIEVEMENTS: '+this.ach.newThisMatch.join(' · '):'');
   }
   // ---- fixed-timestep simulation ----
   fixedUpdate(dt){
     this.time+=dt;
+    if(this.net&&this.net.inMatch){ if(this.net.role==='guest'){ this.net.guestTick(dt); input.clearEdges(); return; } this.net.hostTick(); }
     if(this.paused){ input.clearEdges(); return; }
     if(this.state==='title'||this.state==='results'){
       this.arena.update(dt,this.time); this.seeds.update(dt,this.time,false); for(const c of this.chars){ c.vel.set(0,0,0); c.animate(dt); } this.fx.update(dt); input.clearEdges(); return; }
@@ -2127,7 +2231,7 @@ class Game {
     } else {
       const p=this.player.pos; this.camTarget.x=lerp(this.camTarget.x,p.x,Math.min(1,dt*5)); this.camTarget.z=lerp(this.camTarget.z,p.z,Math.min(1,dt*5));
       const lim=7; const tx=clamp(this.camTarget.x,-lim,lim), tz=clamp(this.camTarget.z,-lim,lim);
-      camera.position.set(tx+CAM_OFF.x,CAM_OFF.y,tz+CAM_OFF.z); camera.lookAt(tx,0,tz);
+      camera.position.set(tx+CAM_OFF.x*this.view,CAM_OFF.y,tz+CAM_OFF.z*this.view); camera.lookAt(tx,0,tz);
       if(this.shakeA>0.001){ camera.position.x+=rand(-1,1)*this.shakeA; camera.position.y+=rand(-1,1)*this.shakeA; camera.position.z+=rand(-1,1)*this.shakeA; this.shakeA*=Math.exp(-dt*14); }
     }
     renderer.render(scene,camera);
@@ -2138,19 +2242,405 @@ class Game {
 }
 
 /* =====================================================================
+   SECTION 14b — ONLINE PLAY (1 human + bot vs 1 human + bot)
+   ---------------------------------------------------------------------
+   How it works, in plain terms:
+   - The HOST's browser runs the real match (physics, hits, bots), exactly like single player.
+   - The GUEST's browser sends only its controls (60 per second, two per message) and draws what the host
+     sends back: a "snapshot" of the whole arena 20 times a second. The guest draws ~0.1 s in the past and
+     blends between snapshots so motion looks smooth.
+   - So the guest's own walking feels instant, the guest predicts its own movement locally and gently
+     corrects toward where the host says it really is.
+   - Hits, sounds, banners and particles are recorded on the host and replayed on the guest at the same moment.
+   - The guest sees the arena from the opposite corner, so both players have their base at the bottom.
+   - How the two browsers reach each other is a swappable "transport", so the server can change without
+     touching the game:
+       p2p   (default) PeerJS. A free public matchmaking server introduces the two browsers, then they talk
+             directly. No accounts. A few strict networks (some offices/schools) block direct links.
+       relay (future hook, not deployed) Any WebSocket relay that speaks the small protocol in RelayTransport.
+             Works on every network and is the path to bigger rooms. Turn on with NET_CFG.relay (or ?relay=wss://...).
+       local Two tabs of the same browser on one computer (?net=local). For testing without the internet.
+   - Rooms have guest slots (NET_CFG.maxGuests) so more players can be added later; today the lobby is 1v1.
+   ===================================================================== */
+const NET_PROTO=1, SNAP_EVERY=3, INTERP=0.11, NET_TIMEOUT=8;
+const NET_CFG={
+  relay:'',          // optional future relay server address (wss://...). Empty = peer-to-peer.
+  peer:{debug:0},    // PeerJS options (default: free PeerJS cloud server + public STUN)
+  maxGuests:1,       // one friend per room for now (1+bot vs 1+bot)
+};
+const NET={mode:'both', rec:null}; // mode: 'both' | 'local' (only this screen) | 'remote' (only the guest's screen)
+
+class Transport { // every transport: open(role,code) → Promise, send(msg,to?), kick(id), close(); events msg/join/leave
+  constructor(){ this.h={msg(){},join(){},leave(){}}; this.id=Math.random().toString(36).slice(2,10); }
+  on(ev,fn){ this.h[ev]=fn; return this; }
+}
+const netErr=(code,msg)=>Object.assign(new Error(msg),{code});
+// Two tabs, one browser: BroadcastChannel. Great for testing; no internet needed.
+class LocalTransport extends Transport {
+  constructor(){ super(); this.kind='local'; this.peers=new Set(); }
+  open(role,code){ this.role=role;
+    return new Promise((res,rej)=>{
+      const bc=this.bc=new BroadcastChannel('eyv-room-'+code); let done=false, taken=false;
+      this.post=(k,to,m)=>{ try{ bc.postMessage({k,from:this.id,to,m}); }catch(e){} };
+      bc.onmessage=e=>{ const d=e.data; if(!d||d.from===this.id||(d.to&&d.to!==this.id)) return;
+        if(role==='host'){
+          if(d.k==='exists'){ taken=true; return; }
+          if(d.k==='probe'){ if(done) this.post('exists',d.from); return; }
+          if(d.k==='hello'){ if(!this.peers.has(d.from)){ this.peers.add(d.from); this.h.join(d.from); } this.post('welcome',d.from); return; }
+          if(!this.peers.has(d.from)) return;
+          if(d.k==='bye'){ this.peers.delete(d.from); this.h.leave(d.from); return; }
+          if(d.k==='m') this.h.msg(d.m,d.from);
+        } else {
+          if(d.k==='welcome'&&!done){ done=true; this.host=d.from; res(); return; }
+          if(d.from!==this.host) return;
+          if(d.k==='bye'){ this.h.leave('host'); return; }
+          if(d.k==='m') this.h.msg(d.m,'host');
+        } };
+      if(role==='host'){ this.post('probe'); setTimeout(()=>{ if(taken){ bc.close(); this.bc=null; rej(netErr('taken','Code in use')); } else { done=true; res(); } },300); }
+      else { this.post('hello'); setTimeout(()=>{ if(!done){ bc.close(); this.bc=null; rej(netErr('nohost','No game found with that code')); } },3000); }
+    });
+  }
+  send(m,to){ if(!this.bc) return; if(this.role==='host'){ if(to) this.post('m',to,m); else for(const p of this.peers) this.post('m',p,m); } else this.post('m',this.host,m); }
+  kick(id){ if(this.bc) this.post('bye',id); this.peers.delete(id); }
+  close(){ if(!this.bc) return; this.post('bye'); this.bc.close(); this.bc=null; }
+}
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(netErr('net','Could not load the online library. Check your connection.')); document.head.appendChild(s); }); }
+// Peer-to-peer: PeerJS's free cloud server introduces the browsers, then they talk directly (WebRTC data channel).
+class PeerTransport extends Transport {
+  constructor(){ super(); this.kind='p2p'; this.conns=new Map(); }
+  opts(){ const q=new URLSearchParams(location.search), o={...NET_CFG.peer}; // ?peerhost= lets us test against our own PeerJS server
+    if(q.get('peerhost')){ o.host=q.get('peerhost'); o.port=+(q.get('peerport')||443); o.path=q.get('peerpath')||'/'; o.secure=q.get('peersecure')!=='0'; } return o; }
+  async open(role,code){ this.role=role;
+    if(!window.Peer) await loadScript('https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js');
+    const PID='eyv-v'+NET_PROTO+'-'+code;
+    return new Promise((res,rej)=>{ let done=false;
+      const fail=(c,msg)=>{ if(done) return; done=true; clearTimeout(timer); try{ this.peer.destroy(); }catch(e){} this.peer=null; rej(netErr(c,msg)); };
+      const timer=setTimeout(()=>fail('timeout',role==='host'?"Couldn't reach the matchmaking server. Try again.":"Couldn't connect to that game. Check the code and try again."),15000);
+      const p=this.peer=role==='host'?new Peer(PID,this.opts()):new Peer(this.opts());
+      p.on('error',e=>{ if(e.type==='unavailable-id') fail('taken','Code in use'); else if(e.type==='peer-unavailable') fail('nohost','No game found with that code');
+        else if(!done) fail('net',"Couldn't reach the matchmaking server ("+e.type+')'); else console.warn('[net]',e.type); });
+      p.on('disconnected',()=>{ if(done&&this.peer===p&&!p.destroyed) setTimeout(()=>{ try{ if(!p.destroyed) p.reconnect(); }catch(e){} },1500); }); // only the matchmaker dropped; live links keep working
+      const wire=(conn,from)=>{ conn.on('data',d=>this.h.msg(d,from)); conn.on('close',()=>{ if(this.conns.get(from)===conn){ this.conns.delete(from); this.h.leave(from); } }); conn.on('error',()=>{}); };
+      if(role==='host'){
+        p.on('open',()=>{ if(done) return; done=true; clearTimeout(timer); res(); });
+        p.on('connection',conn=>conn.on('open',()=>{ this.conns.set(conn.peer,conn); wire(conn,conn.peer); this.h.join(conn.peer); }));
+      } else p.on('open',()=>{ const conn=p.connect(PID,{reliable:true,serialization:'json'});
+        conn.on('open',()=>{ if(done) return; done=true; clearTimeout(timer); this.conns.set('host',conn); wire(conn,'host'); res(); }); });
+    });
+  }
+  send(m,to){ if(to){ const c=this.conns.get(to); if(c&&c.open) c.send(m); } else for(const c of this.conns.values()) if(c.open) c.send(m); }
+  kick(id){ const c=this.conns.get(id); this.conns.delete(id); if(c) setTimeout(()=>{ try{ c.close(); }catch(e){} },300); }
+  close(){ for(const c of this.conns.values()){ try{ c.close(); }catch(e){} } this.conns.clear(); if(this.peer){ try{ this.peer.destroy(); }catch(e){} } this.peer=null; }
+}
+// Relay (future option): an always-on WebSocket server forwards every message. Messages: ready, error, join, leave, msg.
+class RelayTransport extends Transport {
+  constructor(url){ super(); this.kind='relay'; this.url=String(url).replace(/\/+$/,''); }
+  open(role,code){ this.role=role;
+    return new Promise((res,rej)=>{ let done=false;
+      const fail=(c,m)=>{ if(done) return; done=true; clearTimeout(timer); try{ ws.close(); }catch(e){} this.ws=null; rej(netErr(c,m)); };
+      const ws=this.ws=new WebSocket(`${this.url}/room/${code}?role=${role}&v=${NET_PROTO}`);
+      const timer=setTimeout(()=>fail('timeout',"Couldn't reach the game server. Try again."),10000);
+      ws.onmessage=e=>{ let d; try{ d=JSON.parse(e.data); }catch(err){ return; }
+        if(d.t==='ready'){ if(!done){ done=true; clearTimeout(timer); res(); } }
+        else if(d.t==='error') fail(d.code,d.code==='taken'?'Code in use':d.code==='nohost'?'No game found with that code':d.code==='full'?'That game is full':'Server error');
+        else if(d.t==='join') this.h.join(d.id);
+        else if(d.t==='leave') this.h.leave(d.id);
+        else if(d.t==='msg') this.h.msg(d.m,role==='host'?d.from:'host'); };
+      ws.onclose=()=>{ if(!done) fail('net',"Couldn't reach the game server. Try again."); else if(this.ws===ws){ this.ws=null; this.h.leave(role==='host'?'*':'host'); } };
+      ws.onerror=()=>{};
+    }); }
+  send(m,to){ if(this.ws&&this.ws.readyState===1) this.ws.send(JSON.stringify({t:'msg',to,m})); }
+  kick(id){ if(this.ws&&this.ws.readyState===1) this.ws.send(JSON.stringify({t:'kick',id})); }
+  close(){ const ws=this.ws; this.ws=null; if(ws){ try{ ws.close(); }catch(e){} } }
+}
+function netKind(){ const q=new URLSearchParams(location.search), n=q.get('net');
+  if(n==='local'||n==='p2p') return n; if(n==='relay'||q.get('relay')||NET_CFG.relay) return 'relay'; return 'p2p'; }
+function makeTransport(kind){ if(kind==='local') return new LocalTransport(); if(kind==='relay') return new RelayTransport(new URLSearchParams(location.search).get('relay')||NET_CFG.relay); return new PeerTransport(); }
+
+// Host side: the guest's critter is driven by the inputs that arrive over the network, one per simulation tick.
+// Input packet: [seq, mx, mz, aim (99 = none), targetX, targetZ, buttons]; buttons: 1 attack (held), 2 special, 4 pick up, 8 hedge, 16 dodge.
+class RemoteController {
+  constructor(game,c){ this.game=game; this.c=c; this.q=[]; this.last=null; this.ack=0; }
+  push(list){ for(const p of list){ const tail=this.q.length?this.q[this.q.length-1][0]:this.ack; if(Array.isArray(p)&&p[0]>tail) this.q.push(p); } this.trim(8); }
+  trim(n){ while(this.q.length>n){ const d=this.q.shift(); this.ack=d[0]; if(this.q.length) this.q[0][6]|=d[6]&~1; } } // fell behind: skip old moves, keep their button presses
+  idle(){ this.trim(0); if(this.last){ this.last=this.last.slice(); this.last[6]&=1; } } // between rounds: don't let inputs pile up
+  update(){
+    this.trim(3); let p=this.q.shift();
+    if(p){ this.last=p; this.ack=p[0]; } else if(this.last){ p=this.last=this.last.slice(); p[6]&=1; } // nothing new yet: keep walking, don't repeat presses
+    const it=blankIntent(); if(!p) return it; const b=p[6]|0;
+    it.mx=clamp(+p[1]||0,-1,1); it.mz=clamp(+p[2]||0,-1,1); it.aim=p[3]===99?null:+p[3]||0; it.target=new V3(+p[4]||0,0,+p[5]||0);
+    it.attack=!!(b&1); it.special=!!(b&2); it.pickup=!!(b&4); it.hedge=!!(b&8); it.dodge=!!(b&16); return it;
+  }
+}
+const r1=v=>Math.round(v*10)/10, r2=v=>Math.round(v*100)/100, r3=v=>Math.round(v*1000)/1000;
+// Per-critter snapshot fields, in order. Continuous ones are blended on the guest; timers count down between snapshots.
+const CF=['x','y','z','f','vx','vz','hp','en','ko','rs','wp','du','bf','bw','iv','gr','aa','ad','ak','sp','lg','dg','fl','sq','hk','pp','df','sl'];
+const CF_TIMERS=['rs','bf','bw','iv','aa','sp','lg','dg','fl','sq','hk','df','sl'];
+function packChar(c){ return [r2(c.pos.x),r2(c.pos.y),r2(c.pos.z),r2(c.facing),r2(c.vel.x),r2(c.vel.z),r1(c.hp),r1(c.energy),c.ko?1:0,r2(c.respawnT),WEAPON_ORDER.indexOf(c.weapon),
+  c.durability===Infinity?-1:c.durability,r2(c.buffT),r2(c.bulwarkT),r2(c.invuln),c.respawnGrace?1:0,r2(c.atkAnim),r2(c.atkDur||0.3),c.atkKind?WEAPON_ORDER.indexOf(c.atkKind):-1,
+  r2(c.spinT),r2(c.lungeT),r2(c.dodgeT),r2(c.flinch),r2(c.squash),r2(c.honkT),r2(c.popT),r2(c.dropFlash),r2(c.slowT)]; }
+function unpackChar(a){ const o={}; CF.forEach((k,i)=>o[k]=a[i]); return o; }
+
+class Online {
+  constructor(game){
+    this.game=game; this.t=null; this.role=null; this.inMatch=false; this.lobby=null; this.heard=new Map(); this.ping=0; this.onConnChange=()=>{};
+    this.wrapEffects(); this.bindUI(); setInterval(()=>this.heartbeat(),1000);
+    addEventListener('pagehide',()=>{ if(this.t) this.t.close(); });
+  }
+  // ---------- effects: record on the host, replay on the guest ----------
+  wrapEffects(){
+    const g=this.game, W=(obj,name,code,ser)=>{ const orig=obj[name].bind(obj); obj[name]=(...a)=>{ const m=NET.mode; let r; if(m!=='remote') r=orig(...a); if(NET.rec&&m!=='local') NET.rec.push([code,...ser(a)]); return r; }; };
+    W(g.fx,'burst','b',([p,c,n=10,s=4,u=3,z=1])=>[r2(p.x),r2(p.y),r2(p.z),c,n,s,u,z]);
+    W(g.fx,'float','f',([t,p,c='dmg',l=0.9])=>[t,r2(p.x),r2(p.y),r2(p.z),c,l]);
+    W(audio,'play','a',([n])=>[n]);
+    W(g,'splash','sp',([t])=>[t]);
+    W(g.hud,'showBanner','bn',([h,d=1.6])=>[h,d]);
+    W(g.hud,'flashSeeds','fs',([t])=>[t]);
+    W(g,'shake','sh',([a])=>[a]);
+  }
+  replay(ev){ const g=this.game, [k,...a]=ev; NET.mode='local';
+    try{ if(k==='b') g.fx.burst(new V3(a[0],a[1],a[2]),a[3],a[4],a[5],a[6],a[7]);
+      else if(k==='f') g.fx.float(String(a[0]),new V3(a[1],a[2],a[3]),a[4],a[5]);
+      else if(k==='a') audio.play(a[0]);
+      else if(k==='sp'){ g.splash(String(a[0])); if(a[0]==='FIGHT!') setTimeout(()=>{ if(g.state!=='countdown') $('splash').classList.add('hidden'); },700); }
+      else if(k==='bn') g.hud.showBanner(String(a[0]),a[1]);
+      else if(k==='fs') g.hud.flashSeeds(a[0]);
+      else if(k==='sh') g.shake(a[0]); } catch(e){} finally { NET.mode='both'; } }
+  // ---------- lobby UI ----------
+  bindUI(){
+    const click=(id,fn)=>$(id).addEventListener('click',e=>{ e.currentTarget.blur(); audio.init(); audio.play('click'); fn(); });
+    click('btn-on-host',()=>this.host()); click('btn-on-join',()=>this.join($('on-code').value));
+    click('btn-on-back',()=>{ this.leave(); this.game.showScreen('title'); }); click('btn-on-leave',()=>{ this.leave(); this.openMenu(); });
+    click('btn-on-ready',()=>this.toggleReady()); click('btn-on-copy',()=>this.copyLink());
+    const code=$('on-code'); code.addEventListener('input',()=>{ code.value=code.value.replace(/\D/g,'').slice(0,4); $('on-err').textContent=''; });
+    code.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') this.join(code.value); });
+    const k=netKind(); setText($('on-kind'),k==='local'?'TEST MODE: TWO TABS ON THIS COMPUTER':k==='relay'?'CONNECTS THROUGH THE GAME SERVER':'CONNECTS DIRECTLY TO YOUR FRIEND (PEER-TO-PEER)');
+  }
+  openMenu(msg){ const g=this.game; if(g.state!=='title') g.resetScene(); g.showScreen('online'); $('on-menu').classList.remove('hidden'); $('on-room').classList.add('hidden');
+    $('on-err').textContent=msg||''; this.busy(false); }
+  busy(on,label){ for(const id of ['btn-on-host','btn-on-join']) $(id).disabled=on; $('btn-on-host').textContent=on&&label==='host'?'Creating room…':'Host a game'; $('btn-on-join').textContent=on&&label==='join'?'Joining…':'Join'; }
+  wire(t){ t.on('msg',(m,from)=>this.onMsg(m,from)).on('join',id=>this.onJoin(id)).on('leave',id=>this.onLeave(id)); }
+  async host(){
+    if(this.t) this.leave(); this.busy(true,'host'); $('on-err').textContent=''; const kind=netKind();
+    for(let tries=0;tries<6;tries++){ const code=String(randi(1000,9999)), t=makeTransport(kind); this.wire(t);
+      try{ await t.open('host',code); }
+      catch(e){ if(e.code==='taken') continue; this.busy(false); $('on-err').textContent=e.message; return; }
+      this.t=t; this.role='host'; this.code=code; this.onConnChange();
+      const ch=this.game.choice; this.lobby={v:NET_PROTO,host:{char:ch,cos:this.game.cosmetics[ch]||'none',ready:false},guest:null};
+      this.showRoom(); return; }
+    this.busy(false); $('on-err').textContent='Could not get a free room code. Try again.';
+  }
+  async join(code){
+    code=String(code||'').trim(); if(!/^\d{4}$/.test(code)){ $('on-err').textContent='Enter the 4-digit code from your friend.'; return; }
+    if(this.t) this.leave(); this.busy(true,'join'); $('on-err').textContent=''; const t=makeTransport(netKind()); this.wire(t);
+    try{ await t.open('guest',code); } catch(e){ this.busy(false); $('on-err').textContent=e.message; return; }
+    this.t=t; this.role='guest'; this.code=code; this.lobby=null; this.heard.set('host',performance.now()); this.onConnChange();
+    this.send({t:'hi',v:NET_PROTO}); this.showRoom();
+  }
+  send(m,to){ if(this.t) this.t.send(m,to); }
+  leave(){ if(this.inMatch) this.endMatch(); if(this.t){ this.send({t:'bye'}); const t=this.t; setTimeout(()=>t.close(),150); }
+    this.t=null; this.role=null; this.lobby=null; this.heard.clear(); this.onConnChange(); }
+  link(){ const u=new URL(location.href); u.hash=''; u.searchParams.delete('autoplay'); u.searchParams.delete('achtest'); u.searchParams.set('join',this.code); return u.toString(); }
+  copyLink(){ const url=this.link(), b=$('btn-on-copy');
+    const done=ok=>{ b.textContent=ok?'Copied!':'Select and copy the link'; setTimeout(()=>b.textContent=navigator.share&&matchMedia('(pointer:coarse)').matches?'Share invite link':'Copy invite link',1600); };
+    if(navigator.share&&matchMedia('(pointer:coarse)').matches){ navigator.share({title:'Eat Your Vegetables',text:'Join my garden brawl! Code '+this.code,url}).catch(()=>{}); return; }
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(()=>done(true),()=>{ $('on-link').select(); done(false); });
+    else { $('on-link').select(); try{ done(document.execCommand('copy')); }catch(e){ done(false); } } }
+  showRoom(){ this.game.showScreen('online'); $('on-menu').classList.add('hidden'); $('on-room').classList.remove('hidden'); this.busy(false);
+    setText($('on-codeval'),this.code); $('on-link').value=this.link();
+    $('btn-on-copy').textContent=navigator.share&&matchMedia('(pointer:coarse)').matches?'Share invite link':'Copy invite link'; this.renderRoom(); }
+  me(){ const L=this.lobby; return L&&(this.role==='host'?L.host:L.guest); }
+  them(){ const L=this.lobby; return L&&(this.role==='host'?L.guest:L.host); }
+  slotHTML(p,who){ if(!p) return null; const d=CHARS[p.char], mate=CHAR_ORDER.find(k=>k!==p.char&&CHARS[k].team===d.team);
+    return `<img src="${this.game.portraits[p.char]}" alt=""><div><div class="who">${who}</div><div class="nm">${d.name}</div><div class="bot">${TEAM_NAME[d.team]} · BOT TEAMMATE: ${CHARS[mate].name}</div>`+
+      `<div class="st ${p.ready?'ok':''}">${p.ready?'READY ✓':'NOT READY'}</div></div>`; }
+  renderRoom(){
+    const L=this.lobby, me=this.me(), them=this.them(), sm=$('slot-me'), st=$('slot-them');
+    if(!L||!me){ sm.className='slot empty'; sm.innerHTML='<span>CONNECTING<span class="dots"></span></span>'; st.className='slot empty'; st.innerHTML=''; $('on-cards').innerHTML=''; setText($('on-status'),''); $('btn-on-ready').disabled=true; return; }
+    sm.className='slot'; sm.style.setProperty('--team',TEAM_CSS[CHARS[me.char].team]); sm.innerHTML=this.slotHTML(me,'YOU');
+    if(them){ st.className='slot'; st.style.setProperty('--team',TEAM_CSS[CHARS[them.char].team]); st.innerHTML=this.slotHTML(them,this.role==='host'?'YOUR FRIEND':'HOST'); }
+    else { st.className='slot empty'; st.style.removeProperty('--team'); st.innerHTML='<span>WAITING FOR YOUR FRIEND<span class="dots"></span><br><small style="font-size:15px;letter-spacing:1px">Send them the code or the link</small></span>'; }
+    const box=$('on-cards'); box.innerHTML='';
+    for(const k of CHAR_ORDER){ const d=CHARS[k], ok=this.role==='host'||d.team!==CHARS[L.host.char].team, el=document.createElement('div');
+      el.className='mcard'+(me.char===k?' sel':'')+(ok?'':' off'); el.style.setProperty('--team',TEAM_CSS[d.team]);
+      el.innerHTML=`${them&&them.char===k?'<span class="tag">'+(this.role==='host'?'FRIEND':'HOST')+'</span>':''}<img src="${this.game.portraits[k]}" alt=""><div class="nm">${d.name}</div><div class="wp">${WEAPONS[d.weapon].name}</div>`;
+      if(ok) el.addEventListener('click',()=>{ audio.init(); audio.play('click'); this.pick(k); }); box.appendChild(el); }
+    setText($('on-pickhint'),this.role==='host'?'PICK YOUR WARRIOR (YOUR FRIEND GETS THE OTHER TEAM)':'PICK YOUR WARRIOR FROM THE '+TEAM_NAME[1-CHARS[L.host.char].team]);
+    const rb=$('btn-on-ready'); rb.disabled=!them; rb.textContent=me.ready?'Not ready':'Ready!'; rb.classList.toggle('green',me.ready);
+    setText($('on-status'),!them?(this.role==='host'?'ROOM OPEN · CODE '+this.code:'WAITING FOR THE HOST'):me.ready&&them.ready?'STARTING…':me.ready?'WAITING FOR '+(this.role==='host'?'YOUR FRIEND':'THE HOST')+' TO READY UP':'PRESS READY WHEN YOU ARE SET');
+  }
+  pick(k){ const L=this.lobby, cos=this.game.cosmetics[k]||'none'; this.game.choice=k;
+    if(this.role==='host'){ if(L.host.char===k) return; L.host={char:k,cos,ready:false}; const G=L.guest;
+      if(G&&CHARS[G.char].team===CHARS[k].team){ const i=CHAR_ORDER.filter(x=>CHARS[x].team===CHARS[G.char].team).indexOf(G.char); G.char=CHAR_ORDER.filter(x=>CHARS[x].team!==CHARS[k].team)[Math.max(0,i)]; G.cos='none'; G.ready=false; }
+      this.pushRoom(); }
+    else { this.lobby.guest={...this.lobby.guest,char:k,cos,ready:false}; this.send({t:'pick',char:k,cos}); }
+    this.renderRoom(); }
+  toggleReady(){ const me=this.me(); if(!me||!this.them()) return; me.ready=!me.ready;
+    if(this.role==='host'){ this.pushRoom(); this.maybeStart(); } else this.send({t:'ready',on:me.ready}); this.renderRoom(); }
+  pushRoom(){ if(this.role==='host'&&this.lobby){ this.send({t:'room',...this.lobby}); this.renderRoom(); } }
+  maybeStart(){ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return; clearTimeout(this.startT);
+    this.startT=setTimeout(()=>{ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return;
+      const cos={}; for(const k of CHAR_ORDER){ const o=cosmeticsFor(k); cos[k]=k===L.host.char?L.host.cos:k===L.guest.char?L.guest.cos:o[randi(0,o.length-1)]; }
+      L.host.ready=L.guest.ready=false; const cfg={host:L.host.char,guest:L.guest.char,cos}; this.send({t:'start',cfg}); this.beginMatch(cfg); },700); }
+  backToLobby(){ if(this.inMatch) return; this.game.resetScene(); if(!this.t){ this.openMenu(); return; } const me=this.me(); if(me) me.ready=false; this.pushRoom(); this.showRoom(); }
+  // ---------- connection events ----------
+  onJoin(id){ if(this.role!=='host') return; const L=this.lobby; this.heard.set(id,performance.now());
+    if(L.guest&&L.guest.id!==id){ this.send({t:'full'},id); setTimeout(()=>this.t&&this.t.kick(id),200); return; }
+    if(!L.guest){ const ht=CHARS[L.host.char].team; L.guest={id,char:CHAR_ORDER.find(k=>CHARS[k].team!==ht),cos:'none',ready:false}; L.host.ready=false; audio.play('pickup'); }
+    this.pushRoom(); }
+  onLeave(id){ if(!this.t) return;
+    if(this.role==='guest'||id==='*'){ const wasHost=this.role==='host'; this.t.close(); this.t=null; this.leave();
+      this.game.resetScene(); this.openMenu(wasHost?'Lost the connection to the game server.':'The host left the game.'); return; }
+    const L=this.lobby; if(!L||!L.guest||L.guest.id!==id) return; this.heard.delete(id); L.guest=null; L.host.ready=false;
+    if(this.inMatch){ const g=this.game, c=g.chars.find(x=>x.remote); this.endMatch(); if(c){ c.remote=false; c.controller=new AIController(g,c,'normal'); }
+      $('net-ping').classList.add('hidden'); this.toast('YOUR FRIEND LEFT','A bot took over their critter. Finish the match or quit from the pause menu.'); }
+    else this.toast('YOUR FRIEND LEFT','The room is still open. Share the code again to play.');
+    if(this.game.screen==='online') this.renderRoom(); }
+  toast(k,d){ const el=document.createElement('div'); el.className='toast'; el.innerHTML='<div class="k"></div><div class="d"></div>'; el.querySelector('.k').textContent=k; el.querySelector('.d').textContent=d;
+    const box=$('toasts'); box.appendChild(el); setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),400); },4500); }
+  heartbeat(){ if(!this.t) return; const now=performance.now(); this.send({t:'ping',s:Math.round(now)});
+    for(const [id,t] of this.heard) if(now-t>NET_TIMEOUT*1000){ this.heard.delete(id); this.onLeave(id); } }
+  onMsg(m,from){ if(!m||typeof m!=='object') return; this.heard.set(from,performance.now());
+    if(m.t==='ping'){ this.send({t:'pong',s:m.s},this.role==='host'?from:undefined); return; }
+    if(m.t==='pong'){ this.ping=Math.max(0,performance.now()-m.s); const el=$('net-ping'); setText(el,'PING '+Math.round(this.ping)+' MS'); el.classList.toggle('bad',this.ping>150); return; }
+    if(m.t==='bye'){ this.onLeave(from); return; }
+    if(this.role==='host'){ const L=this.lobby, G=L&&L.guest; if(!G||G.id!==from) return;
+      if(m.t==='hi'){ if(m.v!==NET_PROTO){ this.send({t:'old'},from); return; } this.pushRoom(); }
+      else if(m.t==='pick'&&CHARS[m.char]&&CHARS[m.char].team!==CHARS[L.host.char].team&&!this.inMatch){ G.char=m.char; G.cos=cosmeticsFor(m.char).includes(m.cos)?m.cos:'none'; G.ready=false; this.pushRoom(); }
+      else if(m.t==='ready'&&!this.inMatch){ G.ready=!!m.on; this.pushRoom(); this.maybeStart(); }
+      else if(m.t==='in'&&this.inMatch&&Array.isArray(m.i)){ const c=this.game.chars.find(x=>x.remote); if(c&&c.controller instanceof RemoteController) c.controller.push(m.i); }
+      return; }
+    // guest
+    if(m.t==='room'){ if(m.v!==NET_PROTO){ this.leave(); this.openMenu('This game is on a different version. Both players should refresh the page.'); return; }
+      this.lobby=m;
+      if(m.guest&&!this.inMatch){ const k=m.guest.char, cos=this.game.cosmetics[k]||'none'; // host assigned/changed our critter: send our saved cosmetic
+        if(m.guest.cos!==cos){ this.send({t:'pick',char:k,cos}); m.guest.cos=cos; } }
+      if(!this.inMatch&&this.game.screen==='online') this.renderRoom(); }
+    else if(m.t==='full'){ this.leave(); this.openMenu('That game is full.'); }
+    else if(m.t==='old'){ this.leave(); this.openMenu('This game is on a different version. Both players should refresh the page.'); }
+    else if(m.t==='start'&&m.cfg&&!this.inMatch) this.beginMatch(m.cfg);
+    else if(m.t==='s'&&this.inMatch) this.onSnap(m);
+    else if(m.t==='res'&&this.inMatch) this.pendingRes=m;
+  }
+  // ---------- match ----------
+  beginMatch(cfg){
+    const g=this.game; this.inMatch=true; this.tick=0; this.buf=[]; this.renderT=null; this.firedT=-1; this.pendingRes=null; this.seq=0; this.out=[]; this.hist=[]; this.corr=new V3();
+    this.pred={dodgeT:0,dodgeCd:0,dir:new V3()}; this.proj=new Map(); this.latest=null; this.selfFresh=false;
+    if(this.role==='host'){ NET.rec=[]; } else { this.ctl=null; }
+    g.startOnline(cfg,this.role);
+    if(this.role==='guest'){ this.me_=g.player; this.meIdx=g.chars.indexOf(g.player); this.ctl=new Player(g,g.player); }
+  }
+  endMatch(){ this.inMatch=false; NET.rec=null; for(const m of (this.proj||new Map()).values()) scene.remove(m); this.proj=new Map(); this.buf=[]; }
+  hostTick(){ const g=this.game, rc=g.chars.find(c=>c.remote); if(rc&&g.state!=='playing'&&rc.controller instanceof RemoteController) rc.controller.idle();
+    if(++this.tick%SNAP_EVERY) return; this.sendSnap(); }
+  sendSnap(){ const g=this.game, A=g.arena, rc=g.chars.find(c=>c.remote);
+    this.send({t:'s', t2:r3(g.time), ack:rc&&rc.controller instanceof RemoteController?rc.controller.ack:0, st:g.state, rd:g.round, rt:r1(g.roundTime), w:g.wins, b:g.bonus, pl:g.seeds.pool,
+      c:g.chars.map(packChar), pt:A.plots.map(p=>[p.stage,r1(p.t)]), bu:A.bushes.map(b=>[b.ripe?1:0,r1(b.t)]),
+      hd:A.hedges.map(h=>[h.id,h.i,h.j,h.hp,g.chars.indexOf(h.owner)]), fd:A.fields.map(f=>[f.id,r2(f.x),r2(f.z),f.team,r2(f.t)]),
+      sd:g.seeds.seeds.map(s=>[s.id,r2(s.x),r2(s.y),r2(s.z),s.state==='fly'?1:0,r1(s.ph)]),
+      pj:g.weapons.proj.map(p=>[p.id,WEAPON_ORDER.indexOf(p.type),r2(p.x),r2(p.z),r2(p.mesh.position.y),r2(p.mesh.rotation.y)]),
+      ev:NET.rec||[]});
+    if(NET.rec) NET.rec=[]; }
+  hostResults(){ const g=this.game; this.sendSnap(); this.send({t:'res',w:g.wins,stats:g.chars.map(c=>c.stats)}); this.endMatch(); this.pushRoom(); }
+  // ---------- guest ----------
+  onSnap(m){ m.cc=m.c.map(unpackChar); m.T=m.t2; if(this.latest&&m.T<=this.latest.T) return; this.buf.push(m); if(this.buf.length>40) this.buf.shift();
+    this.latest=m; if(this.renderT===null) this.renderT=m.T-INTERP; this.selfFresh=true; this.reconcile(m); }
+  reconcile(S){ // compare where the host says we are with where we predicted we'd be at that input
+    const me=S.cc[this.meIdx]; if(!me) return; if(me.ko||S.st!=='playing'){ this.hist=[]; this.corr.set(0,0,0); return; }
+    const k=this.hist.findIndex(h=>h.q===S.ack); if(k<0) return; const h=this.hist[k]; this.hist=this.hist.slice(k+1);
+    const ex=me.x-h.x, ez=me.z-h.z, c=this.me_;
+    if(ex*ex+ez*ez>2.2*2.2){ c.pos.x+=ex; c.pos.z+=ez; for(const q of this.hist){ q.x+=ex; q.z+=ez; } this.corr.set(0,0,0); } // way off (knocked far, teleported): snap
+    else this.corr.set(ex,0,ez); }
+  predictSelf(dt,it){ // the guest's own critter: move it now, using the same walking rules as the host
+    const c=this.me_, S=this.latest, me=S.cc[this.meIdx], P=this.pred, g=this.game;
+    if(me.ko||S.st!=='playing'){ c.pos.set(me.x,me.y,me.z); c.vel.set(me.vx,0,me.vz); c.facing=me.f; P.dodgeT=0; return; }
+    P.dodgeCd-=dt;
+    if(me.lg>0){ c.vel.set(Math.sin(c.facing)*LUNGE_SPEED,0,Math.cos(c.facing)*LUNGE_SPEED); }
+    else if(P.dodgeT>0){ P.dodgeT-=dt; c.vel.copy(P.dir).multiplyScalar(12.5); }
+    else { const sp=c.speed, a=Math.min(1,dt*22); c.vel.x=lerp(c.vel.x,it.mx*sp,a); c.vel.z=lerp(c.vel.z,it.mz*sp,a);
+      if(it.aim!==null) c.facing+=angDiff(c.facing,it.aim)*Math.min(1,dt*(c.spinT>0?4:26)); }
+    if(it.dodge&&P.dodgeCd<=0&&P.dodgeT<=0&&me.lg<=0){ let dx=it.mx,dz=it.mz; if(Math.hypot(dx,dz)<0.1){ dx=Math.sin(c.facing); dz=Math.cos(c.facing); } const l=Math.hypot(dx,dz); P.dir.set(dx/l,0,dz/l); P.dodgeT=0.22; P.dodgeCd=1.5; }
+    const np=_v.set(c.pos.x+c.vel.x*dt,0,c.pos.z+c.vel.z*dt); g.arena.collide(np); c.pos.x=np.x; c.pos.z=np.z; c.pos.y=lerp(c.pos.y,g.arena.heightAt(c.pos.x,c.pos.z),0.25);
+    if(this.corr.x||this.corr.z){ const fx=this.corr.x*0.18, fz=this.corr.z*0.18; c.pos.x+=fx; c.pos.z+=fz; this.corr.x-=fx; this.corr.z-=fz; for(const q of this.hist){ q.x+=fx; q.z+=fz; }
+      if(Math.abs(this.corr.x)+Math.abs(this.corr.z)<0.003) this.corr.set(0,0,0); } }
+  applyChar(c,A,B,k,self){ // discrete state from A (the moment we're showing), motion blended A→B
+    if(!self){ c.pos.set(lerp(A.x,B.x,k),lerp(A.y,B.y,k),lerp(A.z,B.z,k)); c.facing=A.f+angDiff(A.f,B.f)*k; c.vel.set(lerp(A.vx,B.vx,k),0,lerp(A.vz,B.vz,k)); }
+    const w=WEAPON_ORDER[A.wp]||c.sig; if(c.weapon!==w) c.setWeapon(w); c.durability=A.du<0?Infinity:A.du;
+    c.hp=lerp(A.hp,B.hp,k); c.energy=lerp(A.en,B.en,k); c.ko=!!A.ko; c.respawnGrace=!!A.gr; c.atkDur=A.ad; c.atkKind=A.ak<0?null:WEAPON_ORDER[A.ak];
+    const tl=(a,b)=>b<=a?lerp(a,b,k):a; // countdown timers: blend while counting down, jump when one restarts
+    c.respawnT=tl(A.rs,B.rs); c.buffT=tl(A.bf,B.bf); c.bulwarkT=tl(A.bw,B.bw); c.invuln=tl(A.iv,B.iv); c.atkAnim=tl(A.aa,B.aa); c.spinT=tl(A.sp,B.sp); c.lungeT=tl(A.lg,B.lg);
+    c.dodgeT=tl(A.dg,B.dg); c.flinch=tl(A.fl,B.fl); c.squash=tl(A.sq,B.sq); c.honkT=tl(A.hk,B.hk); c.popT=lerp(A.pp,B.pp,k); c.dropFlash=tl(A.df,B.df); c.slowT=tl(A.sl,B.sl); }
+  applySelf(c,S,dt){ // our own critter: freshest host values, then count timers down locally until the next snapshot
+    if(this.selfFresh){ this.selfFresh=false; this.applyChar(c,S,S,0,true); return; }
+    for(const [f,k] of [['respawnT'],['buffT'],['bulwarkT'],['invuln'],['atkAnim'],['spinT'],['lungeT'],['dodgeT'],['flinch'],['squash'],['honkT'],['dropFlash'],['slowT']]) if(c[f]>0) c[f]-=dt;
+    if(c.popT<1) c.popT=Math.min(1,c.popT+dt*2.5); if(this.pred.dodgeT>0) c.dodgeT=Math.max(c.dodgeT,this.pred.dodgeT); }
+  applyWorld(S){ const g=this.game, A=g.arena;
+    if(S.st==='countdown'&&g.state!=='countdown'){ g.fx.clearFloats(); g.weapons.clear(); }
+    if(S.st!=='results') g.state=S.st; g.round=S.rd; g.roundTime=S.rt; g.bonus=S.b; g.seeds.pool=S.pl;
+    if(String(g.wins)!==String(S.w)){ g.wins=S.w; g.hud.renderWins(); }
+    S.pt.forEach(([st,t],i)=>{ const p=A.plots[i]; if(!p) return; if(p.stage!==st){ p.pop=0.3; p.stage=st; } p.t=t; });
+    S.bu.forEach(([r,t],i)=>{ const b=A.bushes[i]; if(!b) return; if(b.ripe!==!!r){ b.ripe=!!r; if(b.ripe) b.pop=0.35; A.setBerryLook(b); } b.t=t; });
+    const hs=new Set(S.hd.map(h=>h[0])); for(const h of [...A.hedges]) if(!hs.has(h.id)) A.removeHedge(h,false);
+    for(const [id,i,j,hp,o] of S.hd){ let h=A.hedges.find(x=>x.id===id); if(!h&&g.chars[o]){ h=A.placeHedge(g.chars[o],i,j); h.id=id; } if(h&&h.hp!==hp){ if(hp<h.hp) h.shake=0.2; h.hp=hp; } }
+    const fs=new Set(S.fd.map(f=>f[0])); for(let k=A.fields.length-1;k>=0;k--){ const f=A.fields[k]; if(!fs.has(f.id)){ scene.remove(f.mesh); A.fields.splice(k,1); } }
+    for(const [id,x,z,team,t] of S.fd){ let f=A.fields.find(q=>q.id===id); if(!f){ f=A.addSlowField(x,z,team); f.id=id; } f.t=t; } }
+  guestTick(dt){
+    const g=this.game, c=this.me_;
+    // 1) read our controls and send them (two ticks per message)
+    const it=this.ctl?this.ctl.update(dt):blankIntent(); const q=++this.seq;
+    this.out.push([q,r2(it.mx),r2(it.mz),it.aim===null?99:r2(it.aim),it.target?r2(it.target.x):0,it.target?r2(it.target.z):0,(it.attack?1:0)|(it.special?2:0)|(it.pickup?4:0)|(it.hedge?8:0)|(it.dodge?16:0)]);
+    if(this.out.length>=2){ this.send({t:'in',i:this.out}); this.out=[]; }
+    if(!this.latest){ for(const ch of g.chars) ch.animate(dt); g.arena.update(dt,g.time); g.fx.update(dt); return; }
+    // 2) move our own critter right away, remember where we predicted it after this input
+    this.predictSelf(dt,it); this.hist.push({q,x:c.pos.x,z:c.pos.z}); if(this.hist.length>120) this.hist.shift();
+    // 3) pick the two snapshots around "a moment ago" and blend everyone else
+    const L=this.latest; this.renderT+=dt; const target=L.T-INTERP, err=target-this.renderT;
+    if(Math.abs(err)>0.4) this.renderT=target; else this.renderT+=err*0.04;
+    const buf=this.buf; let i=buf.length-1; while(i>0&&buf[i].T>this.renderT) i--;
+    const A=buf[i], B=buf[Math.min(i+1,buf.length-1)], k=B.T>A.T?clamp((this.renderT-A.T)/(B.T-A.T),0,1):0;
+    for(const s of buf){ if(s.T<=this.renderT&&s.T>this.firedT){ this.applyWorld(s); for(const ev of s.ev||[]) this.replay(ev); this.firedT=s.T; } } // events + world, in order
+    g.chars.forEach((ch,n)=>{ if(ch===c) this.applySelf(ch,L.cc[n],dt); else this.applyChar(ch,A.cc[n],B.cc[n],k,false); });
+    // seeds (blend by id)
+    const bm=new Map(B.sd.map(s=>[s[0],s])); g.seeds.seeds=A.sd.map(a=>{ const b=bm.get(a[0])||a; return {id:a[0],x:lerp(a[1],b[1],k),y:lerp(a[2],b[2],k),z:lerp(a[3],b[3],k),state:a[4]?'fly':'float',ph:a[5]}; });
+    // projectiles (blend by id; create/remove meshes)
+    const pb=new Map(B.pj.map(p=>[p[0],p])), live=new Set();
+    for(const a of A.pj){ const b=pb.get(a[0])||a, id=a[0]; live.add(id); let m=this.proj.get(id); const type=WEAPON_ORDER[a[1]];
+      if(!m){ m=projMesh(type); m.rotation.y=a[5]; scene.add(m); this.proj.set(id,m); }
+      m.position.set(lerp(a[2],b[2],k),a[4],lerp(a[3],b[3],k)); if(type==='kunai'){ m.children[0].rotation.x+=dt*18; m.children[0].rotation.z+=dt*7; } else m.rotation.x+=dt*10; }
+    for(const [id,m] of this.proj) if(!live.has(id)){ scene.remove(m); this.proj.delete(id); }
+    // 4) animate and draw-side updates (no gameplay runs here)
+    for(const ch of g.chars){ if(ch!==c&&ch.ko) ch.vel.set(0,0,0); ch.animate(dt); }
+    g.arena.update(dt,g.time); g.seeds.mat.emissiveIntensity=(0.7+Math.sin(g.time*4)*0.3)*(NIGHT.on?1.25:1); g.seeds.render(g.time); g.fx.update(dt);
+    // 5) the match is over once we've shown everything the host sent before the results
+    if(this.pendingRes&&this.renderT>=L.T-0.001){ const r=this.pendingRes; this.pendingRes=null; this.endMatch();
+      g.wins=r.w; (r.stats||[]).forEach((s,n)=>{ if(g.chars[n]) g.chars[n].stats={...g.chars[n].stats,...s}; }); g.showResults(); }
+  }
+}
+
+/* =====================================================================
    SECTION 15 — BOOT & MAIN LOOP (fixed timestep separated from rendering)
    ===================================================================== */
 resize();
 const game=new Game(); window.__game=game; window.__renderer=renderer; window.__cam=camera;
 $('loading').classList.add('hidden');
 let last=performance.now(), acc=0;
-function frame(now){
-  requestAnimationFrame(frame);
-  let dt=(now-last)/1000; last=now; if(dt>0.25) dt=0.25; acc+=dt;
+function step(now,draw){
+  let dt=(now-last)/1000; last=now; if(dt<0) dt=0; if(dt>0.25) dt=0.25; acc+=dt;
   let n=0; while(acc>=FIXED_DT && n<8){ game.fixedUpdate(FIXED_DT); acc-=FIXED_DT; n++; } if(n>=8) acc=0;
-  game.render(dt);
+  if(draw) game.render(dt);
 }
+function frame(now){ requestAnimationFrame(frame); step(now,true); }
 requestAnimationFrame(frame);
+// Browsers pause requestAnimationFrame in background tabs. During Online Play that would freeze the match for both
+// players, so a tiny Worker timer keeps the game logic (not the drawing) ticking while this tab is hidden.
+let bgTick=null;
+try{ bgTick=new Worker(URL.createObjectURL(new Blob(['let i=null;onmessage=e=>{clearInterval(i);i=e.data?setInterval(()=>postMessage(0),e.data):null}'],{type:'text/javascript'})));
+  bgTick.onmessage=()=>{ if(document.hidden) step(performance.now(),false); }; }catch(e){}
+const syncBg=()=>{ if(bgTick) bgTick.postMessage(document.hidden&&game.net.t?16:0); };
+document.addEventListener('visibilitychange',syncBg); game.net.onConnChange=syncBg;
+// Invite links look like ?join=1234 : open Online Play and join straight away.
+{ const q=new URLSearchParams(location.search), j=q.get('join');
+  if(j&&/^\d{4}$/.test(j)){ q.delete('join'); history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash); game.net.openMenu(); $('on-code').value=j; game.net.join(j); } }
 </script>
 </body>
 </html>
