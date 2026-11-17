@@ -2629,15 +2629,17 @@ function step(now,draw){
   let n=0; while(acc>=FIXED_DT && n<8){ game.fixedUpdate(FIXED_DT); acc-=FIXED_DT; n++; } if(n>=8) acc=0;
   if(draw) game.render(dt);
 }
-function frame(now){ requestAnimationFrame(frame); step(now,true); }
+let lastRaf=performance.now();
+function frame(now){ requestAnimationFrame(frame); lastRaf=performance.now(); step(now,true); }
 requestAnimationFrame(frame);
-// Browsers pause requestAnimationFrame in background tabs. During Online Play that would freeze the match for both
-// players, so a tiny Worker timer keeps the game logic (not the drawing) ticking while this tab is hidden.
+// Browsers pause or slow requestAnimationFrame in background tabs, minimised or covered windows. During Online Play
+// that would freeze the match for both players, so while connected a tiny Worker timer keeps the game logic (not the
+// drawing) ticking whenever frames stop arriving.
 let bgTick=null;
 try{ bgTick=new Worker(URL.createObjectURL(new Blob(['let i=null;onmessage=e=>{clearInterval(i);i=e.data?setInterval(()=>postMessage(0),e.data):null}'],{type:'text/javascript'})));
-  bgTick.onmessage=()=>{ if(document.hidden) step(performance.now(),false); }; }catch(e){}
-const syncBg=()=>{ if(bgTick) bgTick.postMessage(document.hidden&&game.net.t?16:0); };
-document.addEventListener('visibilitychange',syncBg); game.net.onConnChange=syncBg;
+  bgTick.onmessage=()=>{ const now=performance.now(); if(now-lastRaf>100) step(now,false); }; }catch(e){}
+const syncBg=()=>{ if(bgTick) bgTick.postMessage(game.net.t?16:0); };
+game.net.onConnChange=syncBg;
 // Invite links look like ?join=1234 : open Online Play and join straight away.
 { const q=new URLSearchParams(location.search), j=q.get('join');
   if(j&&/^\d{4}$/.test(j)){ q.delete('join'); history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash); game.net.openMenu(); $('on-code').value=j; game.net.join(j); } }
