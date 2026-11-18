@@ -8,15 +8,26 @@ A 2v2 garden brawl in the browser. Pick a cute vegetable-loving critter, team up
 
 Grab magic seeds. Every 12 seeds triggers a **Seed Surge** (a speed and attack-speed buff). The team with the most surges wins the round. Best of 3.
 
+## Modes
+
+- **Seed Surge** (default): most seed surges wins the round.
+- **Team Deathmatch:** most knockouts wins the round. Seeds still heal and still trigger surges. If knockouts are tied, more seed surges wins; if those are tied too, the round is a draw. Rounds are still 2:30, best of 3.
+
+Pick the mode on the title screen (single player) or in the Online Play lobby.
+
 ## Online Play
 
-Play with a friend over the internet: **you + a bot vs. your friend + a bot**.
+Play with a friend over the internet. After your friend joins, the host picks:
+
+- **Vs each other:** you + a bot vs. your friend + a bot.
+- **Co-op vs bots:** you and your friend on one team vs. two bots (host picks Easy, Normal or Hard).
+- **Mode:** Seed Surge or Team Deathmatch (see below).
 
 1. Click **Online Play**, then **Host a game**. You get a 4-digit room code and an invite link.
 2. Your friend opens the link (or clicks Online Play and types the code).
-3. Each of you picks a critter (your friend picks from the other team), then both press **Ready**. The match starts.
+3. Pick critters, then both press **Ready**. The match starts.
 
-Your friend sees the arena from their own side. No accounts or servers to set up: players connect directly
+In Vs mode your friend sees the arena from their own side. No accounts or servers to set up: players connect directly
 (peer-to-peer) using the free [PeerJS](https://peerjs.com/) matchmaking service. The host's browser runs the match,
 so the host should keep the game tab open. A few strict networks (some offices and schools) block direct
 connections; if a join keeps failing, try another network.
