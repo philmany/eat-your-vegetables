@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  EAT YOUR VEGETABLES — a 2v2 garden arena brawler. One self-contained file.
+  EAT YOUR VEGGIES! — a 2v2 garden arena brawler. One self-contained file.
 
   DESIGN DECISIONS (judgment calls where the spec was open or conflicted):
   1. Rendering: Three.js primitives, orthographic camera at a fixed isometric angle (45° down, 45° yaw).
@@ -80,7 +80,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Eat Your Vegetables</title>
+<title>Eat Your Veggies!</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Russo+One&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
@@ -95,22 +95,44 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1F3226;font-family:va
 canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .hidden{display:none!important}
 
-/* ---------- Buttons (chunky, angular, with a pressed lip) ---------- */
-.btn{font-family:var(--ui);font-size:22px;letter-spacing:2px;text-transform:uppercase;color:var(--navy);background:var(--orange);
-  border:0;padding:12px 34px 10px;cursor:pointer;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
-  box-shadow:inset 0 -6px 0 var(--orange-s);transition:transform .06s, box-shadow .06s;min-width:240px}
-.btn:hover{filter:brightness(1.08)}
-.btn:active{transform:translateY(4px);box-shadow:inset 0 -2px 0 var(--orange-s)}
-.btn.green{background:var(--green);box-shadow:inset 0 -6px 0 var(--green-s)}
-.btn.green:active{box-shadow:inset 0 -2px 0 var(--green-s)}
-.btn.ghost{background:var(--white);box-shadow:inset 0 -6px 0 #B9BFCC}
+/* ---------- Buttons: cel-shaded sticker. Thin cream rim (the button's own fill; turns corn yellow on hover) around a
+   thick navy ink outline (::before), around three hard light bands (::after: highlight / base / shadow). Same angular
+   cut corners. Colours from the mockup palette. Reads on the dark beet card, the navy panels and the bright garden. ---------- */
+.btn{--b1:#FFB45E;--b2:#F28A2A;--b3:#B85A16;--tx:var(--navy);--rim:#F5EFDC;
+  position:relative;isolation:isolate;font-family:var(--ui);font-size:22px;letter-spacing:2px;text-transform:uppercase;color:var(--tx);
+  background:var(--rim);border:0;padding:14px 38px 14px;cursor:pointer;min-width:240px;
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+  text-shadow:0 1px 0 rgba(255,255,255,.35);transition:transform .07s ease-out}
+.btn::before,.btn::after{content:"";position:absolute;z-index:-1;pointer-events:none}
+.btn::before{inset:2px;background:var(--navy);clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
+.btn::after{inset:6px;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
+  background:linear-gradient(180deg,var(--b1) 0 32%,var(--b2) 32% 70%,var(--b3) 70% 100%);transition:filter .07s}
+.btn:hover,.btn:focus-visible{transform:translateY(-2px);--rim:#F2B51E}
+.btn:hover::after,.btn:focus-visible::after{filter:brightness(1.1) saturate(1.08);
+  background:linear-gradient(180deg,var(--b1) 0 38%,var(--b2) 38% 74%,var(--b3) 74% 100%)}
+.btn:focus-visible{outline:none}
+.btn:active{transform:translateY(3px)}
+.btn:active::after{filter:brightness(.94);background:linear-gradient(180deg,var(--b2) 0 14%,var(--b1) 14% 30%,var(--b2) 30% 82%,var(--b3) 82% 100%)}
+.btn.green{--b1:#A9D65E;--b2:#6C9A3A;--b3:#3E6127;--tx:#F5EFDC;text-shadow:0 2px 0 var(--navy)}
+.btn.ghost{--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A}
+.btn.off{--b1:#9A6A4E;--b2:#7B4832;--b3:#552F20;--tx:#F5EFDC;text-shadow:0 2px 0 var(--navy)}
 
 /* ---------- Screens ---------- */
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:20}
 .screen.dim{background:rgba(10,12,18,.62)}
 /* see-through black card under the title menu so it pops off the 3D garden */
-.menu-card{display:flex;flex-direction:column;align-items:center;gap:16px;padding:30px clamp(18px,4vw,48px) 28px;max-width:calc(100vw - 32px);
-  background:rgba(0,0,0,.5);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+/* Title menu sits inside a giant translucent beet: blurred bulb (masked), faint ring stripes, a tapering root below and leaves on top. */
+.menu-card{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;gap:16px;
+  padding:clamp(44px,8vh,72px) clamp(26px,6vw,70px) clamp(70px,11vh,110px);max-width:calc(100vw - 32px);margin-top:clamp(70px,11vh,110px)}
+.menu-card::before{content:"";position:absolute;inset:-4% -6% -12%;z-index:-1;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260' preserveAspectRatio='none'%3E%3Cdefs%3E%3CradialGradient id='g' cx='38%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%236A1838' stop-opacity='.78'/%3E%3Cstop offset='.6' stop-color='%233E0C22' stop-opacity='.72'/%3E%3Cstop offset='1' stop-color='%2322060F' stop-opacity='.8'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M100 5C172 5 198 44 198 108C198 168 166 205 124 220C112 225 105 238 100 258C95 238 88 225 76 220C34 205 2 168 2 108C2 44 28 5 100 5Z' fill='url(%23g)' stroke='%23120309' stroke-opacity='.85' stroke-width='3' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M30 70C24 105 26 150 48 185M170 70C176 105 174 150 152 185M62 40C52 90 54 160 82 212M138 40C148 90 146 160 118 212' fill='none' stroke='%23AD1550' stroke-opacity='.22' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M52 30C70 18 96 14 118 18' fill='none' stroke='%23E86A9A' stroke-opacity='.35' stroke-width='4' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260' preserveAspectRatio='none'%3E%3Cpath d='M100 5C172 5 198 44 198 108C198 168 166 205 124 220C112 225 105 238 100 258C95 238 88 225 76 220C34 205 2 168 2 108C2 44 28 5 100 5Z' fill='%23000'/%3E%3C/svg%3E") center/100% 100% no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260' preserveAspectRatio='none'%3E%3Cpath d='M100 5C172 5 198 44 198 108C198 168 166 205 124 220C112 225 105 238 100 258C95 238 88 225 76 220C34 205 2 168 2 108C2 44 28 5 100 5Z' fill='%23000'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.menu-card::after{content:"";position:absolute;z-index:-1;pointer-events:none;left:50%;top:calc(-4% - clamp(84px,12vh,130px) + 22px);
+  width:clamp(180px,34vw,270px);height:clamp(84px,12vh,130px);transform:translateX(-50%);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 110'%3E%3Cg stroke='%230E1A10' stroke-opacity='.85' stroke-width='3' stroke-linejoin='round'%3E%3Cpath d='M104 108C96 80 62 66 30 22C70 18 104 50 108 104Z' fill='%232F5A2A' fill-opacity='.82'/%3E%3Cpath d='M116 108C124 80 158 66 190 22C150 18 116 50 112 104Z' fill='%232F5A2A' fill-opacity='.82'/%3E%3Cpath d='M110 108C98 72 96 34 110 2C124 34 122 72 110 108Z' fill='%233E7A32' fill-opacity='.85'/%3E%3C/g%3E%3Cg fill='none' stroke='%23AD1550' stroke-opacity='.7' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M106 104C96 80 70 60 44 30'/%3E%3Cpath d='M114 104C124 80 150 60 176 30'/%3E%3Cpath d='M110 104V14'/%3E%3C/g%3E%3C/svg%3E") center bottom/contain no-repeat}
+@media (max-width:520px){ .menu-card::before{inset:-3% -3% -10%} .menu-card .btn{min-width:min(240px,62vw)} }
+@media (max-height:900px){ .menu-card{gap:10px;padding-top:clamp(34px,6vh,56px);padding-bottom:clamp(56px,9vh,90px)} .menu-card .btn{padding-top:11px;padding-bottom:11px} #title h1{font-size:clamp(44px,7vw,100px)} }
 #title h1{font-family:var(--display);font-size:clamp(48px,8vw,118px);line-height:.9;margin:0 0 6px;text-align:center;color:var(--corn);
   text-shadow:0 6px 0 var(--orange-s),0 12px 0 var(--navy),0 18px 30px rgba(0,0,0,.35);transform:skewX(-8deg) rotate(-3deg);letter-spacing:2px}
 #title h1 span{display:block;color:var(--orange);font-size:.62em}
@@ -273,8 +295,6 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .setrow .lbl{font-family:var(--display);font-size:22px;color:var(--white);letter-spacing:1px}
 .setrow .sub{font-size:13px;color:#C9CFDD;line-height:1.3;max-width:300px}
 .setrow .btn{min-width:130px}
-.btn.off{background:#5A6178;box-shadow:inset 0 -6px 0 #3A4058;color:var(--white)}
-.btn.off:active{box-shadow:inset 0 -2px 0 #3A4058}
 #tut{position:absolute;right:18px;top:14px;width:min(380px,calc(100vw - 36px));background:rgba(26,32,48,.95);padding:14px 18px 14px;border-left:8px solid var(--corn);
   clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%);pointer-events:auto}
 #tut .k{font-family:var(--num);font-size:18px;letter-spacing:3px;color:var(--corn);line-height:1}
@@ -397,7 +417,7 @@ body.night #nightvig{display:block}
 
 <!-- ================= SCREENS ================= -->
 <div id="title" class="screen hidden"><div class="menu-card">
-  <h1>EAT YOUR<span>VEGETABLES</span></h1>
+  <h1>EAT YOUR<span>VEGGIES!</span></h1>
   <div class="tag">2 V 2 GARDEN BRAWL</div>
   <button class="btn" id="btn-play">Play</button>
   <button class="btn" id="btn-online">Online Play</button>
@@ -743,6 +763,40 @@ class Audio {
       case 'achieve': [784,988,1175,1568].forEach((f,i)=>this.tone(f,0.18,'triangle',0.13,null,i*0.07)); this.tone(2093,0.4,'sine',0.07,null,0.3); break;
     }
   }
+  // ---- Menu button sounds. Each button gets its own note on a C-major pentatonic (hashed from its id), and its
+  // colour picks the voice: orange = bubbly pop, green = marimba, tan = wood block, brown/back = falling tock.
+  // Everything goes through this.sfx, so mute (M) and the master volume apply as usual.
+  uiVoice(b){ const id=b.id||b.textContent||''; let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0;
+    const pent=[0,2,4,7,9,12,14,16]; const f=523.25*Math.pow(2,pent[h%pent.length]/12);
+    const back=/back|quit|leave|title|skip|exit/i.test(id);
+    const kind=b.classList.contains('off')?'off':b.matches('.setrow .btn')?'toggleoff':back?'back':b.classList.contains('green')?'green':b.classList.contains('ghost')?'ghost':'pop';
+    return {f,kind,h}; }
+  uiHover(b){ if(!this.ctx||this.ctx.state!=='running') return; const now=performance.now();
+    if(this.last.uih&&now-this.last.uih<45) return; this.last.uih=now;
+    const {f,kind}=this.uiVoice(b);
+    this.tone(f*2,0.07,'sine',kind==='ghost'?0.035:0.045,f*2.12);           // soft rising "tick"
+    this.tone(f*3,0.05,'triangle',0.012,null,0.012);                          // faint sparkle on top
+    this.noise(0.035,'highpass',5200,null,0.025,0.7); }
+  uiPress(b){ if(!this.ctx) return; const now=performance.now(); this.last.click=now; // swallow the generic 'click'
+    if(this.last.uip&&now-this.last.uip<60) return; this.last.uip=now;
+    const {f,kind}=this.uiVoice(b);
+    switch(kind){
+      case 'pop':   // bubbly pop + bright two-note chime
+        this.tone(f*0.5,0.09,'sine',0.22,f*1.6); this.noise(0.03,'bandpass',2600,null,0.18,3);
+        this.tone(f,0.16,'triangle',0.12,null,0.04); this.tone(f*1.5,0.22,'triangle',0.1,null,0.09); this.tone(f*3,0.18,'sine',0.03,null,0.09); break;
+      case 'green': // marimba: wooden attack and a 4th harmonic, rolled up a triad
+        [1,1.26,1.5].forEach((m,i)=>{ this.tone(f*m,0.22,'sine',0.14,null,i*0.05); this.tone(f*m*4,0.05,'sine',0.03,null,i*0.05); });
+        this.noise(0.025,'bandpass',1800,null,0.14,4); break;
+      case 'ghost': // hollow wood block, then a little bell
+        this.tone(f*0.75,0.07,'sine',0.2,f*0.6); this.noise(0.03,'bandpass',1200,null,0.2,6); this.tone(f*2,0.2,'sine',0.06,null,0.05); break;
+      case 'back':  // falling two-note tock
+        this.tone(f,0.1,'triangle',0.13,null); this.tone(f*0.75,0.18,'triangle',0.12,f*0.7,0.07); this.noise(0.03,'bandpass',900,null,0.16,5); break;
+      case 'off':   // about to switch ON: rising thunk
+        this.tone(f*0.5,0.12,'square',0.06,f); this.tone(f,0.16,'triangle',0.12,null,0.06); break;
+      case 'toggleoff': // about to switch OFF: falling thunk
+        this.tone(f,0.1,'square',0.05,f*0.5); this.tone(f*0.5,0.16,'triangle',0.12,f*0.4,0.05); break;
+    }
+  }
   honk(d){ // nasal sawtooth through two formant filters with a falling pitch
     const c=this.ctx, t=c.currentTime+d; const o=c.createOscillator(); o.type='sawtooth';
     o.frequency.setValueAtTime(340,t); o.frequency.linearRampToValueAtTime(290,t+0.14);
@@ -797,6 +851,13 @@ class Audio {
   }
 }
 const audio=new Audio();
+// Menu button hover/press sounds, wired once for every .btn (including ones added later). Hover only for a real mouse,
+// so a tap on a phone doesn't play both. Press runs in the capture phase, before each button's own handler.
+{ let hov=null;
+  document.addEventListener('pointerover',e=>{ const b=e.target.closest&&e.target.closest('.btn'); if(b===hov) return; hov=b;
+    if(b&&e.pointerType==='mouse'&&!b.disabled) audio.uiHover(b); });
+  document.addEventListener('focusin',e=>{ const b=e.target.closest&&e.target.closest('.btn'); if(b&&b.matches(':focus-visible')) audio.uiHover(b); });
+  document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.btn'); if(!b||b.disabled) return; audio.init(); audio.uiPress(b); },true); }
 
 /* =====================================================================
    SECTION 5 — INPUT (keyboard, mouse, optional gamepad)
@@ -1994,7 +2055,7 @@ const TUT_STEPS=[
   {id:'shield', n:'PICK UP A WEAPON', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
   {id:'block', n:'BLOCK', d:'The Possum is throwing celery at you. <b>Face it</b> with the mouse: the shield blocks most damage from the <b>front</b>. Block 3 shots.', goal:3, unit:'BLOCKS'},
   {id:'bulwark', n:'BULWARK', d:'<b>Right-click</b> for <b>Bulwark</b>: a dome that eats enemy shots and protects teammates standing inside it.'},
-  {id:'done', n:'YOU\'RE READY!', d:'Bonus tip: the Raccoon\'s <b>Potato Toss</b> knocks enemy shots out of the air. Matches are best of 3 rounds, 2:30 each. Now go eat your vegetables.'},
+  {id:'done', n:'YOU\'RE READY!', d:'Bonus tip: the Raccoon\'s <b>Potato Toss</b> knocks enemy shots out of the air. Matches are best of 3 rounds, 2:30 each. Now go eat your veggies!'},
 ];
 class Tutorial {
   constructor(game){
@@ -2043,7 +2104,7 @@ class Tutorial {
       case 'block': { pl.energy=Math.min(pl.energy,20); const [x,z]=this.openSpot(4.6); this.place(possum,x,z,true); possum.controller.t=1.6; break; }
       case 'bulwark': pl.energy=100; break;
       case 'done': possum.controller.shoot=false; try{ localStorage.setItem('eyv-tutorial-done','1'); }catch(e){} audio.play('fanfare');
-        g.hud.showBanner('TUTORIAL COMPLETE<small>GO EAT YOUR VEGETABLES</small>',2.5); break;
+        g.hud.showBanner('TUTORIAL COMPLETE<small>GO EAT YOUR VEGGIES!</small>',2.5); break;
     }
     this.render(true);
   }
@@ -2579,7 +2640,7 @@ class Online {
   link(){ const u=new URL(location.href); u.hash=''; u.searchParams.delete('autoplay'); u.searchParams.delete('achtest'); u.searchParams.set('join',this.code); return u.toString(); }
   copyLink(){ const url=this.link(), b=$('btn-on-copy');
     const done=ok=>{ b.textContent=ok?'Copied!':'Select and copy the link'; setTimeout(()=>b.textContent=navigator.share&&matchMedia('(pointer:coarse)').matches?'Share invite link':'Copy invite link',1600); };
-    if(navigator.share&&matchMedia('(pointer:coarse)').matches){ navigator.share({title:'Eat Your Vegetables',text:'Join my garden brawl! Code '+this.code,url}).catch(()=>{}); return; }
+    if(navigator.share&&matchMedia('(pointer:coarse)').matches){ navigator.share({title:'Eat Your Veggies!',text:'Join my garden brawl! Code '+this.code,url}).catch(()=>{}); return; }
     if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(()=>done(true),()=>{ $('on-link').select(); done(false); });
     else { $('on-link').select(); try{ done(document.execCommand('copy')); }catch(e){ done(false); } } }
   showRoom(){ this.game.showScreen('online'); $('on-menu').classList.add('hidden'); $('on-room').classList.remove('hidden'); this.busy(false);

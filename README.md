@@ -1,4 +1,4 @@
-# Eat Your Vegetables 🥕
+# Eat Your Veggies! 🥕
 
 A 2v2 garden brawl in the browser. Pick a cute vegetable-loving critter, team up with a bot, and fight another team for magic seeds in a chunky, colourful isometric arena.
 
