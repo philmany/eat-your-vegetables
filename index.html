@@ -47,7 +47,7 @@
       became a plain blue bar with a number and a marker at the current special's cost. Interactive TUTORIAL from
       the title screen: movement, attacks, specials, seeds, seed surges, hedges, the Pumpkin Shield and Bulwark.
   22. Berries, night, cosmetics (Nov 17): four BERRY BUSHES (two side lanes, two neutral corners, point-symmetric).
-      A bush heals 1 full heart (10 HP, twice a seed), per Philman. You eat by walking into a ripe bush, and only when
+      A bush heals 2 full hearts (20 HP; doubled Nov 18 per Philman) and shows a floating red health cross while ripe. You eat by walking into a ripe bush, and only when
       hurt, so full-health players
       can't waste it; it regrows in 20 s. NIGHT MODE (Settings, saved in `eyv-settings-v1`): moonlight and cool tones;
       seeds, ripe plots, berries and the centre plaza cast additive light pools, plus fireflies. No extra real lights
@@ -121,21 +121,30 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:20}
 .screen.dim{background:rgba(10,12,18,.62)}
 /* see-through black card under the title menu so it pops off the 3D garden */
-/* Title menu sits inside a giant translucent beet: blurred bulb (masked), faint ring stripes, a tapering root below and leaves on top. */
-.menu-card{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;gap:16px;
-  padding:clamp(44px,8vh,72px) clamp(26px,6vw,70px) clamp(70px,11vh,110px);max-width:calc(100vw - 32px);margin-top:clamp(70px,11vh,110px)}
-.menu-card::before{content:"";position:absolute;inset:-4% -6% -12%;z-index:-1;pointer-events:none;
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260' preserveAspectRatio='none'%3E%3Cdefs%3E%3CradialGradient id='g' cx='38%25' cy='30%25' r='75%25'%3E%3Cstop offset='0' stop-color='%236A1838' stop-opacity='.78'/%3E%3Cstop offset='.6' stop-color='%233E0C22' stop-opacity='.72'/%3E%3Cstop offset='1' stop-color='%2322060F' stop-opacity='.8'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M100 5C172 5 198 44 198 108C198 168 166 205 124 220C112 225 105 238 100 258C95 238 88 225 76 220C34 205 2 168 2 108C2 44 28 5 100 5Z' fill='url(%23g)' stroke='%23120309' stroke-opacity='.85' stroke-width='3' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M30 70C24 105 26 150 48 185M170 70C176 105 174 150 152 185M62 40C52 90 54 160 82 212M138 40C148 90 146 160 118 212' fill='none' stroke='%23AD1550' stroke-opacity='.22' stroke-width='2' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M52 30C70 18 96 14 118 18' fill='none' stroke='%23E86A9A' stroke-opacity='.35' stroke-width='4' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center/100% 100% no-repeat;
-  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260' preserveAspectRatio='none'%3E%3Cpath d='M100 5C172 5 198 44 198 108C198 168 166 205 124 220C112 225 105 238 100 258C95 238 88 225 76 220C34 205 2 168 2 108C2 44 28 5 100 5Z' fill='%23000'/%3E%3C/svg%3E") center/100% 100% no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 260' preserveAspectRatio='none'%3E%3Cpath d='M100 5C172 5 198 44 198 108C198 168 166 205 124 220C112 225 105 238 100 258C95 238 88 225 76 220C34 205 2 168 2 108C2 44 28 5 100 5Z' fill='%23000'/%3E%3C/svg%3E") center/100% 100% no-repeat;
-  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-.menu-card::after{content:"";position:absolute;z-index:-1;pointer-events:none;left:50%;top:calc(-4% - clamp(84px,12vh,130px) + 22px);
-  width:clamp(180px,34vw,270px);height:clamp(84px,12vh,130px);transform:translateX(-50%);
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 110'%3E%3Cg stroke='%230E1A10' stroke-opacity='.85' stroke-width='3' stroke-linejoin='round'%3E%3Cpath d='M104 108C96 80 62 66 30 22C70 18 104 50 108 104Z' fill='%232F5A2A' fill-opacity='.82'/%3E%3Cpath d='M116 108C124 80 158 66 190 22C150 18 116 50 112 104Z' fill='%232F5A2A' fill-opacity='.82'/%3E%3Cpath d='M110 108C98 72 96 34 110 2C124 34 122 72 110 108Z' fill='%233E7A32' fill-opacity='.85'/%3E%3C/g%3E%3Cg fill='none' stroke='%23AD1550' stroke-opacity='.7' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M106 104C96 80 70 60 44 30'/%3E%3Cpath d='M114 104C124 80 150 60 176 30'/%3E%3Cpath d='M110 104V14'/%3E%3C/g%3E%3C/svg%3E") center bottom/contain no-repeat}
-@media (max-width:520px){ .menu-card::before{inset:-3% -3% -10%} .menu-card .btn{min-width:min(240px,62vw)} }
-@media (max-height:900px){ .menu-card{gap:10px;padding-top:clamp(34px,6vh,56px);padding-bottom:clamp(56px,9vh,90px)} .menu-card .btn{padding-top:11px;padding-bottom:11px} #title h1{font-size:clamp(44px,7vw,100px)} }
-#title h1{font-family:var(--display);font-size:clamp(48px,8vw,118px);line-height:.9;margin:0 0 6px;text-align:center;color:var(--corn);
-  text-shadow:0 6px 0 var(--orange-s),0 12px 0 var(--navy),0 18px 30px rgba(0,0,0,.35);transform:skewX(-8deg) rotate(-3deg);letter-spacing:2px}
-#title h1 span{display:block;color:var(--orange);font-size:.62em}
+/* Title menu card: wide, dark and see-through (blurred garden behind), with roomy spacing between buttons. */
+.menu-card{display:flex;flex-direction:column;align-items:center;gap:18px;width:min(720px,calc(100vw - 32px));
+  padding:clamp(26px,4.5vh,44px) clamp(18px,5vw,64px) clamp(24px,4vh,40px);
+  background:rgba(8,10,16,.55);border-radius:22px;box-shadow:0 14px 44px rgba(0,0,0,.38),inset 0 0 0 2px rgba(245,239,220,.08);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.menu-card .btngrp{display:flex;flex-direction:column;align-items:center;gap:14px}
+.menu-card .btngrp.sub{gap:10px;margin-top:4px}
+/* green buttons on the title are secondary: smaller and quieter than Play / Online Play */
+.menu-card .btn.green{font-size:16px;letter-spacing:1.5px;min-width:200px;padding:10px 24px}
+@media (max-height:820px){ .menu-card{gap:12px} .menu-card .btngrp{gap:10px} .menu-card .btngrp.sub{gap:8px} }
+@media (max-width:520px){ .menu-card .btn{min-width:min(240px,70vw)} .menu-card .btn.green{min-width:min(200px,62vw)} }
+/* Cel-shaded logo: solid (non-stencil) face, three hard light bands, thick navy ink outline and a hard drop shadow. */
+#title h1{margin:0 0 4px;text-align:center;line-height:.86;transform:rotate(-3deg);font-family:"Russo One",Impact,sans-serif;font-weight:400;
+  filter:drop-shadow(0 5px 0 #0E1220) drop-shadow(0 10px 14px rgba(0,0,0,.35))}
+#title h1 span{display:block;position:relative;padding:0 .08em;color:var(--navy);-webkit-text-stroke:var(--sw) var(--navy)}
+/* the span itself is the thick navy ink; ::after lays the banded colour face exactly on top, so the stroke never eats into it */
+#title h1 span::after{content:attr(data-t);position:absolute;inset:0;padding:inherit;-webkit-text-stroke:0;
+  background-image:var(--bands);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+#title h1 .t1{font-size:clamp(36px,4.8vw,64px);letter-spacing:.06em;--sw:clamp(8px,.9vw,12px);
+  --bands:linear-gradient(180deg,#FFE58A 0 36%,#F2B51E 36% 70%,#C8861A 70% 100%)}
+#title h1 .t2{font-size:clamp(60px,10vw,124px);letter-spacing:.03em;margin-top:.02em;--sw:clamp(12px,1.4vw,18px);
+  --bands:linear-gradient(180deg,#FFB86A 0 36%,#F28A2A 36% 70%,#B85A16 70% 100%)}
+/* music on/off, bottom-right of the title screen */
+#btn-music{position:absolute;right:16px;bottom:16px;min-width:0;font-size:15px;letter-spacing:1.5px;padding:10px 18px}
 #title .tag{font-family:var(--num);font-size:28px;letter-spacing:4px;color:var(--navy);background:var(--white);padding:2px 18px 0;
   clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);margin-bottom:18px}
 .panel{background:rgba(26,32,48,.94);padding:28px 36px;clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
@@ -289,7 +298,6 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #res-new{font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--corn);text-align:center;max-width:90vw}
 /* ---------- Settings, small menu buttons, tutorial ---------- */
 .btn.small{font-size:17px;min-width:0;padding:10px 20px 8px}
-#title .row{margin-top:4px}
 .setrow{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:10px 0;border-top:2px solid rgba(255,255,255,.08);min-width:min(520px,80vw)}
 .setrow:first-of-type{border-top:0}
 .setrow .lbl{font-family:var(--display);font-size:22px;color:var(--white);letter-spacing:1px}
@@ -417,15 +425,15 @@ body.night #nightvig{display:block}
 
 <!-- ================= SCREENS ================= -->
 <div id="title" class="screen hidden"><div class="menu-card">
-  <h1>EAT YOUR<span>VEGGIES!</span></h1>
+  <h1><span class="t1" data-t="EAT YOUR">EAT YOUR</span><span class="t2" data-t="VEGGIES!">VEGGIES!</span></h1>
   <div class="tag">2 V 2 GARDEN BRAWL</div>
-  <button class="btn" id="btn-play">Play</button>
-  <button class="btn" id="btn-online">Online Play</button>
-  <button class="btn green" id="btn-tutorial">Tutorial</button>
+  <div class="btngrp"><button class="btn" id="btn-play">Play</button>
+  <button class="btn" id="btn-online">Online Play</button></div>
+  <div class="btngrp sub"><button class="btn green" id="btn-tutorial">Tutorial</button>
   <button class="btn green" id="btn-diff">Difficulty: Normal</button>
-  <button class="btn green" id="btn-mode">Mode: Seed Surge</button>
+  <button class="btn green" id="btn-mode">Mode: Seed Surge</button></div>
   <div class="row"><button class="btn ghost small" id="btn-controls">Controls</button><button class="btn ghost small" id="btn-ach">Achievements</button><button class="btn ghost small" id="btn-settings">Settings</button></div>
-</div></div>
+</div><button class="btn ghost" id="btn-music" aria-pressed="false" title="Music on/off">&#9835; Music: On</button></div>
 <div id="online" class="screen dim hidden">
   <div class="panel">
     <h2>ONLINE PLAY</h2>
@@ -483,7 +491,7 @@ body.night #nightvig{display:block}
       <b>ESC</b><span>Pause</span>
       <b>M</b><span>Mute / unmute</span>
       <b>POTATOES</b><span>Thrown potatoes knock enemy shots out of the air (both break).</span>
-      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. Berry bushes heal 1 heart when you're hurt. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
+      <b>GOAL</b><span>Grab magic seeds. Each seed heals half a heart and gives 5 Energy. Berry bushes (red cross) heal 2 hearts when you're hurt. 12 seeds = a SEED SURGE (speed + attack-speed buff). Most surges wins the round. Best of 3.</span>
       <b>PUMPKIN</b><span>Pumpkin Shield (tank): blocks most damage from the front. Bulwark special shields you and nearby allies and eats enemy shots.</span>
     </div>
     <div class="row" style="margin-top:20px"><button class="btn" id="btn-controls-back">Back</button></div>
@@ -505,7 +513,7 @@ body.night #nightvig{display:block}
         <p>Getting hit makes your team <b>drop seeds</b>, so don't get greedy.</p></div>
       <div class="tip" style="--tc:var(--tomato)"><h3>HEALTH</h3>
         <p>You have <b>8 hearts</b>. There's no slow regen, so heal on purpose:</p>
-        <p>Every seed you pick up heals <b>half a heart</b>. Walk into a <b>berry bush</b> to heal <b>1 heart</b> (it regrows in 20 s).</p>
+        <p>Every seed you pick up heals <b>half a heart</b>. Walk into a <b>berry bush</b> (look for the red cross) to heal <b>2 hearts</b> (it regrows in 20 s).</p>
         <p>Knocked out? You're back in <b>4 s</b> at full health. A <b>Pumpkin Shield</b> blocks most hits from the front.</p></div>
       <div class="tip" style="--tc:#63C8F2"><h3>ENERGY</h3>
         <p>The blue Energy bar pays for your weapon <b>special</b> (right-click) and <b>hedges</b> (Q, 20 each, up to 3).</p>
@@ -570,8 +578,8 @@ const WEAPONS = {
 };
 const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWARK_R=1.8, HEAL_PER_SEED=5, ENERGY_PER_SEED=5,
       POTATO_GAP=0.12, CELERY_ENERGY=6, CELERY_HEAL_EVERY=4, CELERY_HEAL=5, HEDGE_MAX=3, LUNGE_SPEED=13.6;
-// Berry bushes: walk into a ripe bush while hurt to eat. 10 HP = 1 full heart, twice a seed.
-const BERRY_HEAL=10, BERRY_REGROW=20, BERRY_R=1.1;
+// Berry bushes: walk into a ripe bush while hurt to eat. 20 HP = 2 full hearts, four times a seed.
+const BERRY_HEAL=20, BERRY_REGROW=20, BERRY_R=1.1;
 const BERRY_BUSHES=[[3,6],[12,9],[13,0],[2,15]]; // [i, j] tiles, point-symmetric about the centre
 // Cosmetics: one per character, purely visual. 'only' limits an item to one critter.
 const COSMETICS = {
@@ -708,11 +716,13 @@ class Audio {
     this.ctx=new AC(); const c=this.ctx;
     this.master=c.createGain(); this.master.gain.value=0.55; this.master.connect(c.destination);
     this.sfx=c.createGain(); this.sfx.gain.value=0.9; this.sfx.connect(this.master);
-    this.mus=c.createGain(); this.mus.gain.value=0.22; this.mus.connect(this.master);
+    this.mus=c.createGain(); this.mus.gain.value=this.musVol(); this.mus.connect(this.master);
     const len=c.sampleRate; this.noiseBuf=c.createBuffer(1,len,c.sampleRate);
     const d=this.noiseBuf.getChannelData(0); for(let i=0;i<len;i++) d[i]=Math.random()*2-1;
     this.startMusic();
   }
+  musVol(){ return this.musicOff?0:(this.intense?0.27:0.22); }
+  setMusicOff(off){ this.musicOff=!!off; if(this.mus) this.mus.gain.setTargetAtTime(this.musVol(),this.ctx.currentTime,0.05); }
   setMuted(m){ this.muted=m; if(this.master) this.master.gain.setTargetAtTime(m?0:0.55,this.ctx.currentTime,0.02); }
   tone(f,dur,type='square',vol=0.2,slide=null,delay=0,dest=null){
     const c=this.ctx; if(!c) return; const t=c.currentTime+delay;
@@ -807,7 +817,7 @@ class Audio {
   }
   // Final stretch: the last FINAL_STRETCH seconds of a round switch the loop to a faster, minor-key "panic" version.
   setIntense(on){ on=!!on; if(this.intense===on) return; this.intense=on; this.moodChange=true;
-    if(this.ctx&&this.mus) this.mus.gain.setTargetAtTime(on?0.27:0.22,this.ctx.currentTime,0.3);
+    if(this.ctx&&this.mus) this.mus.gain.setTargetAtTime(this.musVol(),this.ctx.currentTime,0.3);
     if(on&&this.ctx){ this.noise(1.1,'bandpass',300,5200,0.22,1.2); this.tone(220,1.1,'sawtooth',0.07,880); } } // riser stinger
   startMusic(){ // tiny step sequencer with lookahead scheduling. Calm: C - Am - F - G at 132 BPM.
     if(this.musicOn) return; this.musicOn=true;
@@ -1224,9 +1234,12 @@ class Arena {
   // Berry bushes: block their tile; a hurt critter that touches a ripe bush eats it (BERRY_HEAL), then it regrows.
   buildBerries(){
     this.bushes=[];
-    this.berryMat=toonMat({color:0xD8315B,emissive:0xFF4F7A,emissiveIntensity:0.18});
+    this.berryMat=toonMat({color:0xE0283A,emissive:0xFF3040,emissiveIntensity:0.3});
+    // floating health cross over each ripe bush: chunky red plus, navy outline, soft red glow behind it
+    this.crossMat=toonMat({color:0xE8293A,emissive:0xFF3A3A,emissiveIntensity:0.45});
+    const crossGlow=new THREE.SpriteMaterial({map:GLOW_TEX,color:0xFF3A3A,transparent:true,opacity:0.55,blending:THREE.AdditiveBlending,depthWrite:false});
     this.unripeMat=toonMat({color:0xA9C25A,emissive:0x000000});
-    const ringMat=toonMat({color:0xF27A9A,emissive:0xFF5A88,emissiveIntensity:0.38,transparent:true,opacity:0.3,side:THREE.DoubleSide,depthWrite:false});
+    const ringMat=toonMat({color:0xF25A5A,emissive:0xFF3A3A,emissiveIntensity:0.38,transparent:true,opacity:0.3,side:THREE.DoubleSide,depthWrite:false});
     const spots=[[0.3,0.32,0.12],[0.12,0.42,0.3],[-0.12,0.36,0.3],[0.33,0.2,-0.12],[-0.02,0.58,0.12],[0.22,0.52,0.05],[-0.3,0.3,0.14],[0.06,0.24,0.36],[0.28,0.42,-0.24],[-0.18,0.5,-0.08]];
     for(const [i,j] of BERRY_BUSHES){ this.blocked[j][i]=1; const x=tileC(i), z=tileC(j), g=new THREE.Group(); g.position.set(x,this.heightAt(x,z),z); this.root.add(g);
       M(CYL(0.44,0.48,0.08,10),PAL.loamS,0,0.04,0,g,false);
@@ -1237,8 +1250,11 @@ class Arena {
       for(const [a,b,c] of spots){ const m=new THREE.Mesh(ICO(0.075,0),this.berryMat); m.position.set(a,b,c); m.castShadow=true; berries.add(m);
         M(BOX(0.02,0.05,0.02),PAL.leaf,a,b+0.07,c,berries,false); }
       const ring=new THREE.Mesh(G('ripple',()=>new THREE.RingGeometry(0.5,0.6,24)),ringMat.clone()); ring.rotation.x=-Math.PI/2; ring.position.y=0.06; g.add(ring);
-      const pool=lightPool(g,0xFF5F8A,0.85,0.06,0.4);
-      this.bushes.push({i,j,x,z,g,berries,ring,pool,ripe:true,t:0,pop:0});
+      const pool=lightPool(g,0xFF3A3A,0.85,0.06,0.4);
+      const cross=new THREE.Group(); cross.position.y=1.2; g.add(cross);
+      M(BOX(0.42,0.14,0.1),this.crossMat,0,0,0,cross); M(BOX(0.14,0.42,0.1),this.crossMat,0,0,0,cross); addOutlines(cross,0.025,0.05);
+      const glow=new THREE.Sprite(crossGlow); glow.scale.set(1.1,1.1,1); glow.renderOrder=2; cross.add(glow);
+      this.bushes.push({i,j,x,z,g,berries,ring,pool,cross,glow,ripe:true,t:0,pop:0});
     }
   }
   setBerryLook(b){ const m=b.ripe?this.berryMat:this.unripeMat; b.berries.children.forEach(o=>{ if(o.geometry.type==='IcosahedronGeometry') o.material=m; });
@@ -1275,9 +1291,10 @@ class Arena {
       if(!b.ripe){ b.t+=dt; const k=b.t/BERRY_REGROW; b.berries.visible=k>0.35; if(k>0.35) b.berries.scale.setScalar(0.4+0.5*(k-0.35)/0.65);
         if(b.t>=BERRY_REGROW){ b.ripe=true; b.pop=0.35; this.setBerryLook(b); } }
       else if(b.pop>0){ b.pop-=dt; b.berries.scale.setScalar(1+Math.sin((0.35-b.pop)/0.35*Math.PI)*0.35); }
-      b.ring.visible=b.ripe; b.pool.visible=NIGHT.on&&b.ripe;
+      b.ring.visible=b.ripe; b.pool.visible=NIGHT.on&&b.ripe; b.cross.visible=b.ripe;
+      if(b.ripe){ b.cross.position.y=1.2+Math.sin(time*2.4+b.i)*0.07; b.cross.quaternion.copy(camera.quaternion); b.cross.rotateZ(Math.sin(time*2+b.j)*0.12); b.cross.scale.setScalar(1+Math.sin(time*3+b.i)*0.06); b.glow.material.opacity=(NIGHT.on?0.7:0.45)+Math.sin(time*3+b.i)*0.1; }
       if(b.ripe){ const r=(time*0.7+b.i*0.21)%1; b.ring.scale.setScalar(0.85+r*0.5); b.ring.material.opacity=0.3*(1-r); if(b.pool.visible) b.pool.material.opacity=0.36+Math.sin(time*2.6+b.j)*0.06; } }
-    this.berryMat.emissiveIntensity=(NIGHT.on?0.38:0.1)+Math.sin(time*3)*(NIGHT.on?0.08:0.02);
+    this.berryMat.emissiveIntensity=(NIGHT.on?0.5:0.28)+Math.sin(time*3)*(NIGHT.on?0.1:0.06); this.crossMat.emissiveIntensity=(NIGHT.on?0.7:0.45)+Math.sin(time*3)*0.1;
     if(NIGHT.on){ const a=this.ff.geometry.attributes.position; for(let k=0;k<this.ffSeed.length;k++){ const [x,z,y,ph,sp]=this.ffSeed[k];
         a.setXYZ(k,x+Math.sin(time*sp+ph)*0.8,y+Math.sin(time*sp*2.3+ph*2)*0.25,z+Math.cos(time*sp*0.8+ph)*0.8); }
       a.needsUpdate=true; this.ff.material.opacity=0.75+Math.sin(time*1.7)*0.2; }
@@ -2049,7 +2066,7 @@ const TUT_STEPS=[
   {id:'special', n:'SPECIAL MOVE', d:'<b>Right-click</b> for your weapon special. The Rabbit\'s <b>Lunge Slash</b> dashes forward. Specials cost <b>Energy</b>: the blue bar at the top left. The gold tick on it marks the cost.'},
   {id:'dodge', n:'DODGE ROLL', d:'Press <b>SPACE</b> to dodge roll. You can\'t be hurt mid-roll. It recharges in 1.5 s.'},
   {id:'seeds', n:'MAGIC SEEDS', d:'You\'re hurt! Walk over the glowing <b>magic seeds</b>. Each one heals <b>half a heart</b> and gives <b>+5 Energy</b>. Watch your hearts and the blue bar.', goal:4, unit:'SEEDS'},
-  {id:'berries', n:'BERRY BUSHES', d:'Still hurt? <b>Berry bushes</b> heal <b>1 full heart</b> (10 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
+  {id:'berries', n:'BERRY BUSHES', d:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
   {id:'surge', n:'SEED SURGE', d:'Every seed goes into your team\'s pot (top centre). Bank <b>12</b> for a <b>SEED SURGE</b>: faster running and attacks for 10 s. <b>Most surges wins the round.</b> Grab the last few!'},
   {id:'hedge', n:'HEDGES', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
   {id:'shield', n:'PICK UP A WEAPON', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
@@ -2166,7 +2183,8 @@ class Game {
     this.ach=new Achievements(); this.achOn=false;
     this.hud=new HUD(this); this.wins=[0,0]; this.bonus=[0,0]; this.round=1; this.roundTime=ROUND_TIME;
     this.view=1; this.net=null; this.mode='seeds'; this.modeSP='seeds';
-    this.settings={shake:true,night:false}; try{ const d=JSON.parse(localStorage.getItem('eyv-settings-v1')||'{}'); if(d&&typeof d.shake==='boolean') this.settings.shake=d.shake; if(d&&typeof d.night==='boolean') this.settings.night=d.night; }catch(e){}
+    this.settings={shake:true,night:false,music:true}; try{ const d=JSON.parse(localStorage.getItem('eyv-settings-v1')||'{}'); if(d&&typeof d.shake==='boolean') this.settings.shake=d.shake; if(d&&typeof d.night==='boolean') this.settings.night=d.night; if(d&&typeof d.music==='boolean') this.settings.music=d.music; }catch(e){}
+    audio.setMusicOff(!this.settings.music);
     this.applyNight();
     this.tutorial=new Tutorial(this); this.tut=null; this.spinV=0.12;
     this.placeTitleChars(); this.bindUI(); this.net=new Online(this); this.showScreen('title');
@@ -2227,6 +2245,7 @@ class Game {
     click('btn-online',()=>this.net.openMenu());
     click('btn-set-night',()=>{ this.settings.night=!this.settings.night; this.saveSettings(); this.applyNight(); this.renderSettings(); });
     click('btn-tutorial',()=>this.startTutorial());
+    click('btn-music',()=>{ this.settings.music=!this.settings.music; this.saveSettings(); audio.setMusicOff(!this.settings.music); this.renderSettings(); }); this.renderSettings();
     click('btn-settings',()=>{ this.renderSettings(); this.showScreen('settings'); }); click('btn-settings-back',()=>this.showScreen('title'));
     click('btn-set-shake',()=>{ this.settings.shake=!this.settings.shake; this.saveSettings(); this.renderSettings(); if(this.settings.shake) this.shakeA=0; });
     click('btn-set-tips',()=>{ try{ if(this.tipsOn()) localStorage.setItem('eyv-tips-off','1'); else localStorage.removeItem('eyv-tips-off'); }catch(e){} this.renderSettings(); });
@@ -2257,7 +2276,8 @@ class Game {
   tipsOn(){ try{ return localStorage.getItem('eyv-tips-off')!=='1'; }catch(e){ return true; } }
   saveSettings(){ try{ localStorage.setItem('eyv-settings-v1',JSON.stringify(this.settings)); }catch(e){} }
   renderSettings(){
-    for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()],['btn-set-night',this.settings.night]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); } }
+    for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()],['btn-set-night',this.settings.night]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); }
+    const m=$('btn-music'), mo=this.settings.music; m.innerHTML='&#9835; Music: '+(mo?'On':'Off'); m.classList.toggle('off',!mo); m.setAttribute('aria-pressed',String(!mo)); }
   startTutorial(){ // learn-by-doing sandbox: you play the Rabbit, everyone else is a training partner
     this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME; this.mode='seeds';
     this.player=this.chars.find(c=>c.key==='rabbit'); this.achOn=false; this.ach.startMatch();
