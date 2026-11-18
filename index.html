@@ -252,8 +252,14 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .ob b{display:block;height:100%;width:100%}
 .ob .en b{background:#63C8F2}
 .ob.ko{display:none}
-#tips .panel{max-width:min(860px,94vw)}
-.tipcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:4px 0 6px}
+.ob .bty{display:none;align-self:center;font-family:var(--num);font-size:14px;letter-spacing:1px;line-height:1;color:var(--navy);background:var(--corn);padding:2px 6px 1px;margin-bottom:1px;white-space:nowrap;box-shadow:0 0 8px #FFC93C}
+.ob.bounty .bty{display:block;animation:bty 1s infinite alternate}
+@keyframes bty{to{transform:scale(1.1)}}
+.sc .cb{display:none;font-family:var(--display);font-size:14px;letter-spacing:2px;line-height:1;color:var(--navy);background:var(--corn);margin:4px auto 0;padding:3px 8px 2px;width:max-content}
+.sc.comeback .cb{display:block;animation:bty .6s infinite alternate}
+.fl.gold{color:var(--corn);font-family:var(--display);font-size:30px}
+#tips .panel{max-width:min(980px,94vw)}
+.tipcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:4px 0 6px}
 .tip{background:#2A3757;padding:12px 16px 14px;border-top:6px solid var(--tc);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
 .tip h3{font-family:var(--display);font-size:24px;margin:0 0 6px;color:var(--tc);letter-spacing:1px}
 .tip p{margin:0 0 6px;font-size:15px;line-height:1.35;color:#E3E6EE;font-family:var(--ui)}
@@ -496,8 +502,8 @@ body.touch #mute{display:none}
   <div id="hud-tc">
     <div class="slabel" id="slabel">MAGIC SEEDS</div>
     <div class="scounters">
-      <div class="sc" id="sc0" style="--team:var(--green)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div></div>
-      <div class="sc" id="sc1" style="--team:var(--orange)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div></div>
+      <div class="sc" id="sc0" style="--team:var(--green)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div><div class="cb">COMEBACK!</div></div>
+      <div class="sc" id="sc1" style="--team:var(--orange)"><div class="num"><span>0</span><small> / 12</small></div><div class="icons"></div><div class="bonus">SURGES 0</div><div class="cb">COMEBACK!</div></div>
     </div>
   </div>
   <div id="hud-tr"><div id="timer">2:30</div><div id="round-label">ROUND 1</div><div id="wins"></div><div id="net-ping" class="hidden"></div></div>
@@ -629,6 +635,10 @@ body.touch #mute{display:none}
       <div class="tip" style="--tc:#63C8F2"><h3>ENERGY</h3>
         <p>The blue Energy bar pays for your weapon <b>special</b> (<span class="kb">right-click</span><span class="tc">blue button</span>) and <b>hedges</b> (<span class="kb">Q</span><span class="tc">HEDGE button</span>, 20 each, up to 3).</p>
         <p>It refills slowly on its own, faster when you <b>land hits</b>, and every seed gives <b>+5</b>.</p></div>
+      <div class="tip" style="--tc:var(--mint)"><h3>COMEBACKS</h3>
+        <p>Falling behind (1 surge, or 3 knockouts in Team Deathmatch)? Your team gets a small <b>COMEBACK</b> boost:</p>
+        <p>Respawn in <b>3 s</b> instead of 4. A <b>Golden Seed</b> pops up near your side (worth <b>3 seeds</b> and heals 1 heart).</p>
+        <p>Their top scorer wears a <b>BOUNTY</b>: knock them out for <b>+1 knockout</b> and 3 bonus seeds.</p></div>
     </div>
     <div class="row" style="margin-top:16px;align-items:center;justify-content:space-between">
       <label><input type="checkbox" id="tips-skip"> DON'T SHOW AGAIN</label>
@@ -674,6 +684,11 @@ const FIXED_DT = 1/60, HALF = 8, N = 16;
 const FINAL_STRETCH = 30; // seconds left in a round when the music turns intense
 const MAX_HP = 80, RESPAWN = 4, ROUND_TIME = 150, SEED_GOAL = 12, BUFF_TIME = 10, HEDGE_COST = 20;
 const BASE_SPEED = 4.4, CHAR_R = 0.32;
+// Comeback boost: kept small on purpose so skill still decides most matches.
+// A team that's behind (1+ Seed Surge in Seed Surge, 3+ knockouts in Team Deathmatch) respawns faster, gets a Golden Seed
+// near its side every so often, and the leading team's top scorer carries a bounty.
+const CB_SURGE_GAP = 1, CB_KO_GAP = 3, CB_RESPAWN = 3, CB_FIRST_SEED = 3, CB_SEED_EVERY = 15;
+const GOLD_SEEDS = 3, GOLD_HEAL = 10, GOLD_ENERGY = 15, BOUNTY_SEEDS = 3;
 
 const WEAPONS = {
   sword:{ name:'CARROT SWORD', kind:'melee', dmg:10, cd:0.42, range:1.65, arc:Math.PI*0.8, knock:3, windup:0.07, anim:0.3,
@@ -1629,9 +1644,24 @@ class SeedSystem {
     this.haloMat=toonMat({color:PAL.mint,emissive:PAL.seedGlow,emissiveIntensity:0.45,transparent:true,opacity:0.22,depthWrite:false});
     this.halo=new THREE.InstancedMesh(G('seedhalo',()=>new THREE.RingGeometry(0.15,0.24,16).rotateX(-Math.PI/2)),this.haloMat,this.max); this.halo.frustumCulled=false; scene.add(this.halo);
     this.pools=new THREE.InstancedMesh(POOL_GEO,glowMat(0x4FE0A0,0.2),this.max); this.pools.frustumCulled=false; this.pools.renderOrder=2; this.pools.visible=false; scene.add(this.pools);
+    // the Comeback Golden Seed: one bigger, brighter seed with a tall beam so the trailing team spots it
+    this.goldG=new THREE.Group(); scene.add(this.goldG); this.goldG.visible=false;
+    this.goldSeed=new THREE.Mesh(ICO(0.3,0),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.9})); this.goldSeed.castShadow=true; this.goldG.add(this.goldSeed);
+    this.goldRing=new THREE.Mesh(G('goldring',()=>new THREE.RingGeometry(0.34,0.5,24).rotateX(-Math.PI/2)),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:1,transparent:true,opacity:0.7,depthWrite:false,side:THREE.DoubleSide})); this.goldG.add(this.goldRing);
+    this.goldBeam=new THREE.Mesh(CYL(0.3,0.36,3.2,14,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.7,transparent:true,opacity:0.16,depthWrite:false,side:THREE.DoubleSide})); this.goldG.add(this.goldBeam);
     this.sid=0; this.reset();
   }
   reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; this.render(0); }
+  // a Golden Seed for the trailing team, on their half between their base and the plaza (or at x,z)
+  spawnGold(team,x,z){
+    const ar=this.game.arena;
+    if(x===undefined){ const s=SPAWNS[team][randi(0,1)];
+      for(let k=0;k<30;k++){ const f=rand(0.3,0.6); x=clamp(s[0]*f+rand(-1.6,1.6),-7.2,7.2); z=clamp(s[1]*f+rand(-1.6,1.6),-7.2,7.2); if(!ar.blockedAt(x,z)) break; } }
+    this.seeds.push({x,z,y:0.2,tx:x,tz:z,state:'rise',t:0,pick:0.5,ph:rand(0,6),id:++this.sid,gold:true,team});
+    this.game.fx.burst(new V3(x,0.6,z),[PAL.corn,PAL.white],14,3,4); audio.play('pickup');
+  }
+  clearGold(){ for(let k=this.seeds.length-1;k>=0;k--){ const s=this.seeds[k]; if(!s.gold) continue; this.game.fx.burst(new V3(s.x,s.y,s.z),[PAL.corn,PAL.white],8,2,2,0.6); this.seeds.splice(k,1); } }
+  canTake(c,s){ return !s.gold || s.team===c.team; }
   spawnBatch(){
     const free=this.max-this.seeds.length, n=Math.min(free,randi(3,4));
     for(let k=0;k<n;k++){ const a=rand(0,Math.PI*2), r=rand(0.35,1.3);
@@ -1650,23 +1680,25 @@ class SeedSystem {
         if(ar.blockedAt(nx,nz)){ s.vx*=-0.4; s.vz*=-0.4; } else { s.x=nx; s.z=nz; }
         s.y+=s.vy*dt; const gy=ar.heightAt(s.x,s.z)+0.3; if(s.y<=gy){ if(s.vy<-3){ s.vy*=-0.35; s.vx*=0.5; s.vz*=0.5; s.y=gy; } else { s.y=gy; s.state='float'; } } }
       if(s.state==='float'){ s.y=lerp(s.y,ar.heightAt(s.x,s.z)+0.3+Math.sin(time*3+s.ph)*0.04,0.15); }
-      if(active && s.pick<=0) for(const c of this.game.chars){ if(c.ko) continue; if(dist2(c.pos.x,c.pos.z,s.x,s.z)<0.42){ this.collect(c,k); break; } }
+      if(active && s.pick<=0) for(const c of this.game.chars){ if(c.ko||!this.canTake(c,s)) continue; if(dist2(c.pos.x,c.pos.z,s.x,s.z)<(s.gold?0.6:0.42)){ this.collect(c,k); break; } }
     }
     this.mat.emissiveIntensity=seedGlowAt(time);
     this.render(time);
   }
   collect(c,k){
-    const s=this.seeds[k]; this.seeds.splice(k,1); this.pool[c.team]++; c.stats.seeds++;
-    const gain=[]; if(c.hp<MAX_HP){ c.hp=Math.min(MAX_HP,c.hp+HEAL_PER_SEED); gain.push('+'+HEAL_PER_SEED+' HP'); }
-    if(c.energy<100){ c.energy=Math.min(100,c.energy+ENERGY_PER_SEED); gain.push('+'+ENERGY_PER_SEED+' EN'); }
+    const s=this.seeds[k]; this.seeds.splice(k,1); const n=s.gold?GOLD_SEEDS:1, heal=s.gold?GOLD_HEAL:HEAL_PER_SEED, en=s.gold?GOLD_ENERGY:ENERGY_PER_SEED;
+    this.pool[c.team]=Math.min(SEED_GOAL,this.pool[c.team]+n); c.stats.seeds+=n; if(s.gold) c.stats.gold=(c.stats.gold|0)+1;
+    const gain=[]; if(c.hp<MAX_HP){ c.hp=Math.min(MAX_HP,c.hp+heal); gain.push('+'+heal+' HP'); }
+    if(c.energy<100){ c.energy=Math.min(100,c.energy+en); gain.push('+'+en+' EN'); }
     if(gain.length) this.game.fx.float(gain.join('  '),new V3(c.pos.x,1.7,c.pos.z),'heal',0.7);
-    this.game.fx.float('+1',new V3(s.x,1.3,s.z),'seed',0.8); this.game.fx.burst(new V3(s.x,s.y,s.z),[PAL.corn,PAL.white],4,1.5,1.5,0.6);
-    audio.play('seed');
+    if(s.gold){ this.game.fx.float('GOLDEN SEED +'+n,new V3(s.x,1.5,s.z),'gold',1.1); this.game.fx.burst(new V3(s.x,s.y,s.z),[PAL.corn,PAL.white,PAL.mint],16,3,3); audio.play('achieve'); }
+    else { this.game.fx.float('+1',new V3(s.x,1.3,s.z),'seed',0.8); this.game.fx.burst(new V3(s.x,s.y,s.z),[PAL.corn,PAL.white],4,1.5,1.5,0.6); audio.play('seed'); }
     if(this.pool[c.team]>=SEED_GOAL) this.game.seedSurge(c.team);
   }
   render(time){
     const ar=this.game.arena, hs=1+Math.sin(time*5)*0.05;
-    for(let k=0;k<this.max;k++){ const s=this.seeds[k];
+    let gold=null;
+    for(let k=0;k<this.max;k++){ let s=this.seeds[k]; if(s&&s.gold){ if(!gold) gold=s; s=null; }
       if(s){ _e.set(0,time*2+s.ph,0.3); _q.setFromEuler(_e); _m4.compose(_v.set(s.x,s.y,s.z),_q,_s.set(1,1.45,1)); }
       else _m4.makeScale(0,0,0);
       this.im.setMatrixAt(k,_m4);
@@ -1675,8 +1707,11 @@ class SeedSystem {
       if(NIGHT.on){ if(s){ const ps=1.0*hs; _m4.makeScale(ps,1,ps).setPosition(s.x,ar.heightAt(s.x,s.z)+0.07,s.z); } else _m4.makeScale(0,0,0); this.pools.setMatrixAt(k,_m4); } }
     this.im.instanceMatrix.needsUpdate=true; this.halo.instanceMatrix.needsUpdate=true; this.pools.visible=NIGHT.on; if(NIGHT.on) this.pools.instanceMatrix.needsUpdate=true;
     this.haloMat.opacity=0.2+Math.sin(time*5)*0.04;
+    this.goldG.visible=!!gold;
+    if(gold){ const gy=ar.heightAt(gold.x,gold.z); this.goldG.position.set(gold.x,gy,gold.z); this.goldSeed.position.y=Math.max(0.35,gold.y-gy+0.15)+Math.sin(time*4)*0.06;
+      this.goldSeed.rotation.set(0.3,time*3,0); this.goldSeed.scale.set(1,1.45,1); this.goldRing.position.y=0.07; this.goldRing.scale.setScalar(1+Math.sin(time*6)*0.12); this.goldBeam.position.y=1.6; }
   }
-  nearest(x,z,avoid=[]){ let best=null,bd=1e9; for(const s of this.seeds){ if(s.state==='fly') continue; let d=Math.sqrt(dist2(x,z,s.x,s.z));
+  nearest(x,z,avoid=[],team=-1){ let best=null,bd=1e9; for(const s of this.seeds){ if(s.state==='fly') continue; if(s.gold&&s.team!==team) continue; let d=Math.sqrt(dist2(x,z,s.x,s.z))-(s.gold?4:0);
       for(const e of avoid) if(!e.ko && dist2(e.pos.x,e.pos.z,s.x,s.z)<4) d+=2.5; if(d<bd){bd=d;best=s;} } return best; }
 }
 
@@ -1704,7 +1739,7 @@ class Character {
     this.stars.visible=false;
     this.weaponMeshes=[]; this.isPlayer=false; this.controller=null;
     this.pos=new V3(); this.vel=new V3(); this.kb=new V3(); this.facing=0;
-    this.hedges=[]; this.cos=[]; this.cosmetic='none'; this.resetStats(); this.resetState();
+    this.hedges=[]; this.cos=[]; this.cosmetic='none'; this.resetStats(); this.resetState(); this.rko=0;
   }
   setCosmetic(id){ if(!cosmeticsFor(this.key).includes(id)) id='none'; if(this.cosmetic===id) return;
     removeCosmetic(this.m,this.cos); this.cos=addCosmetic(this.m,this.key,id); this.cosmetic=id; }
@@ -1801,7 +1836,7 @@ class Character {
     if(m.tail) m.tail.rotation.y=Math.sin(t*5+this.phase*0.5)*0.3;
     if(this.key==='possum'&&this.honkT>0) for(const e of m.ears) e.rotation.x=-0.7; // ears pinned back mid-hiss
     if(this.ko){ // knocked out: tipped over, sunk, stars circling
-      const k=Math.min(1,(RESPAWN-this.respawnT)/0.35); rz=lerp(0,Math.PI/2,k); y=0.5-0.25*k; armR=-2.5; armL=-2.5; legA=0.6; }
+      const k=Math.min(1,((this.respawnMax||RESPAWN)-this.respawnT)/0.35); rz=lerp(0,Math.PI/2,k); y=0.5-0.25*k; armR=-2.5; armL=-2.5; legA=0.6; }
     m.rig.position.y=y; m.rig.rotation.set(rx,ry,rz); m.rig.scale.set(sx,sy,sz);
     m.armR.rotation.x=armR; m.armR.rotation.z=armRz; m.armL.rotation.x=armL; m.legL.rotation.x=legA; m.legR.rotation.x=-legA;
     // respawn pop-in with overshoot
@@ -2070,7 +2105,7 @@ class AIController {
       for(const a of g.chars){ if(a===c||a.team!==c.team||a.ko||a.hp>MAX_HP*0.65) continue;
         for(const e of en){ const d=Math.hypot(e.pos.x-a.pos.x,e.pos.z-a.pos.z); if(d<4.5 && d+a.hp/20<gs){ gs=d+a.hp/20; ga=a; gt=e; } } }
       if(ga && dist2(ga.pos.x,ga.pos.z,c.pos.x,c.pos.z)<100){ this.state='guard'; this.guardAlly=ga; this.target=gt; return; } }
-    const seed=g.seeds.nearest(c.pos.x,c.pos.z,en), sd=seed?Math.hypot(seed.x-c.pos.x,seed.z-c.pos.z):1e9;
+    const seed=g.seeds.nearest(c.pos.x,c.pos.z,en,c.team), sd=seed?Math.hypot(seed.x-c.pos.x,seed.z-c.pos.z):1e9;
     // Aggression sets how far away a fight is worth taking; greed (higher on Hard) prefers seeds over brawling.
     const fightR=1.5+p.aggr*3.5+(g.seeds.pool[1-c.team]>=6?2.5:0);
     if(ed<1.8){ this.state='attack'; return; }
@@ -2252,13 +2287,15 @@ class HUD {
       bc.appendChild(d); this.sp.push({c,el:d,bar:d.querySelector('.hb b'),cd:d.querySelector('.cd'),sd:d.querySelector('.sd'),bf:d.querySelector('.bf'),last:{}}); }
     const ob=$('overbars'); ob.innerHTML=''; this.ob=[];
     for(const c of g.chars){ const d=document.createElement('div'); d.className='ob';
-      d.innerHTML='<i class="hp"><b></b></i><i class="en"><b></b></i>'; ob.appendChild(d);
+      d.innerHTML='<span class="bty">★ BOUNTY</span><i class="hp"><b></b></i><i class="en"><b></b></i>'; ob.appendChild(d);
       this.ob.push({c,el:d,hp:d.querySelector('.hp b'),en:d.querySelector('.en b'),last:{}}); }
     this.renderWins();
   }
   updateOverbars(){ // small health + energy bars over every critter's head
     if(!this.ob) return; const w=innerWidth, h=innerHeight;
-    for(const o of this.ob){ const c=o.c, L=o.last;
+    const bi=this.game.cb.bounty;
+    for(const o of this.ob){ const c=o.c, L=o.last, by=bi>=0&&this.game.chars[bi]===c;
+      if(L.by!==by){ L.by=by; o.el.classList.toggle('bounty',by); }
       if(L.ko!==c.ko){ L.ko=c.ko; o.el.classList.toggle('ko',c.ko); } if(c.ko) continue;
       _v.set(c.pos.x,c.pos.y+(c.key==='rabbit'?2.05:1.85),c.pos.z).project(camera);
       const x=Math.round((_v.x+1)/2*w), y=Math.round((1-_v.y)/2*h);
@@ -2286,7 +2323,8 @@ class HUD {
     // seed counters
     const pool=g.seeds.pool;
     for(let t=0;t<2;t++){ const s=this.sc[t]; if(s.last!==pool[t]){ s.last=pool[t]; s.num.textContent=pool[t]; s.icons.forEach((i,k)=>i.classList.toggle('on',k<pool[t])); }
-      const tdm=g.mode==='tdm', ko=g.teamKO||[0,0]; setText(s.bonus,tdm?'KNOCKOUTS '+ko[t]+' · SURGES '+g.bonus[t]:'SURGES '+g.bonus[t]); s.el.classList.toggle('lead',tdm?ko[t]>ko[1-t]:pool[t]>pool[1-t]); }
+      const tdm=g.mode==='tdm', ko=g.teamKO||[0,0]; setText(s.bonus,tdm?'KNOCKOUTS '+ko[t]+' · SURGES '+g.bonus[t]:'SURGES '+g.bonus[t]); s.el.classList.toggle('lead',tdm?ko[t]>ko[1-t]:pool[t]>pool[1-t]);
+      const cbOn=g.cb.team===t; if(s.cbOn!==cbOn){ s.cbOn=cbOn; s.el.classList.toggle('comeback',cbOn); } }
     setText($('slabel'),g.mode==='tdm'&&!g.tut?'TEAM DEATHMATCH · MOST KNOCKOUTS WINS':'MAGIC SEEDS');
     // timer
     const tl=Math.max(0,Math.ceil(g.roundTime)); setText(this.timer,Math.floor(tl/60)+':'+String(tl%60).padStart(2,'0'));
@@ -2324,6 +2362,7 @@ const TUT_STEPS=[
   {id:'seeds', n:'MAGIC SEEDS', d:'You\'re hurt! Walk over the glowing <b>magic seeds</b>. Each one heals <b>half a heart</b> and gives <b>+5 Energy</b>. Watch your hearts and the blue bar.', goal:4, unit:'SEEDS'},
   {id:'berries', n:'BERRY BUSHES', t:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). <b>Tap the bush</b> under the marker and you walk over and eat it. Bushes only feed hurt critters, then regrow in <b>20 s</b>.', d:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
   {id:'surge', n:'SEED SURGE', d:'Every seed goes into your team\'s pot (top centre). Bank <b>12</b> for a <b>SEED SURGE</b>: faster running and attacks for 10 s. <b>Most surges wins the round.</b> Grab the last few!'},
+  {id:'comeback', n:'COMEBACKS', d:'Falling behind? Your team gets a small <b>COMEBACK</b> boost: <b>3 s</b> respawns and a <b>Golden Seed</b> near your side (worth <b>3 seeds</b>, heals 1 heart). The leader wears a gold <b>BOUNTY</b> tag: KO them for <b>+1 knockout</b>. Grab the Golden Seed!'},
   {id:'hedge', n:'HEDGES', t:'Tap <b>HEDGE</b> (above Attack) to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
   {id:'shield', n:'PICK UP A WEAPON', t:'Ripe plots glow gold. <b>Tap the Pumpkin</b> plot under the marker: you walk over and grab the <b>Pumpkin Shield</b>. You can also tap berry bushes and seeds. Picked-up weapons snap after 12 uses.', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
   {id:'block', n:'BLOCK', t:'The Possum is throwing celery at you. <b>Face it</b>: you turn to the nearest enemy by yourself (or drag Attack to aim). The shield blocks most damage from the <b>front</b>. Block 3 shots.', d:'The Possum is throwing celery at you. <b>Face it</b> with the mouse: the shield blocks most damage from the <b>front</b>. Block 3 shots.', goal:3, unit:'BLOCKS'},
@@ -2371,7 +2410,10 @@ class Tutorial {
         const b=[...g.arena.bushes].sort((a,c)=>dist2(a.x,a.z,pl.pos.x,pl.pos.z)-dist2(c.x,c.z,pl.pos.x,pl.pos.z))[0];
         b.ripe=true; b.t=0; g.arena.setBerryLook(b); this.bush=b; this.setMarker(b.x,b.z); break; }
       case 'surge': g.seeds.pool[0]=Math.max(g.seeds.pool[0],9); this.dropSeeds(4); break;
-      case 'hedge': pl.energy=100; this.base=pl.stats.hedges; break;
+      case 'comeback': { g.seeds.seeds=g.seeds.seeds.filter(s=>!s.gold); this.place(goose,clamp(pl.pos.x+3.2,-7,7),clamp(pl.pos.z+2.2,-7,7));
+        g.cb.team=0; g.cb.bounty=g.chars.indexOf(goose); pl.hp=Math.min(pl.hp,60); this.base=pl.stats.gold|0;
+        const [x,z]=this.openSpot(2.6); g.seeds.spawnGold(0,x,z); this.setMarker(x,z); break; }
+      case 'hedge': g.cb.team=-1; g.cb.bounty=-1; g.seeds.seeds=g.seeds.seeds.filter(s=>!s.gold); pl.energy=100; this.base=pl.stats.hedges; break;
       case 'shield': { if(pl.weapon==='shield') pl.setWeapon(pl.sig); const p=g.arena.plots.filter(q=>q.type==='shield').sort((a,b)=>dist2(a.x,a.z,pl.pos.x,pl.pos.z)-dist2(b.x,b.z,pl.pos.x,pl.pos.z))[0];
         p.stage=3; p.t=0; this.plot=p; this.setMarker(p.x,p.z); break; }
       case 'block': { pl.energy=Math.min(pl.energy,20); const [x,z]=this.openSpot(4.6); this.place(possum,x,z,true); possum.controller.t=1.6; break; }
@@ -2412,6 +2454,7 @@ class Tutorial {
       case 'seeds': this.cnt=pl.stats.seeds-this.base; ok=this.cnt>=st.goal; if(!ok && !g.seeds.seeds.length) this.dropSeeds(st.goal-this.cnt); break;
       case 'berries': ok=pl.stats.berries>this.base; if(!ok){ if(pl.hp>MAX_HP-20) pl.hp=MAX_HP-30; if(!this.bush.ripe){ this.bush.ripe=true; g.arena.setBerryLook(this.bush); } } break;
       case 'surge': ok=g.bonus[0]>=1; if(!ok && !g.seeds.seeds.length) this.dropSeeds(12-g.seeds.pool[0]); break;
+      case 'comeback': ok=(pl.stats.gold|0)>this.base; if(!ok && !g.seeds.seeds.some(s=>s.gold)){ const [x,z]=this.openSpot(2.6); g.seeds.spawnGold(0,x,z); this.setMarker(x,z); } break;
       case 'hedge': ok=pl.stats.hedges>this.base; if(pl.energy<HEDGE_COST) pl.energy=HEDGE_COST; break;
       case 'shield': ok=pl.weapon==='shield'; if(this.plot.stage!==3 && !ok){ this.plot.stage=3; this.plot.t=0; } break;
       case 'block': if(pl.energy>WEAPONS.shield.spCost-1) pl.energy=WEAPONS.shield.spCost-1; // save the Bulwark for the next step
@@ -2432,7 +2475,7 @@ class Game {
   constructor(){
     this.time=0; this.state='title'; this.difficulty='normal'; this.choice='rabbit'; this.hitstop=0; this.shakeA=0;
     this.camTarget=new V3(); this.titleAng=0; this.autoplay=new URLSearchParams(location.search).has('autoplay');
-    this.arena=new Arena(this); this.fx=new FX(); this.seeds=new SeedSystem(this); this.weapons=new Weapon(this);
+    this.cb={team:-1,bounty:-1,seedT:0}; this.arena=new Arena(this); this.fx=new FX(); this.seeds=new SeedSystem(this); this.weapons=new Weapon(this);
     this.chars=CHAR_ORDER.map(k=>new Character(this,k));
     this.cosmetics={}; try{ const d=JSON.parse(localStorage.getItem('eyv-cosmetics-v1')||'{}'); if(d&&typeof d==='object') for(const k of CHAR_ORDER) if(cosmeticsFor(k).includes(d[k])) this.cosmetics[k]=d[k]; }catch(e){}
     this.portraits=this.makePortraits();
@@ -2538,7 +2581,7 @@ class Game {
     this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME; this.mode='seeds';
     this.player=this.chars.find(c=>c.key==='rabbit'); this.achOn=false; this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.controller=c.isPlayer?new Player(this,c):new TutDummy(this,c); }
-    this.weapons.clear(); this.seeds.reset(); this.seeds.spawnT=1e9; this.arena.resetForRound(); this.fx.clearFloats();
+    this.weapons.clear(); this.seeds.reset(); this.seeds.spawnT=1e9; this.arena.resetForRound(); this.fx.clearFloats(); this.cb={team:-1,bounty:-1,seedT:0};
     const idx=[0,0]; for(const c of this.chars){ c.resetState(); const s=SPAWNS[c.team][idx[c.team]++]; c.spawnAt(s[0],s[1]); }
     this.tut=this.tutorial; this.hud.setup(); this.hud.show(true); $('hud').classList.add('tutorial');
     this.state='playing'; this.camTarget.copy(this.player.pos); setView(11.5); this.tut.begin(); }
@@ -2552,7 +2595,7 @@ class Game {
   resetScene(){ // back to the orbiting title garden (also used between Online Play matches)
     this.endTutorial(); this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); $('net-ping').classList.add('hidden');
     if(this.view!==1){ this.view=1; this.applyNight(); } for(const c of this.chars) c.remote=false;
-    this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.placeTitleChars(); }
+    this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.cb={team:-1,bounty:-1,seedT:0}; this.placeTitleChars(); }
   get online(){ return !!(this.net&&this.net.inMatch); }
   // Online Play: the host runs the real match; the guest (role 'guest') only draws snapshots, from the mirrored side.
   startOnline(cfg,role){
@@ -2577,7 +2620,7 @@ class Game {
     this.hud.setup(); this.hud.show(true); this.startRound();
   }
   startRound(){
-    this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.bonus=[0,0]; this.teamKO=[0,0]; this.roundTime=ROUND_TIME;
+    this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.bonus=[0,0]; this.teamKO=[0,0]; this.roundTime=ROUND_TIME; this.cb={team:-1,bounty:-1,seedT:0}; for(const c of this.chars) c.rko=0;
     const idx=[0,0]; for(const c of this.chars){ c.resetState(); c.hedges=[]; const s=SPAWNS[c.team][idx[c.team]++]; c.spawnAt(s[0],s[1]); if(c.controller&&c.controller.reset) c.controller.reset(); }
     this.seeds.spawnBatch(); this.hud.renderWins();
     this.state='countdown'; this.cdT=0; this.cdStep=-1; this.camTarget.copy(this.player.pos); setView(11.5);
@@ -2615,16 +2658,30 @@ class Game {
     return true;
   }
   knockout(t,src,wtype=src.weapon){
-    t.ko=true; t.hp=0; t.respawnT=RESPAWN; t.pending=null; t.spinT=0; t.lungeT=0; t.dodgeT=0; t.bulwarkT=0; src.stats.ko++; t.stats.deaths++; this.teamKO[src.team]++;
+    const fast=this.cb.team===t.team, bounty=this.cb.bounty===this.chars.indexOf(t) && src.team!==t.team;
+    t.ko=true; t.hp=0; t.respawnT=t.respawnMax=fast?CB_RESPAWN:RESPAWN; t.pending=null; t.spinT=0; t.lungeT=0; t.dodgeT=0; t.bulwarkT=0; src.stats.ko++; src.rko=(src.rko|0)+1; t.stats.deaths++; this.teamKO[src.team]++;
+    if(bounty){ this.teamKO[src.team]++; this.cb.bounty=-1; src.stats.bounties=(src.stats.bounties|0)+1; this.seeds.scatter(t,BOUNTY_SEEDS);
+      this.fx.float('BOUNTY! +1 KO',new V3(t.pos.x,2.6,t.pos.z),'gold',1.4); audio.play('fanfare'); }
     audio.play('ko'); this.fx.burst(new V3(t.pos.x,0.6,t.pos.z),[t.def.fur,PAL.corn,PAL.white],22,6,5); this.hitstop=6; this.shake(0.3);
     this.fx.float('K.O.!',new V3(t.pos.x,2.0,t.pos.z),'big',1.2);
-    this.personal(t,()=>this.hud.showBanner('KNOCKED OUT<small>BACK IN 4 SECONDS</small>',1.6));
+    this.personal(t,()=>this.hud.showBanner('KNOCKED OUT<small>'+(fast?'COMEBACK! BACK IN 3 SECONDS':'BACK IN 4 SECONDS')+'</small>',1.6));
     if(this.achOn) this.ach.onKO(t,src,wtype,this);
   }
   respawn(c){
     const s=SPAWNS[c.team][this.chars.filter(x=>x.team===c.team).indexOf(c)]; const keepBuff=c.buffT;
     c.ko=false; c.hp=MAX_HP; c.respawnT=0; c.invuln=1.5; c.respawnGrace=true; c.popT=0; c.setWeapon(c.sig); c.buffT=keepBuff; c.vel.set(0,0,0); c.kb.set(0,0,0);
     c.spawnAt(s[0],s[1]); this.fx.burst(new V3(c.pos.x,0.4,c.pos.z),[PAL.corn,PAL.white,TEAM_HEX[c.team]],14,3,3);
+  }
+  // ---- comeback boost (host / single player only; the guest reads it from snapshots) ----
+  updateComeback(dt){
+    const cb=this.cb, tdm=this.mode==='tdm', sc=tdm?this.teamKO:this.bonus, gap=tdm?CB_KO_GAP:CB_SURGE_GAP;
+    const trail=sc[0]-sc[1]>=gap?1:sc[1]-sc[0]>=gap?0:-1;
+    if(trail!==cb.team){ cb.team=trail; cb.seedT=CB_FIRST_SEED; this.seeds.clearGold();
+      if(trail>=0){ audio.play('achieve'); for(const c of this.chars) if(c.team===trail&&!c.ko) this.fx.float('COMEBACK!',new V3(c.pos.x,2.3,c.pos.z),'gold',1.6); } }
+    cb.bounty=-1; if(trail<0) return;
+    let best=null; for(const c of this.chars) if(c.team!==trail && !c.ko && (!best || (c.rko|0)>(best.rko|0) || ((c.rko|0)===(best.rko|0) && c.stats.dmg>best.stats.dmg))) best=c;
+    if(best) cb.bounty=this.chars.indexOf(best);
+    if(!this.seeds.seeds.some(s=>s.gold)){ cb.seedT-=dt; if(cb.seedT<=0){ this.seeds.spawnGold(trail); cb.seedT=CB_SEED_EVERY; } }
   }
   seedSurge(team){
     this.bonus[team]++; this.seeds.pool[team]=0;
@@ -2635,7 +2692,7 @@ class Game {
     const p=this.arena.ripePlotNear(c.pos.x,c.pos.z);
     if(p){ this.arena.harvest(p); c.setWeapon(p.type,12); audio.play('pickup'); c.squash=0.15;
       this.fx.float(WEAPONS[p.type].name+'!',new V3(c.pos.x,1.8,c.pos.z),'info',1); this.fx.burst(new V3(p.x,0.4,p.z),[PAL.loam,PAL.leaf,PAL.carrot],10,2.5,3); return; }
-    for(let k=this.seeds.seeds.length-1;k>=0;k--){ const s=this.seeds.seeds[k]; if(s.state!=='fly' && dist2(s.x,s.z,c.pos.x,c.pos.z)<1.6){ this.seeds.collect(c,k); } }
+    for(let k=this.seeds.seeds.length-1;k>=0;k--){ const s=this.seeds.seeds[k]; if(s.state!=='fly' && this.seeds.canTake(c,s) && dist2(s.x,s.z,c.pos.x,c.pos.z)<1.6){ this.seeds.collect(c,k); } }
   }
   tryHedge(c){
     const fx=Math.sin(c.facing), fz=Math.cos(c.facing), i=tileOf(c.pos.x+fx*1.0), j=tileOf(c.pos.z+fz*1.0);
@@ -2651,7 +2708,7 @@ class Game {
     if(this.mode==='tdm'){ if(k[0]!==k[1]){ w=k[0]>k[1]?0:1; why='MOST KNOCKOUTS · '+k[0]+' TO '+k[1]; } else if(b[0]!==b[1]){ w=b[0]>b[1]?0:1; why='KNOCKOUTS TIED · MORE SEED SURGES'; } }
     else if(b[0]!==b[1]){ w=b[0]>b[1]?0:1; why='MOST SEED SURGES'; } else if(pl[0]!==pl[1]){ w=pl[0]>pl[1]?0:1; why='MORE SEEDS HELD'; } else if(k[0]!==k[1]){ w=k[0]>k[1]?0:1; why='MORE KNOCKOUTS'; }
     if(w>=0) this.wins[w]++; this.hud.renderWins();
-    this.state='roundEnd'; this.endT=3.2; this.weapons.clear();
+    this.state='roundEnd'; this.endT=3.2; this.weapons.clear(); this.cb.team=-1; this.cb.bounty=-1; this.seeds.clearGold();
     this.hud.showBanner(w<0?'DRAW ROUND<small>DEAD EVEN</small>':`<span style="color:${w?'#F28A2A':'#6CC24A'}">${TEAM_NAME[w]}</span> TAKES ROUND ${this.round}<small>${why}</small>`,3);
     for(const c of this.chars) this.personal(c,()=>audio.play(w===c.team?'win':'ko'));
   }
@@ -2694,6 +2751,7 @@ class Game {
     // soft character separation
     for(let a=0;a<4;a++) for(let b=a+1;b<4;b++){ const A=this.chars[a], B=this.chars[b]; if(A.ko||B.ko) continue; const dx=B.pos.x-A.pos.x, dz=B.pos.z-A.pos.z, d=Math.hypot(dx,dz);
       if(d<0.62 && d>1e-4){ const p=(0.62-d)/2; A.pos.x-=dx/d*p; A.pos.z-=dz/d*p; B.pos.x+=dx/d*p; B.pos.z+=dz/d*p; this.arena.collide(A.pos); this.arena.collide(B.pos); } }
+    if(!this.tut) this.updateComeback(dt);
     this.weapons.update(dt); this.seeds.update(dt,this.time,true); this.arena.update(dt,this.time); this.fx.update(dt);
   }
   render(dt){
@@ -2735,7 +2793,7 @@ class Game {
        local Two tabs of the same browser on one computer (?net=local). For testing without the internet.
    - Rooms have guest slots (NET_CFG.maxGuests) so more players can be added later; today the lobby is 1v1.
    ===================================================================== */
-const NET_PROTO=2, SNAP_EVERY=3, INTERP=0.11, NET_TIMEOUT=8;
+const NET_PROTO=3, SNAP_EVERY=3, INTERP=0.11, NET_TIMEOUT=8;
 const NET_CFG={
   relay:'',          // optional future relay server address (wss://...). Empty = peer-to-peer.
   peer:{debug:0},    // PeerJS options (default: free PeerJS cloud server + public STUN)
@@ -3021,10 +3079,10 @@ class Online {
   hostTick(){ const g=this.game, rc=g.chars.find(c=>c.remote); if(rc&&g.state!=='playing'&&rc.controller instanceof RemoteController) rc.controller.idle();
     if(++this.tick%SNAP_EVERY) return; this.sendSnap(); }
   sendSnap(){ const g=this.game, A=g.arena, rc=g.chars.find(c=>c.remote);
-    this.send({t:'s', t2:r3(g.time), ack:rc&&rc.controller instanceof RemoteController?rc.controller.ack:0, st:g.state, rd:g.round, rt:r1(g.roundTime), w:g.wins, b:g.bonus, ko:g.teamKO, pl:g.seeds.pool,
+    this.send({t:'s', t2:r3(g.time), ack:rc&&rc.controller instanceof RemoteController?rc.controller.ack:0, st:g.state, rd:g.round, rt:r1(g.roundTime), w:g.wins, b:g.bonus, ko:g.teamKO, pl:g.seeds.pool, cb:[g.cb.team,g.cb.bounty],
       c:g.chars.map(packChar), pt:A.plots.map(p=>[p.stage,r1(p.t)]), bu:A.bushes.map(b=>[b.ripe?1:0,r1(b.t)]),
       hd:A.hedges.map(h=>[h.id,h.i,h.j,h.hp,g.chars.indexOf(h.owner)]), fd:A.fields.map(f=>[f.id,r2(f.x),r2(f.z),f.team,r2(f.t)]),
-      sd:g.seeds.seeds.map(s=>[s.id,r2(s.x),r2(s.y),r2(s.z),s.state==='fly'?1:0,r1(s.ph)]),
+      sd:g.seeds.seeds.map(s=>[s.id,r2(s.x),r2(s.y),r2(s.z),s.state==='fly'?1:0,r1(s.ph),s.gold?s.team+1:0]),
       pj:g.weapons.proj.map(p=>[p.id,WEAPON_ORDER.indexOf(p.type),r2(p.x),r2(p.z),r2(p.mesh.position.y),r2(p.mesh.rotation.y)]),
       ev:NET.rec||[]});
     if(NET.rec) NET.rec=[]; }
@@ -3053,7 +3111,7 @@ class Online {
   applyChar(c,A,B,k,self){ // discrete state from A (the moment we're showing), motion blended A→B
     if(!self){ c.pos.set(lerp(A.x,B.x,k),lerp(A.y,B.y,k),lerp(A.z,B.z,k)); c.facing=A.f+angDiff(A.f,B.f)*k; c.vel.set(lerp(A.vx,B.vx,k),0,lerp(A.vz,B.vz,k)); }
     const w=WEAPON_ORDER[A.wp]||c.sig; if(c.weapon!==w) c.setWeapon(w); c.durability=A.du<0?Infinity:A.du; c.celeryHits=A.cs|0;
-    c.hp=lerp(A.hp,B.hp,k); c.energy=lerp(A.en,B.en,k); c.ko=!!A.ko; c.respawnGrace=!!A.gr; c.atkDur=A.ad; c.atkKind=A.ak<0?null:WEAPON_ORDER[A.ak];
+    if(A.ko&&!c.ko) c.respawnMax=A.rs+0.1; c.hp=lerp(A.hp,B.hp,k); c.energy=lerp(A.en,B.en,k); c.ko=!!A.ko; c.respawnGrace=!!A.gr; c.atkDur=A.ad; c.atkKind=A.ak<0?null:WEAPON_ORDER[A.ak];
     const tl=(a,b)=>b<=a?lerp(a,b,k):a; // countdown timers: blend while counting down, jump when one restarts
     c.respawnT=tl(A.rs,B.rs); c.buffT=tl(A.bf,B.bf); c.bulwarkT=tl(A.bw,B.bw); c.invuln=tl(A.iv,B.iv); c.atkAnim=tl(A.aa,B.aa); c.spinT=tl(A.sp,B.sp); c.lungeT=tl(A.lg,B.lg);
     c.dodgeT=tl(A.dg,B.dg); c.flinch=tl(A.fl,B.fl); c.squash=tl(A.sq,B.sq); c.honkT=tl(A.hk,B.hk); c.popT=lerp(A.pp,B.pp,k); c.dropFlash=tl(A.df,B.df); c.slowT=tl(A.sl,B.sl); }
@@ -3063,7 +3121,7 @@ class Online {
     if(c.popT<1) c.popT=Math.min(1,c.popT+dt*2.5); if(this.pred.dodgeT>0) c.dodgeT=Math.max(c.dodgeT,this.pred.dodgeT); }
   applyWorld(S){ const g=this.game, A=g.arena;
     if(S.st==='countdown'&&g.state!=='countdown'){ g.fx.clearFloats(); g.weapons.clear(); }
-    if(S.st!=='results') g.state=S.st; g.round=S.rd; g.roundTime=S.rt; g.bonus=S.b; if(S.ko) g.teamKO=S.ko; g.seeds.pool=S.pl;
+    if(S.st!=='results') g.state=S.st; g.round=S.rd; g.roundTime=S.rt; g.bonus=S.b; if(S.ko) g.teamKO=S.ko; g.seeds.pool=S.pl; if(S.cb){ g.cb.team=S.cb[0]; g.cb.bounty=S.cb[1]; }
     if(String(g.wins)!==String(S.w)){ g.wins=S.w; g.hud.renderWins(); }
     S.pt.forEach(([st,t],i)=>{ const p=A.plots[i]; if(!p) return; if(p.stage!==st){ p.pop=0.3; p.stage=st; } p.t=t; });
     S.bu.forEach(([r,t],i)=>{ const b=A.bushes[i]; if(!b) return; if(b.ripe!==!!r){ b.ripe=!!r; if(b.ripe) b.pop=0.35; A.setBerryLook(b); } b.t=t; });
@@ -3088,7 +3146,7 @@ class Online {
     for(const s of buf){ if(s.T<=this.renderT&&s.T>this.firedT){ this.applyWorld(s); for(const ev of s.ev||[]) this.replay(ev); this.firedT=s.T; } } // events + world, in order
     g.chars.forEach((ch,n)=>{ if(ch===c) this.applySelf(ch,L.cc[n],dt); else this.applyChar(ch,A.cc[n],B.cc[n],k,false); });
     // seeds (blend by id)
-    const bm=new Map(B.sd.map(s=>[s[0],s])); g.seeds.seeds=A.sd.map(a=>{ const b=bm.get(a[0])||a; return {id:a[0],x:lerp(a[1],b[1],k),y:lerp(a[2],b[2],k),z:lerp(a[3],b[3],k),state:a[4]?'fly':'float',ph:a[5]}; });
+    const bm=new Map(B.sd.map(s=>[s[0],s])); g.seeds.seeds=A.sd.map(a=>{ const b=bm.get(a[0])||a; return {id:a[0],x:lerp(a[1],b[1],k),y:lerp(a[2],b[2],k),z:lerp(a[3],b[3],k),state:a[4]?'fly':'float',ph:a[5],gold:!!a[6],team:(a[6]|0)-1}; });
     // projectiles (blend by id; create/remove meshes)
     const pb=new Map(B.pj.map(p=>[p[0],p])), live=new Set();
     for(const a of A.pj){ const b=pb.get(a[0])||a, id=a[0]; live.add(id); let m=this.proj.get(id); const type=WEAPON_ORDER[a[1]];
