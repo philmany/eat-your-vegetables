@@ -75,11 +75,21 @@
       The title menu sits on a see-through black card. Achievements show medallion icons rendered once from the
       game's own models (weapon models; seeds, berries, sunflower, salad bowl, plate for general ones); the ring
       colour and stars show the tier (bronze 1, silver 10, gold 25 KOs).
+  26. TOUCH CONTROLS (Nov 18): phones and tablets play in landscape (a "turn your phone" card covers portrait, and a
+      solo match pauses). Left: floating joystick + ROLL button just inside it towards the centre. Right: big ATTACK
+      (hold), blue SPECIAL (fires on release) and HEDGE above Attack; pause top right. Attack and Special aim at the
+      nearest enemy within 8.5 units unless the button is dragged to aim. Tapping a ripe plot, berry bush or seed walks
+      you there (A*) and grabs it. Touch mode follows the last input (touch on, real mouse off); ?touch forces it.
+      Menus get a CSS zoom so each screen fits small windows; the title goes two columns on short landscape screens.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1F3226">
 <title>Eat Your Veggies!</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -382,6 +392,87 @@ body.night #nightvig{display:block}
 #net-ping{font-family:var(--num);font-size:17px;letter-spacing:2px;color:#C9CFDD;text-align:right;line-height:1;margin-top:2px}
 #net-ping.bad{color:#FF8A6A}
 @media (max-width:640px){ .slots{grid-template-columns:1fr} .vs{justify-self:center;font-size:22px} .codebox b{font-size:44px} .mcard{width:84px} .mcard img{width:64px;height:64px} }
+/* ---------- Phones and tablets: fit menus and HUD to small screens ----------
+   JS sets --hz (HUD scale) and a CSS zoom on whichever menu screen is open so it fits the window. */
+.screen{overflow:auto;-webkit-overflow-scrolling:touch;justify-content:safe center}
+.screen>*{flex-shrink:0}
+#hud-tl,#hud-tc,#hud-tr,#hud-bc,#hint,#toasts{zoom:var(--hz,1)}
+#tut{zoom:var(--tz,1)}
+@media (max-height:600px){ #online .panel{max-height:none} }
+@media (max-height:520px){ #ach-grid{max-height:calc(100vh - 150px)}
+  .card{width:168px;padding:8px 10px 10px} .card img{width:112px;margin:0 auto} .card .bl{display:none} .card .nm{font-size:24px} #select h2{font-size:38px} }
+/* short landscape screens (phones on their side): the title card goes two columns, logo left and buttons right */
+@media (max-height:560px) and (min-aspect-ratio:4/3){
+  #title .menu-card{display:grid;grid-template-columns:auto auto;column-gap:40px;row-gap:12px;width:auto;align-items:center;justify-items:center}
+  #title h1{grid-column:1;grid-row:1/3;align-self:center} #title .tag{grid-column:1;grid-row:3;margin:0}
+  #title .btngrp{grid-column:2;grid-row:1} #title .btngrp.sub{grid-row:2;margin:0} #title .menu-card>.row{grid-column:2;grid-row:3}
+  #title h1 .t1{font-size:56px} #title h1 .t2{font-size:104px}
+}
+/* touch: no hover lift, no grey tap flash, no long-press callouts */
+body.touch .btn:hover{transform:none;--rim:#F5EFDC}
+body.touch .card:hover{transform:none}
+button,.card,.mcard,.chip{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+body.touch{touch-action:manipulation}
+canvas#c{touch-action:none}
+/* keyboard-only and touch-only bits of help text */
+body.touch .kb{display:none} body:not(.touch) .tc{display:none}
+
+/* ---------- Touch controls (shown only on touch screens, only during a match or the tutorial) ----------
+   Same cel-shaded sticker look as the menu buttons: cream rim, thick navy ink ring, three hard light bands. */
+#touch{position:fixed;inset:0;z-index:12;pointer-events:none;display:none;--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+#touch.on{display:block}
+#touch .zone{position:absolute;left:0;bottom:0;width:44%;height:70%;pointer-events:auto;touch-action:none}
+#stick{position:absolute;left:calc(var(--sal) + 112px);top:calc(100% - var(--sab) - 104px);width:136px;height:136px;margin:-68px 0 0 -68px;border-radius:50%;
+  background:radial-gradient(circle,rgba(26,32,48,.15) 0 54%,rgba(26,32,48,.42) 55%);box-shadow:inset 0 0 0 4px rgba(245,239,220,.7),0 0 0 3px rgba(26,32,48,.55);
+  opacity:.6;transition:opacity .15s;pointer-events:none}
+#stick.on{opacity:1;transition:none}
+#knob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:#F5EFDC;isolation:isolate}
+#knob::before,#knob::after{content:"";position:absolute;border-radius:50%;z-index:-1}
+#knob::before{inset:3px;background:var(--navy)}
+#knob::after{inset:7px;background:linear-gradient(180deg,#A9D65E 0 34%,#6C9A3A 34% 70%,#3E6127 70%)}
+.tbtn{--b1:#FFB45E;--b2:#F28A2A;--b3:#B85A16;--tx:var(--navy);position:absolute;pointer-events:auto;touch-action:none;border-radius:50%;background:#F5EFDC;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;isolation:isolate;font-family:var(--ui);color:var(--tx);text-transform:uppercase;
+  letter-spacing:1px;line-height:1;text-align:center;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+  filter:drop-shadow(0 4px 0 rgba(14,18,32,.55));transition:transform .06s}
+.tbtn::before,.tbtn::after{content:"";position:absolute;border-radius:50%;z-index:-1;pointer-events:none}
+.tbtn::before{inset:3px;background:var(--navy)}
+.tbtn::after{inset:7px;background:linear-gradient(180deg,var(--b1) 0 32%,var(--b2) 32% 70%,var(--b3) 70% 100%)}
+.tbtn.down{transform:translateY(3px) scale(.95)}
+.tbtn.down::after{background:linear-gradient(180deg,var(--b2) 0 14%,var(--b1) 14% 30%,var(--b2) 30% 82%,var(--b3) 82% 100%)}
+.tbtn .ic{width:46%;height:46%;display:block;position:relative;z-index:1}
+.tbtn .lb{position:relative;z-index:1;font-size:12px;margin-top:2px;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+.tbtn .sub{position:relative;z-index:1;font-family:var(--num);font-size:14px;letter-spacing:1px;line-height:.9}
+/* a dark sweep shows recharge (roll) or energy still missing (special, hedge) */
+.tbtn .cd{position:absolute;inset:7px;border-radius:50%;z-index:0;pointer-events:none;background:conic-gradient(rgba(14,18,32,.62) calc(var(--p,0)*1%),transparent 0)}
+.tbtn.off .ic,.tbtn.off .lb,.tbtn.off .sub{opacity:.55}
+#t-atk{right:calc(var(--sar) + 26px);bottom:calc(var(--sab) + 26px);width:108px;height:108px}
+#t-atk .ic{width:44%;height:44%}
+#t-sp{--b1:#9FDDF7;--b2:#3E9BD1;--b3:#22628C;--tx:#F5EFDC;right:calc(var(--sar) + 150px);bottom:calc(var(--sab) + 20px);width:80px;height:80px}
+#t-sp .lb,#t-sp .sub{text-shadow:0 2px 0 var(--navy)}
+#t-sp.ready{animation:spReady 1.1s ease-in-out infinite alternate}
+@keyframes spReady{to{filter:drop-shadow(0 4px 0 rgba(14,18,32,.55)) drop-shadow(0 0 10px #63C8F2)}}
+#t-hedge{--b1:#A9D65E;--b2:#6C9A3A;--b3:#3E6127;--tx:#F5EFDC;right:calc(var(--sar) + 46px);bottom:calc(var(--sab) + 150px);width:66px;height:66px}
+#t-hedge .lb{text-shadow:0 2px 0 var(--navy);font-size:11px}
+#t-roll{--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;left:calc(var(--sal) + clamp(232px,31vw,340px));bottom:calc(var(--sab) + 30px);width:84px;height:84px}
+#t-pause{right:calc(var(--sar) + 10px);top:10px;width:48px;height:48px;border-radius:0;--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;filter:none;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+#t-pause::before{border-radius:0;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
+#t-pause::after{border-radius:0;inset:6px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+#t-pause .ic{width:40%;height:40%}
+/* make room for the pause button and keep HUD text clear of the thumbs */
+body.touch #hud-tr{right:calc(68px / var(--hz,1))}
+body.touch #tut{right:calc(68px / var(--tz,1));top:10px}
+body.touch #hint{bottom:calc(84px / var(--hz,1))}
+body.touch #mute{display:none}
+@media (max-height:600px){ body.touch #hud-bc{display:none} }
+/* landscape only: a "turn your phone" card covers the game in portrait on touch screens */
+#rotate{position:fixed;inset:0;z-index:70;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#1F3226;padding:24px;text-align:center}
+@media (orientation:portrait){ body.touch #rotate{display:flex} }
+#rotate .ph{width:64px;height:110px;border:6px solid var(--white);border-radius:12px;box-shadow:0 0 0 4px var(--navy);position:relative;animation:turn 2.2s ease-in-out infinite}
+#rotate .ph::after{content:"";position:absolute;left:50%;bottom:6px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--corn)}
+@keyframes turn{0%,20%{transform:rotate(0)}55%,85%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+#rotate b{font-family:var(--display);font-size:30px;color:var(--corn);letter-spacing:1px;text-shadow:0 4px 0 var(--navy);line-height:1.1}
+#rotate small{font-family:var(--num);font-size:22px;letter-spacing:2px;color:var(--white)}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:30px;color:var(--navy);z-index:50;background:#1F3226;color:var(--white)}
 </style>
 <script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
@@ -422,6 +513,16 @@ body.night #nightvig{display:block}
 <div id="fps" class="hidden"></div>
 <div id="splash" class="hidden"><div></div></div>
 <div id="toasts"></div>
+<!-- Touch controls: left joystick (floating), roll beside it towards the centre; attack, special and hedge on the right. -->
+<div id="touch">
+  <div class="zone" id="t-zone"><div id="stick"><div id="knob"></div></div></div>
+  <div class="tbtn" id="t-roll"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M17.5 2.5v4h-4"/></svg><span class="lb">Roll</span><i class="cd"></i></div>
+  <div class="tbtn" id="t-hedge"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><circle cx="7" cy="14" r="5"/><circle cx="17" cy="14" r="5"/><circle cx="12" cy="9" r="6"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg><span class="lb">Hedge</span><i class="cd"></i></div>
+  <div class="tbtn" id="t-sp"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.6 6.6 7 .5-5.4 4.5 1.7 6.9L12 16.2 6.1 20l1.7-6.9L2.4 8.6l7-.5z"/></svg><span class="sub" id="t-sp-n">LUNGE</span><i class="cd"></i></div>
+  <div class="tbtn" id="t-atk"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 2.5l-1 4.6L9.6 17l-2.6-2.6 9.9-9.9z"/><path d="M4.2 13.6l6.2 6.2-1.6 1.6-1.9-1.9-2.7 2.7-1.4-1.4 2.7-2.7-1.9-1.9z"/></svg><span class="lb">Attack</span></div>
+  <div class="tbtn" id="t-pause" aria-label="Pause"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg></div>
+</div>
+<div id="rotate"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><small>EAT YOUR VEGGIES! PLAYS IN LANDSCAPE</small></div>
 
 <!-- ================= SCREENS ================= -->
 <div id="title" class="screen hidden"><div class="menu-card">
@@ -480,7 +581,17 @@ body.night #nightvig{display:block}
 <div id="controls" class="screen dim hidden">
   <div class="panel">
     <h2>CONTROLS</h2>
-    <div class="controls-grid">
+    <div class="controls-grid tc">
+      <b>JOYSTICK</b><span>Put your left thumb down anywhere in the lower left and drag to move</span>
+      <b>ROLL</b><span>Dodge roll the way you're moving (brief invulnerability, 1.5 s cooldown)</span>
+      <b>ATTACK</b><span>Hold to keep swinging. Aims at the nearest enemy; drag the button to aim by hand</span>
+      <b>SPECIAL</b><span>Blue button left of Attack: your weapon special (costs Energy, lights up when ready). Drag to aim, it fires when you let go</span>
+      <b>HEDGE</b><span>Above Attack: plant a hedge on the tile you face (20 Energy, max 3)</span>
+      <b>TAP</b><span>Tap a ripe plot, a berry bush or a seed and you walk over and grab it</span>
+      <b>II</b><span>Pause (top right)</span>
+      <b>LANDSCAPE</b><span>Hold your phone sideways to play</span>
+    </div>
+    <div class="controls-grid kb">
       <b>WASD</b><span>Move (screen-relative, 8 directions)</span>
       <b>MOUSE</b><span>Aim (you face the cursor)</span>
       <b>LEFT CLICK</b><span>Attack (hold to keep swinging)</span>
@@ -508,15 +619,15 @@ body.night #nightvig{display:block}
     <h2>BEFORE YOU BRAWL</h2>
     <div class="tipcards">
       <div class="tip" style="--tc:var(--corn)"><h3>SEED SURGES</h3>
-        <p>Magic seeds pop out of the <b>centre plaza</b>. Walk over them (or press <b>E</b>) to bank them for your team.</p>
+        <p>Magic seeds pop out of the <b>centre plaza</b>. Walk over them (<span class="kb">or press <b>E</b></span><span class="tc">or tap them</span>) to bank them for your team.</p>
         <p>Bank <b>12</b> and your team gets a <b>SEED SURGE</b>: faster running and faster attacks for 10 s. Most surges wins the round.</p>
         <p>Getting hit makes your team <b>drop seeds</b>, so don't get greedy.</p></div>
       <div class="tip" style="--tc:var(--tomato)"><h3>HEALTH</h3>
         <p>You have <b>8 hearts</b>. There's no slow regen, so heal on purpose:</p>
-        <p>Every seed you pick up heals <b>half a heart</b>. Walk into a <b>berry bush</b> (look for the red cross) to heal <b>2 hearts</b> (it regrows in 20 s).</p>
+        <p>Every seed you pick up heals <b>half a heart</b>. <span class="kb">Walk into</span><span class="tc">Tap</span> a <b>berry bush</b> (look for the red cross) to heal <b>2 hearts</b> (it regrows in 20 s).</p>
         <p>Knocked out? You're back in <b>4 s</b> at full health. A <b>Pumpkin Shield</b> blocks most hits from the front.</p></div>
       <div class="tip" style="--tc:#63C8F2"><h3>ENERGY</h3>
-        <p>The blue Energy bar pays for your weapon <b>special</b> (right-click) and <b>hedges</b> (Q, 20 each, up to 3).</p>
+        <p>The blue Energy bar pays for your weapon <b>special</b> (<span class="kb">right-click</span><span class="tc">blue button</span>) and <b>hedges</b> (<span class="kb">Q</span><span class="tc">HEDGE button</span>, 20 each, up to 3).</p>
         <p>It refills slowly on its own, faster when you <b>land hits</b>, and every seed gives <b>+5</b>.</p></div>
     </div>
     <div class="row" style="margin-top:16px;align-items:center;justify-content:space-between">
@@ -886,10 +997,98 @@ class Input {
     this.padPrev=[];
   }
   take(code){ const h=this.pressed.has(code); this.pressed.delete(code); return h; }
-  clearEdges(){ this.pressed.clear(); this.mouse.rPressed=false; }
+  clearEdges(){ this.pressed.clear(); this.mouse.rPressed=false; const t=this.touch; if(t){ t.sp=t.dodge=t.hedge=false; t.tap=null; } }
   pad(){ const ps=navigator.getGamepads?navigator.getGamepads():[]; for(const p of ps) if(p&&p.connected) return p; return null; }
 }
 const input=new Input();
+
+/* =====================================================================
+   SECTION 5b — TOUCH CONTROLS (phones and tablets; keyboard and mouse are untouched)
+   Left: a floating joystick (put your thumb down anywhere in the lower-left area) and a ROLL button
+   just inside it, towards the centre. Right: a big ATTACK button (hold to keep swinging), the blue
+   SPECIAL button to its left and HEDGE above it. Attack and Special aim at the nearest enemy by
+   themselves; drag either button to aim by hand (a dragged special fires where you let go).
+   Tap a ripe plot, a berry bush or a seed in the garden and your critter walks over and grabs it.
+   Touch mode switches on with the first touch and off again when a real mouse moves or clicks.
+   ===================================================================== */
+const TOUCH={on:false,sx:0,sy:0,atk:false,aimOn:false,ax:0,ay:0,sp:false,dodge:false,hedge:false,tap:null};
+input.touch=TOUCH; window.__touch=TOUCH;
+const touchUI={
+  el:document.getElementById('touch'), shown:false, last:{},
+  init(){
+    const q=new URLSearchParams(location.search);
+    this.force=q.has('touch');
+    this.setMode(this.force||matchMedia('(pointer:coarse)').matches);
+    addEventListener('pointerdown',e=>{ if(e.pointerType==='touch') this.setMode(true); else if(e.pointerType==='mouse'&&!this.force) this.setMode(false); },true);
+    addEventListener('pointermove',e=>{ if(e.pointerType==='mouse'&&!this.force&&(e.movementX||e.movementY)) this.setMode(false); },true);
+    // ---- joystick: the base appears under your thumb and follows it if you drag past the rim ----
+    const zone=$('t-zone'), stick=$('stick'), knob=$('knob'), R=54; let sid=null, ox=0, oy=0, t0=0, x0=0, y0=0, far=false;
+    const place=()=>{ stick.style.left=ox+'px'; stick.style.top=oy+'px'; };
+    const rest=()=>{ sid=null; TOUCH.sx=TOUCH.sy=0; knob.style.transform=''; stick.classList.remove('on'); stick.style.left=stick.style.top=''; };
+    zone.addEventListener('pointerdown',e=>{ e.preventDefault(); audio.init(); if(sid!==null) return; sid=e.pointerId; zone.setPointerCapture(sid);
+      t0=e.timeStamp; x0=e.clientX; y0=e.clientY; far=false;
+      ox=clamp(e.clientX,74,innerWidth-74); oy=clamp(e.clientY,74,innerHeight-74); place(); stick.classList.add('on'); move(e); });
+    const move=e=>{ if(e.pointerId!==sid) return; if(Math.hypot(e.clientX-x0,e.clientY-y0)>14) far=true; let dx=e.clientX-ox, dy=e.clientY-oy; const L=Math.hypot(dx,dy);
+      if(L>R){ ox+=dx*(L-R)/L; oy+=dy*(L-R)/L; place(); dx=dx*R/L; dy=dy*R/L; }
+      knob.style.transform=`translate(${dx}px,${dy}px)`; const k=Math.hypot(dx,dy)/R;
+      // small dead zone, then full speed comes quickly so a thumb doesn't have to reach the rim
+      const m=k<0.18?0:Math.min(1,(k-0.18)/0.6); TOUCH.sx=k>0?dx/(k*R)*m:0; TOUCH.sy=k>0?-dy/(k*R)*m:0; };
+    zone.addEventListener('pointermove',move);
+    // a quick tap that didn't drag is a tap on the garden (plots and bushes sit under the joystick area too)
+    for(const ev of ['pointerup','pointercancel','lostpointercapture']) zone.addEventListener(ev,e=>{ if(e.pointerId!==sid) return;
+      if(ev==='pointerup'&&!far&&e.timeStamp-t0<1000) TOUCH.tap={x:x0,y:y0}; rest(); });
+    // ---- buttons ----
+    const btn=(id,{down,up,aim})=>{ const b=$(id); let pid=null, x0=0, y0=0;
+      b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); audio.init(); if(pid!==null) return; pid=e.pointerId; b.setPointerCapture(pid); x0=e.clientX; y0=e.clientY; b.classList.add('down'); if(down) down(); });
+      b.addEventListener('pointermove',e=>{ if(e.pointerId!==pid||!aim) return; const dx=e.clientX-x0, dy=e.clientY-y0, L=Math.hypot(dx,dy);
+        if(L>16){ TOUCH.aimOn=true; TOUCH.ax=dx/L; TOUCH.ay=dy/L; } });
+      const end=e=>{ if(e.pointerId!==pid) return; pid=null; b.classList.remove('down'); if(up) up(e.type!=='pointercancel'); if(aim) TOUCH.aimOn=false; };
+      for(const ev of ['pointerup','pointercancel','lostpointercapture']) b.addEventListener(ev,end); };
+    btn('t-atk',{down:()=>{ TOUCH.atk=true; }, up:()=>{ TOUCH.atk=false; }, aim:true});
+    btn('t-sp',{up:ok=>{ if(ok) TOUCH.sp=true; }, aim:true});   // fires on release, so a drag can aim it first
+    btn('t-roll',{down:()=>{ TOUCH.dodge=true; }});
+    btn('t-hedge',{down:()=>{ TOUCH.hedge=true; }});
+    btn('t-pause',{up:ok=>{ if(ok&&window.__game){ audio.play('click'); window.__game.togglePause(); } }});
+    // ---- tap the garden itself: pick up a ripe plot, eat a berry bush, grab a seed ----
+    canvas.addEventListener('pointerdown',e=>{ if(e.pointerType!=='touch') return; e.preventDefault(); audio.init(); TOUCH.tap={x:e.clientX,y:e.clientY}; });
+    this.rest=rest;
+    // landscape only: pause a solo match while the phone is held upright
+    matchMedia('(orientation:portrait)').addEventListener('change',e=>{ const g=window.__game;
+      if(e.matches&&TOUCH.on&&g&&!g.online&&!g.paused&&(g.state==='playing'||g.state==='countdown')&&!g.screen) g.togglePause(); });
+  },
+  setMode(on){ if(TOUCH.on===on) return; TOUCH.on=on; document.body.classList.toggle('touch',on); fitUI(); },
+  // phones: try to go full screen and lock landscape when a match, the tutorial or Online Play starts (Android; iPhone ignores it)
+  goFull(){ if(!TOUCH.on||this.triedFull) return; this.triedFull=true; const d=document.documentElement;
+    try{ const p=d.requestFullscreen?d.requestFullscreen({navigationUI:'hide'}):null;
+      if(p&&p.then) p.then(()=>{ try{ screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} }).catch(()=>{}); }catch(e){} },
+  update(g){ // once per frame: show/hide the controls and keep the special/hedge/roll buttons honest
+    const show=TOUCH.on&&!g.screen&&(g.state==='playing'||g.state==='countdown'||g.state==='roundEnd')&&!$('hud').classList.contains('hidden');
+    if(show!==this.shown){ this.shown=show; this.el.classList.toggle('on',show); if(!show){ this.rest&&this.rest(); TOUCH.atk=false; TOUCH.aimOn=false; tapRing.visible=false; } }
+    if(!show||!g.player) return; const pl=g.player, W=pl.W, L=this.last;
+    const short={sword:'LUNGE',kunai:'SPREAD',flail:'SPIN',staff:'SLOW',shield:'BULWARK'}[pl.weapon]||'SPECIAL';
+    if(L.sp!==short){ L.sp=short; $('t-sp-n').textContent=short; }
+    const spMiss=clamp(1-pl.energy/W.spCost,0,1), hMiss=clamp(1-pl.energy/HEDGE_COST,0,1), roll=clamp((pl.dodgeCd||0)/1.5,0,1);
+    const set=(id,k,v)=>{ if(L[k]===v) return; L[k]=v; $(id).style.setProperty('--p',v); };
+    set('t-sp','spP',Math.round(spMiss*100)); set('t-hedge','hP',Math.round(hMiss*100)); set('t-roll','rP',Math.round(roll*100));
+    const r=spMiss<=0; if(L.spR!==r){ L.spR=r; $('t-sp').classList.toggle('ready',r); $('t-sp').classList.toggle('off',!r); }
+    const h=hMiss<=0; if(L.hR!==h){ L.hR=h; $('t-hedge').classList.toggle('off',!h); }
+  }
+};
+// gold ring on the ground where a tapped pickup is
+const tapRing=new THREE.Mesh(new THREE.RingGeometry(0.5,0.68,32),new THREE.MeshBasicMaterial({color:0xF2B51E,transparent:true,opacity:0.85,depthWrite:false}));
+tapRing.rotation.x=-Math.PI/2; tapRing.renderOrder=5; tapRing.visible=false; scene.add(tapRing);
+// Fit menus and the HUD to the window. Menus get a CSS zoom so the whole card fits without scrolling (down to 45%).
+function fitUI(){
+  const W=innerWidth, H=innerHeight, tch=document.body.classList.contains('touch'), root=document.documentElement.style;
+  root.setProperty('--hz',String(+clamp(tch?Math.min(H/700,W/1180):Math.min(H/620,W/1000),0.5,1).toFixed(3)));
+  root.setProperty('--tz',String(+clamp(Math.min(H/560,W/900),0.62,1).toFixed(3)));
+  for(const s of document.querySelectorAll('.screen')){ if(s.classList.contains('hidden')) continue;
+    const was=s.style.zoom; s.style.zoom=''; let t=1e9,b=-1e9,l=1e9,r=-1e9;
+    for(const c of s.children){ if(getComputedStyle(c).position==='absolute') continue; const q=c.getBoundingClientRect(); if(!q.height) continue; t=Math.min(t,q.top); b=Math.max(b,q.bottom); l=Math.min(l,q.left); r=Math.max(r,q.right); }
+    if(b<t){ continue; } const gap=parseFloat(getComputedStyle(s).rowGap)||0;
+    const z=clamp(Math.min((H-16)/(b-t+gap*0.5),(W-12)/(r-l)),0.45,1); s.style.zoom=z>0.985?'':z.toFixed(3); if(was!==s.style.zoom) s.scrollTop=0; } }
+addEventListener('resize',()=>fitUI());
+
 
 /* =====================================================================
    SECTION 6 — MODELS (characters, weapons, props) built from primitives
@@ -1716,10 +1915,11 @@ class Weapon {
 const blankIntent=()=>({mx:0,mz:0,aim:null,attack:false,special:false,pickup:false,hedge:false,dodge:false,target:null});
 const raycaster=new THREE.Raycaster(), groundPlane=new THREE.Plane(new V3(0,1,0),-0.3), _ndc=new THREE.Vector2(), _hit=new V3();
 class Player {
-  constructor(game,c){ this.game=game; this.c=c; this.lastAim=0; this.padAiming=false; }
+  constructor(game,c){ this.game=game; this.c=c; this.lastAim=0; this.padAiming=false; this.walk=null; this.path=null; }
   update(){
-    const it=blankIntent(), k=input.keys, c=this.c;
+    const it=blankIntent(), k=input.keys, c=this.c, T=input.touch;
     if(this.game.online && this.game.screen==='pause'){ input.clearEdges(); return it; } // online never pauses; the menu just eats input
+    if(T.on) return this.touchUpdate(it,c,T);
     let sx=(k.has('KeyD')||k.has('ArrowRight')?1:0)-(k.has('KeyA')||k.has('ArrowLeft')?1:0);
     let sy=(k.has('KeyW')||k.has('ArrowUp')?1:0)-(k.has('KeyS')||k.has('ArrowDown')?1:0);
     // gamepad (optional)
@@ -1745,7 +1945,63 @@ class Player {
     input.clearEdges();
     return it;
   }
+  // Touch play: joystick moves (screen-relative, analogue), attack/special aim at the nearest enemy unless a button is dragged,
+  // and a tap on a ripe plot / berry bush / seed walks you there and grabs it. Keyboard keys still work alongside.
+  touchUpdate(it,c,T){
+    const g=this.game, V=g.view, k=input.keys;
+    let sx=T.sx+(k.has('KeyD')||k.has('ArrowRight')?1:0)-(k.has('KeyA')||k.has('ArrowLeft')?1:0);
+    let sy=T.sy+(k.has('KeyW')||k.has('ArrowUp')?1:0)-(k.has('KeyS')||k.has('ArrowDown')?1:0);
+    let mx=V*(sx-sy)/Math.SQRT2, mz=V*(-sx-sy)/Math.SQRT2; const L=Math.hypot(mx,mz); if(L>1){ mx/=L; mz/=L; }
+    if(T.tap && !c.ko){ const w=this.pickTap(T.tap); if(w){ this.walk=w; this.path=null; audio.play('click'); } }
+    if(Math.hypot(mx,mz)>0.05) this.walk=null; // the joystick always wins over a tapped walk
+    else if(this.walk) [mx,mz]=this.walkStep(it);
+    it.mx=mx; it.mz=mz;
+    if(this.walk){ tapRing.visible=true; tapRing.position.set(this.walk.x,0.33,this.walk.z); tapRing.scale.setScalar(1+Math.sin(performance.now()/130)*0.12); }
+    else tapRing.visible=false;
+    // aim: a dragged Attack/Special button, else the nearest enemy in reach, else where you're walking
+    let foe=null;
+    if(T.aimOn){ const rx=T.ax, ry=-T.ay; this.lastAim=Math.atan2(V*(rx-ry)/Math.SQRT2,V*(-rx-ry)/Math.SQRT2); }
+    else { let bd=AUTO_AIM_R*AUTO_AIM_R; for(const e of g.chars){ if(e.team===c.team||e.ko) continue; const d=dist2(e.pos.x,e.pos.z,c.pos.x,c.pos.z); if(d<bd){ bd=d; foe=e; } }
+      if(foe) this.lastAim=Math.atan2(foe.pos.x-c.pos.x,foe.pos.z-c.pos.z);
+      else if(Math.hypot(mx,mz)>0.2) this.lastAim=Math.atan2(mx,mz); }
+    it.aim=this.lastAim;
+    it.target=foe&&!T.aimOn?new V3(foe.pos.x,0,foe.pos.z):new V3(c.pos.x+Math.sin(this.lastAim)*5,0,c.pos.z+Math.cos(this.lastAim)*5);
+    it.attack=T.atk||input.mouse.l; it.special=T.sp||input.mouse.rPressed; it.dodge=T.dodge||input.take('Space'); it.hedge=T.hedge||input.take('KeyQ');
+    it.pickup=it.pickup||input.take('KeyE');
+    input.clearEdges();
+    return it;
+  }
+  // Which pickup did the finger land on? Closest on screen within a thumb's width, judged where each thing is drawn.
+  pickTap(tp){
+    const g=this.game, R=Math.max(44,64*(parseFloat(document.documentElement.style.getPropertyValue('--hz'))||1)+18); let best=null, bd=R*R;
+    const test=(x,y,z,kind,ref)=>{ _tp.set(x,y,z).project(camera); const px=(_tp.x+1)/2*innerWidth, py=(1-_tp.y)/2*innerHeight, d=(px-tp.x)**2+(py-tp.y)**2;
+      if(d<bd){ bd=d; best={kind,ref,x,z,t:8}; } };
+    for(const p of g.arena.plots) if(p.stage===3){ test(p.x,0.3,p.z,'plot',p); test(p.x,0.9,p.z,'plot',p); }
+    for(const b of g.arena.bushes) if(b.ripe){ test(b.x,0.4,b.z,'bush',b); test(b.x,1.0,b.z,'bush',b); }
+    for(const s of g.seeds.seeds) if(s.state!=='fly') test(s.x,0.3,s.z,'seed',s);
+    return best; }
+  // Walk towards the tapped thing (A* around fences and hedges) and grab it on arrival.
+  walkStep(it){
+    const w=this.walk, c=this.c, g=this.game, ar=g.arena; w.t-=FIXED_DT;
+    const gone=w.kind==='plot'?w.ref.stage!==3:w.kind==='bush'?!w.ref.ripe:!g.seeds.seeds.includes(w.ref);
+    if(gone||w.t<=0||c.ko){ this.walk=null; return [0,0]; }
+    const d=Math.hypot(w.x-c.pos.x,w.z-c.pos.z);
+    // in reach: keep asking to pick up while stepping onto the plot until it's harvested (an Online Play guest's
+    // own position runs slightly ahead of the host's, so a single request could land just out of reach)
+    if(w.kind==='plot'&&ar.ripePlotNear(c.pos.x,c.pos.z)===w.ref){ it.pickup=true; w.t=Math.min(w.t,1); if(d<0.3) return [0,0]; }
+    if(w.kind==='bush'&&d<BERRY_R*0.8){ this.walk=null;
+      if(c.hp>=MAX_HP) g.personal(c,()=>{ audio.play('deny'); g.fx.float('FULL HEALTH',new V3(c.pos.x,1.8,c.pos.z),'info',0.7); }); return [0,0]; }
+    if(w.kind==='seed'&&d<0.25){ this.walk=null; return [0,0]; }
+    let dx=w.x-c.pos.x, dz=w.z-c.pos.z;
+    if(!ar.los(c.pos.x,c.pos.z,w.x,w.z,0.3)){
+      if(!this.path||this.pathT<=0){ this.path=ar.findPath(tileOf(c.pos.x),tileOf(c.pos.z),tileOf(w.x),tileOf(w.z)); this.pi=1; this.pathT=0.5; }
+      this.pathT-=FIXED_DT;
+      if(this.path&&this.pi<this.path.length){ let [wi,wj]=this.path[this.pi]; if(dist2(c.pos.x,c.pos.z,tileC(wi),tileC(wj))<0.12&&this.pi<this.path.length-1){ this.pi++; [wi,wj]=this.path[this.pi]; }
+        dx=tileC(wi)-c.pos.x; dz=tileC(wj)-c.pos.z; } }
+    else this.path=null;
+    const l=Math.hypot(dx,dz); return l>0.05?[dx/l,dz/l]:[0,0]; }
 }
+const AUTO_AIM_R=8.5, _tp=new V3();
 // Simple, readable state machine: seek_seeds, seek_veg, attack, retreat, place_hedge, guard (Pumpkin Shield tank).
 class AIController {
   constructor(game,c,diff){ this.game=game; this.c=c; this.p=DIFF[diff]; this.diff=diff; this.reset(); }
@@ -2025,8 +2281,8 @@ class HUD {
     if(this.fill._w!==en){ this.fill._w=en; this.fill.style.width=en+'%'; setText(this.enNum,en+' / 100'); }
     if(this.enCost._c!==W.spCost){ this.enCost._c=W.spCost; this.enCost.style.left='calc('+W.spCost+'% - 1px)'; }
     const ready=en>=W.spCost; if(this.enBox._r!==ready){ this.enBox._r=ready; this.enBox.classList.toggle('ready',ready); } setText($('pl-weapon'),W.name+(pl.durability===Infinity?' ★':' · '+pl.durability+' LEFT')+(pl.weapon==='staff'?' · HEAL '+(pl.celeryHits|0)+'/'+CELERY_HEAL_EVERY:''));
-    setText($('pl-special'),'R-CLICK '+W.spName+' · '+W.spCost+' ENERGY');
-    setText($('pl-hedges'),'Q HEDGE '+pl.hedges.length+'/'+HEDGE_MAX+' · 20');
+    setText($('pl-special'),(TOUCH.on?'':'R-CLICK ')+W.spName+' · '+W.spCost+' ENERGY');
+    setText($('pl-hedges'),(TOUCH.on?'HEDGE ':'Q HEDGE ')+pl.hedges.length+'/'+HEDGE_MAX+' · 20');
     // seed counters
     const pool=g.seeds.pool;
     for(let t=0;t<2;t++){ const s=this.sc[t]; if(s.last!==pool[t]){ s.last=pool[t]; s.num.textContent=pool[t]; s.icons.forEach((i,k)=>i.classList.toggle('on',k<pool[t])); }
@@ -2043,7 +2299,7 @@ class HUD {
       const dr=c.dropFlash>0; if(s.last.dr!==dr){ s.last.dr=dr; s.sd.classList.toggle('on',dr); }
       const bf=c.buffT>0; if(s.last.bf!==bf){ s.last.bf=bf; s.bf.classList.toggle('on',bf); } }
     // hint
-    const near=g.arena.ripePlotNear(pl.pos.x,pl.pos.z); setText($('hint'),!pl.ko&&near?'[E] PICK UP '+WEAPONS[near.type].name:pl.ko?'KNOCKED OUT · RESPAWNING':'');
+    const near=g.arena.ripePlotNear(pl.pos.x,pl.pos.z); setText($('hint'),!pl.ko&&near?(TOUCH.on?'TAP THE PLOT TO PICK UP ':'[E] PICK UP ')+WEAPONS[near.type].name:pl.ko?'KNOCKED OUT · RESPAWNING':'');
     if(this.bannerT>0){ this.bannerT-=dt; if(this.bannerT<=0) this.banner.classList.remove('on'); }
   }
 }
@@ -2061,17 +2317,17 @@ class TutDummy {
     return it; }
 }
 const TUT_STEPS=[
-  {id:'move', n:'MOVE', d:'Walk with <b>W A S D</b> (or the arrow keys). Head for the glowing gold marker.'},
-  {id:'attack', n:'ATTACK', d:'Aim with the <b>mouse</b> and <b>left-click</b> to swing your Carrot Sword (hold to keep swinging). Bonk the training Goose 3 times.', goal:3, unit:'HITS'},
-  {id:'special', n:'SPECIAL MOVE', d:'<b>Right-click</b> for your weapon special. The Rabbit\'s <b>Lunge Slash</b> dashes forward. Specials cost <b>Energy</b>: the blue bar at the top left. The gold tick on it marks the cost.'},
-  {id:'dodge', n:'DODGE ROLL', d:'Press <b>SPACE</b> to dodge roll. You can\'t be hurt mid-roll. It recharges in 1.5 s.'},
+  {id:'move', n:'MOVE', t:'Put your left thumb down anywhere in the <b>lower left</b> and drag: that\'s your <b>joystick</b>. Head for the glowing gold marker.', d:'Walk with <b>W A S D</b> (or the arrow keys). Head for the glowing gold marker.'},
+  {id:'attack', n:'ATTACK', t:'Hold the big orange <b>ATTACK</b> button (bottom right) to swing your Carrot Sword. It aims at the nearest enemy by itself; <b>drag the button</b> to aim by hand. Bonk the training Goose 3 times.', d:'Aim with the <b>mouse</b> and <b>left-click</b> to swing your Carrot Sword (hold to keep swinging). Bonk the training Goose 3 times.', goal:3, unit:'HITS'},
+  {id:'special', n:'SPECIAL MOVE', t:'Tap the blue <b>special</b> button (left of Attack) for your weapon special. The Rabbit\'s <b>Lunge Slash</b> dashes forward. Specials cost <b>Energy</b>: the blue bar at the top left. The button lights up when you can afford it.', d:'<b>Right-click</b> for your weapon special. The Rabbit\'s <b>Lunge Slash</b> dashes forward. Specials cost <b>Energy</b>: the blue bar at the top left. The gold tick on it marks the cost.'},
+  {id:'dodge', n:'DODGE ROLL', t:'Tap <b>ROLL</b> (next to your joystick) to dodge roll the way you\'re moving. You can\'t be hurt mid-roll. It recharges in 1.5 s.', d:'Press <b>SPACE</b> to dodge roll. You can\'t be hurt mid-roll. It recharges in 1.5 s.'},
   {id:'seeds', n:'MAGIC SEEDS', d:'You\'re hurt! Walk over the glowing <b>magic seeds</b>. Each one heals <b>half a heart</b> and gives <b>+5 Energy</b>. Watch your hearts and the blue bar.', goal:4, unit:'SEEDS'},
-  {id:'berries', n:'BERRY BUSHES', d:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
+  {id:'berries', n:'BERRY BUSHES', t:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). <b>Tap the bush</b> under the marker and you walk over and eat it. Bushes only feed hurt critters, then regrow in <b>20 s</b>.', d:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
   {id:'surge', n:'SEED SURGE', d:'Every seed goes into your team\'s pot (top centre). Bank <b>12</b> for a <b>SEED SURGE</b>: faster running and attacks for 10 s. <b>Most surges wins the round.</b> Grab the last few!'},
-  {id:'hedge', n:'HEDGES', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
-  {id:'shield', n:'PICK UP A WEAPON', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
-  {id:'block', n:'BLOCK', d:'The Possum is throwing celery at you. <b>Face it</b> with the mouse: the shield blocks most damage from the <b>front</b>. Block 3 shots.', goal:3, unit:'BLOCKS'},
-  {id:'bulwark', n:'BULWARK', d:'<b>Right-click</b> for <b>Bulwark</b>: a dome that eats enemy shots and protects teammates standing inside it.'},
+  {id:'hedge', n:'HEDGES', t:'Tap <b>HEDGE</b> (above Attack) to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
+  {id:'shield', n:'PICK UP A WEAPON', t:'Ripe plots glow gold. <b>Tap the Pumpkin</b> plot under the marker: you walk over and grab the <b>Pumpkin Shield</b>. You can also tap berry bushes and seeds. Picked-up weapons snap after 12 uses.', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
+  {id:'block', n:'BLOCK', t:'The Possum is throwing celery at you. <b>Face it</b>: you turn to the nearest enemy by yourself (or drag Attack to aim). The shield blocks most damage from the <b>front</b>. Block 3 shots.', d:'The Possum is throwing celery at you. <b>Face it</b> with the mouse: the shield blocks most damage from the <b>front</b>. Block 3 shots.', goal:3, unit:'BLOCKS'},
+  {id:'bulwark', n:'BULWARK', t:'Tap the blue <b>special</b> button for <b>Bulwark</b>: a dome that eats enemy shots and protects teammates standing inside it.', d:'<b>Right-click</b> for <b>Bulwark</b>: a dome that eats enemy shots and protects teammates standing inside it.'},
   {id:'done', n:'YOU\'RE READY!', d:'Bonus tip: the Raccoon\'s <b>Potato Toss</b> knocks enemy shots out of the air. Matches are best of 3 rounds, 2:30 each. Now go eat your veggies!'},
 ];
 class Tutorial {
@@ -2132,7 +2388,7 @@ class Tutorial {
     return ''; }
   render(isNew){ const e=this.el, st=this.step, last=this.i===TUT_STEPS.length-1;
     e.k.textContent=last?'TUTORIAL':'TUTORIAL · STEP '+(this.i+1)+' / '+(TUT_STEPS.length-1);
-    e.n.textContent=st.n; e.d.innerHTML=st.d; this.renderProgress();
+    e.n.textContent=st.n; e.d.innerHTML=(TOUCH.on&&st.t)||st.d; this.renderProgress();
     e.bar.style.width=(this.i/(TUT_STEPS.length-1)*100)+'%';
     e.btns.classList.toggle('hidden',last); e.end.classList.toggle('hidden',!last);
     if(isNew){ e.box.classList.remove('pop'); void e.box.offsetWidth; e.box.classList.add('pop'); } }
@@ -2291,7 +2547,7 @@ class Game {
   beginMatch(){ // onboarding tips before the first fight (skippable, remembered)
     let off=this.autoplay; try{ off=off||localStorage.getItem('eyv-tips-off')==='1'; }catch(e){}
     if(off) this.startMatch(); else this.showScreen('tips'); }
-  showScreen(name){ this.screen=name; for(const s of ['title','controls','select','pause','results','achievements','tips','settings','online']) $(s).classList.toggle('hidden',s!==name); }
+  showScreen(name){ this.screen=name; for(const s of ['title','controls','select','pause','results','achievements','tips','settings','online']) $(s).classList.toggle('hidden',s!==name); fitUI(); input.clearEdges(); }
   toTitle(){ if(this.net) this.net.leave(); this.resetScene(); this.showScreen('title'); }
   resetScene(){ // back to the orbiting title garden (also used between Online Play matches)
     this.endTutorial(); this.state='title'; this.paused=false; this.hud.show(false); $('splash').classList.add('hidden'); $('net-ping').classList.add('hidden');
@@ -2853,12 +3109,16 @@ class Online {
    ===================================================================== */
 resize();
 const game=new Game(); window.__game=game; window.__renderer=renderer; window.__cam=camera;
+touchUI.init(); fitUI();
+// menus whose contents change (Online Play lobby, results) are re-fitted a few times a second while open
+setInterval(()=>{ if(game.screen) fitUI(); },400);
+for(const id of ['btn-play','btn-online','btn-tutorial']) $(id).addEventListener('click',()=>touchUI.goFull());
 $('loading').classList.add('hidden');
 let last=performance.now(), acc=0;
 function step(now,draw){
   let dt=(now-last)/1000; last=now; if(dt<0) dt=0; if(dt>0.25) dt=0.25; acc+=dt;
   let n=0; while(acc>=FIXED_DT && n<8){ game.fixedUpdate(FIXED_DT); acc-=FIXED_DT; n++; } if(n>=8) acc=0;
-  if(draw) game.render(dt);
+  if(draw){ game.render(dt); touchUI.update(game); }
   // final-stretch music: driven by the synced round clock, so it also kicks in for an Online Play guest; any other state (round end, results, title, tutorial) drops back to the calm loop
   audio.setIntense(game.state==='playing' && !game.tut && game.roundTime<=FINAL_STRETCH);
 }
