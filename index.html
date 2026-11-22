@@ -108,6 +108,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1F3226">
+<meta name="apple-mobile-web-app-title" content="Veggies!">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
 <title>Eat Your Veggies!</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -458,6 +462,9 @@ body.touch .card:hover{transform:none}
 button,.card,.mcard,.chip{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 body.touch{touch-action:manipulation}
 canvas#c{touch-action:none}
+/* during a match (touch controls showing) the page holds still: no pinch zoom, double-tap zoom, scrolling,
+   text selection or iPhone magnifier, so a thumb sliding off the joystick can't zoom the screen. Menus keep pinch-zoom. */
+html.inmatch,html.inmatch body{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 /* keyboard-only and touch-only bits of help text */
 body.touch .kb{display:none} body:not(.touch) .tc{display:none}
 
@@ -503,6 +510,13 @@ body.touch .kb{display:none} body:not(.touch) .tc{display:none}
 #t-pause::before{border-radius:0;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
 #t-pause::after{border-radius:0;inset:6px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
 #t-pause .ic{width:40%;height:40%}
+/* full screen toggle sits under pause, same square sticker look; hidden where there is nothing to toggle (home-screen app) */
+#t-full{right:calc(var(--sar) + 10px);top:66px;width:48px;height:48px;border-radius:0;--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;filter:none;
+  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+#t-full::before{border-radius:0;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
+#t-full::after{border-radius:0;inset:6px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+#t-full .ic{width:46%;height:46%} #t-full .ic .x{display:none} #t-full.is-full .ic .o{display:none} #t-full.is-full .ic .x{display:inline}
+html.standalone #t-full{display:none}
 /* make room for the pause button and keep HUD text clear of the thumbs */
 body.touch #hud-tr{right:calc(68px / var(--hz,1))}
 body.touch #tut{right:calc(68px / var(--tz,1));top:10px}
@@ -586,6 +600,7 @@ body.touch #mute{display:none}
   <div class="tbtn" id="t-sp" role="button" aria-label="Weapon special"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.6 6.6 7 .5-5.4 4.5 1.7 6.9L12 16.2 6.1 20l1.7-6.9L2.4 8.6l7-.5z"/></svg><span class="sub" id="t-sp-n">LUNGE</span><i class="cd"></i></div>
   <div class="tbtn" id="t-atk" role="button" aria-label="Attack"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 2.5l-1 4.6L9.6 17l-2.6-2.6 9.9-9.9z"/><path d="M4.2 13.6l6.2 6.2-1.6 1.6-1.9-1.9-2.7 2.7-1.4-1.4 2.7-2.7-1.9-1.9z"/></svg><span class="lb">Attack</span></div>
   <div class="tbtn" id="t-pause" role="button" aria-label="Pause"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg></div>
+  <div class="tbtn" id="t-full" role="button" aria-label="Full screen"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path class="o" d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/><path class="x" d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></div>
 </div>
 <div id="rotate"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><small>EAT YOUR VEGGIES! PLAYS IN LANDSCAPE</small></div>
 
@@ -632,6 +647,7 @@ body.touch #mute{display:none}
     <div class="setrow"><div><div class="lbl" id="lbl-shake">SCREEN SHAKE</div><div class="sub">The camera jolts when you get hit, land big hits, or someone is knocked out.</div></div><button class="btn" id="btn-set-shake" role="switch" aria-labelledby="lbl-shake">On</button></div>
     <div class="setrow"><div><div class="lbl" id="lbl-night">NIGHT MODE</div><div class="sub">A moonlit garden. Seeds, berries and ripe plots glow in the dark.</div></div><button class="btn" id="btn-set-night" role="switch" aria-labelledby="lbl-night">Off</button></div>
     <div class="setrow"><div><div class="lbl" id="lbl-tips">PRE-MATCH TIPS</div><div class="sub">Show the tips card after you pick your warrior.</div></div><button class="btn" id="btn-set-tips" role="switch" aria-labelledby="lbl-tips">On</button></div>
+    <div class="setrow" id="row-full"><div><div class="lbl" id="lbl-full">FULL SCREEN</div><div class="sub" id="sub-full">Hide the browser bars. On phones this also stops stray swipes from leaving the game.</div></div><button class="btn" id="btn-set-full" role="switch" aria-labelledby="lbl-full">Off</button></div>
     <div class="row" style="margin-top:18px"><button class="btn" id="btn-settings-back">Back</button></div>
   </div>
 </div>
@@ -1174,14 +1190,51 @@ const touchUI={
     matchMedia('(orientation:portrait)').addEventListener('change',e=>{ const g=window.__game;
       if(e.matches&&TOUCH.on&&g&&!g.online&&!g.paused&&(g.state==='playing'||g.state==='countdown')&&!g.screen) g.togglePause(); });
   },
+  // ---- full screen ----
+  // Android Chrome, desktop browsers and iPad use the Fullscreen API. iPhone Safari has no full screen for pages, so there
+  // the button explains Add to Home Screen instead: the manifest makes that open as a full screen, landscape app.
+  // opened from the home screen (an installed app). display-mode: fullscreen also matches a page in API full screen, so that case is excluded.
+  standalone(){ const api=!!(document.fullscreenElement||document.webkitFullscreenElement);
+    return !!(navigator.standalone||matchMedia('(display-mode: standalone)').matches||(!api&&matchMedia('(display-mode: fullscreen)').matches)); },
+  canFull(){ const d=document.documentElement; return !!((d.requestFullscreen||d.webkitRequestFullscreen)&&(document.fullscreenEnabled!==false||document.webkitFullscreenEnabled)); },
+  isFull(){ return !!(document.fullscreenElement||document.webkitFullscreenElement)||this.standalone(); },
+  enterFull(){ const d=document.documentElement;
+    try{ const f=d.requestFullscreen?()=>d.requestFullscreen({navigationUI:'hide'}):()=>d.webkitRequestFullscreen(); const p=f();
+      const lock=()=>{ try{ if(TOUCH.on) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} };
+      if(p&&p.then) p.then(lock).catch(()=>{}); else lock(); }catch(e){} },
+  exitFull(){ try{ const p=document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen&&document.webkitExitFullscreen(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} },
+  toggleFull(){ if(this.standalone()) return;
+    if(!this.canFull()){ this.homeHint(); return; }
+    if(this.isFull()) this.exitFull(); else this.enterFull(); },
+  homeHint(){ const el=document.createElement('div'); el.className='toast'; el.innerHTML='<div class="k"></div><div class="d"></div>';
+    el.querySelector('.k').textContent='PLAY FULL SCREEN'; el.querySelector('.d').textContent='This browser can\'t hide its bars. Tap Share, then Add to Home Screen, and open Eat Your Veggies! from there.';
+    $('toasts').appendChild(el); setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),400); },7000); },
+  syncFull(){ const on=this.isFull(), b=$('t-full'); b.classList.toggle('is-full',on); b.setAttribute('aria-label',on?'Exit full screen':'Full screen');
+    document.documentElement.classList.toggle('standalone',this.standalone()); if(window.__game&&window.__game.renderSettings) window.__game.renderSettings(); },
+  // ---- hold the page still during a match: no pinch zoom, double-tap zoom or scrolling (menus keep pinch-zoom) ----
+  vpFree:'width=device-width, initial-scale=1, viewport-fit=cover',
+  vpLock:'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
+  setLocked(on){ if(this.locked===on) return; this.locked=on; document.documentElement.classList.toggle('inmatch',on);
+    const m=document.querySelector('meta[name=viewport]'); if(m) m.setAttribute('content',on?this.vpLock:this.vpFree); },
+  initLock(){ const stop=e=>{ if(this.locked&&e.cancelable) e.preventDefault(); }, o={passive:false};
+    // touchstart/touchmove: cancelling them stops pinch zoom and scrolling but pointer events (joystick, buttons) still arrive
+    document.addEventListener('touchstart',stop,o); document.addEventListener('touchmove',stop,o);
+    // iPhone Safari pinch gestures and double-tap zoom
+    for(const ev of ['gesturestart','gesturechange','gestureend']) document.addEventListener(ev,stop,o);
+    let lastEnd=0; document.addEventListener('touchend',e=>{ const t=e.timeStamp; if(this.locked&&t-lastEnd<350&&e.cancelable) e.preventDefault(); lastEnd=t; },o);
+    document.addEventListener('dblclick',stop,o);
+    for(const ev of ['fullscreenchange','webkitfullscreenchange']) document.addEventListener(ev,()=>this.syncFull());
+    { const b=$('t-full'); let pid=null;
+      b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); pid=e.pointerId; b.classList.add('down'); });
+      b.addEventListener('pointerup',e=>{ if(e.pointerId!==pid) return; pid=null; b.classList.remove('down'); audio.play('click'); this.toggleFull(); });
+      b.addEventListener('pointercancel',()=>{ pid=null; b.classList.remove('down'); }); }
+    this.syncFull(); },
   setMode(on){ if(TOUCH.on===on) return; TOUCH.on=on; document.body.classList.toggle('touch',on); fitUI(); },
   // phones: try to go full screen and lock landscape when a match, the tutorial or Online Play starts (Android; iPhone ignores it)
-  goFull(){ if(!TOUCH.on||this.triedFull) return; this.triedFull=true; const d=document.documentElement;
-    try{ const p=d.requestFullscreen?d.requestFullscreen({navigationUI:'hide'}):null;
-      if(p&&p.then) p.then(()=>{ try{ screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} }).catch(()=>{}); }catch(e){} },
+  goFull(){ if(!TOUCH.on||this.triedFull) return; this.triedFull=true; if(this.canFull()&&!this.isFull()) this.enterFull(); },
   update(g){ // once per frame: show/hide the controls and keep the special/hedge/roll buttons honest
     const show=TOUCH.on&&!g.screen&&(g.state==='playing'||g.state==='countdown'||g.state==='roundEnd')&&!$('hud').classList.contains('hidden');
-    if(show!==this.shown){ this.shown=show; this.el.classList.toggle('on',show); if(!show){ this.rest&&this.rest(); TOUCH.atk=false; TOUCH.aimOn=false; tapRing.visible=false; } }
+    if(show!==this.shown){ this.shown=show; this.el.classList.toggle('on',show); this.setLocked(show); if(!show){ this.rest&&this.rest(); TOUCH.atk=false; TOUCH.aimOn=false; tapRing.visible=false; } }
     if(!show||!g.player) return; const pl=g.player, W=pl.W, L=this.last;
     const short={sword:'LUNGE',kunai:'SPREAD',flail:'SPIN',staff:'SLOW',shield:'BULWARK'}[pl.weapon]||'SPECIAL';
     if(L.sp!==short){ L.sp=short; $('t-sp-n').textContent=short; }
@@ -2806,6 +2859,7 @@ class Game {
     click('btn-music',()=>{ this.settings.music=!this.settings.music; this.saveSettings(); audio.setMusicOff(!this.settings.music); this.renderSettings(); }); this.renderSettings();
     click('btn-settings',()=>{ this.renderSettings(); this.showScreen('settings'); }); click('btn-settings-back',()=>this.showScreen('title'));
     click('btn-set-shake',()=>{ this.settings.shake=!this.settings.shake; this.saveSettings(); this.renderSettings(); if(this.settings.shake) this.shakeA=0; });
+    click('btn-set-full',()=>touchUI.toggleFull());
     click('btn-set-tips',()=>{ try{ if(this.tipsOn()) localStorage.setItem('eyv-tips-off','1'); else localStorage.removeItem('eyv-tips-off'); }catch(e){} this.renderSettings(); });
     click('btn-tut-skip',()=>{ if(this.tut){ if(this.tut.step.id==='surge'&&this.bonus[0]<1) this.seedSurge(0); this.tut.next(); } });
     click('btn-tut-quit',()=>this.toTitle()); click('btn-tut-title',()=>this.toTitle());
@@ -2840,7 +2894,10 @@ class Game {
   tipsOn(){ try{ return localStorage.getItem('eyv-tips-off')!=='1'; }catch(e){ return true; } }
   saveSettings(){ try{ localStorage.setItem('eyv-settings-v1',JSON.stringify(this.settings)); }catch(e){} }
   renderSettings(){
-    for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()],['btn-set-night',this.settings.night]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); b.setAttribute('aria-checked',String(on)); }
+    for(const [id,on] of [['btn-set-shake',this.settings.shake],['btn-set-tips',this.tipsOn()],['btn-set-night',this.settings.night],['btn-set-full',touchUI.isFull()]]){ const b=$(id); b.textContent=on?'On':'Off'; b.classList.toggle('off',!on); b.setAttribute('aria-checked',String(on)); }
+    { const ok=touchUI.canFull(), app=touchUI.standalone(), b=$('btn-set-full');   // iPhone: explain Add to Home Screen instead
+      if(app){ b.textContent='On'; b.disabled=true; setText($('sub-full'),'You opened the game from your home screen, so it already fills the screen.'); }
+      else if(!ok){ b.textContent='How?'; b.removeAttribute('aria-checked'); b.setAttribute('role','button'); setText($('sub-full'),'This browser can\'t hide its bars. Tap Share, then Add to Home Screen, and open the game from there: it plays full screen.'); } }
     const m=$('btn-music'), mo=this.settings.music; m.innerHTML='&#9835; Music: '+(mo?'On':'Off'); m.classList.toggle('off',!mo); m.setAttribute('aria-checked',String(mo)); }
   startTutorial(){ // learn-by-doing sandbox: you play the Rabbit, everyone else is a training partner
     this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME; this.mode='seeds';
@@ -3450,7 +3507,7 @@ class Online {
    ===================================================================== */
 resize();
 const game=new Game(); window.__game=game; window.__renderer=renderer; window.__cam=camera;
-touchUI.init(); fitUI();
+touchUI.init(); touchUI.initLock(); fitUI();
 // menus whose contents change (Online Play lobby, results) are re-fitted a few times a second while open
 setInterval(()=>{ if(game.screen) fitUI(); },400);
 for(const id of ['btn-play','btn-online','btn-tutorial']) $(id).addEventListener('click',()=>touchUI.goFull());

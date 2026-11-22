@@ -24,6 +24,8 @@ const live = new Set(); // every context a test opens is closed after the test, 
 async function route(ctx) {
   await ctx.route('**/*', r => {
     const u = new URL(r.request().url());
+    if (u.hostname === 'game.test' && u.pathname === '/manifest.webmanifest') return r.fulfill({ path: path.join(HERE, '..', 'manifest.webmanifest'), contentType: 'application/manifest+json' });
+    if (u.hostname === 'game.test' && /^\/icons\/[\w-]+\.png$/.test(u.pathname)) return r.fulfill({ path: path.join(HERE, '..', u.pathname), contentType: 'image/png' });
     if (u.hostname === 'game.test') return r.fulfill({ path: GAME, contentType: 'text/html' });
     if (u.hostname === 'unpkg.com' && u.pathname.includes('/three@')) return r.fulfill({ path: THREE_JS, contentType: 'text/javascript' });
     if (u.hostname === 'unpkg.com' && u.pathname.includes('/peerjs@')) return r.fulfill({ path: PEER_JS, contentType: 'text/javascript' });
@@ -180,6 +182,65 @@ test('phone: touch controls show in a match, portrait shows the turn-your-phone 
   await page.waitForTimeout(300);
   check(await page.evaluate(() => getComputedStyle(document.getElementById('rotate')).display !== 'none'), 'portrait should show the rotate card');
   noErrors(errors); await ctx.close();
+});
+
+test('phone: a match blocks pinch and double-tap zoom, menus still pinch-zoom', async () => {
+  const { page, errors, ctx } = await open('?touch', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  const cdp = await ctx.newCDPSession(page);
+  const vp = () => page.evaluate(() => document.querySelector('meta[name=viewport]').content);
+  const cancels = id => page.evaluate(id => { const el = document.getElementById(id);
+    const t = new Touch({ identifier: 7, target: el, clientX: 100, clientY: 300 });
+    const ev = new TouchEvent('touchstart', { touches: [t], targetTouches: [t], changedTouches: [t], bubbles: true, cancelable: true });
+    el.dispatchEvent(ev); return ev.defaultPrevented; }, id);
+  // menus: zoom allowed
+  check(!(await vp()).includes('user-scalable=no'), 'menus should allow pinch zoom');
+  check(!(await cancels('title')), 'a touch on the title menu should not be cancelled');
+  // match: zoom reset and blocked, the joystick still works
+  await page.evaluate(() => window.__game.startMatch());
+  await ticks(page, 240); await page.waitForTimeout(200);
+  check(await page.evaluate(() => document.documentElement.classList.contains('inmatch')), 'the page should be locked during a match');
+  check((await vp()).includes('user-scalable=no'), 'viewport should block zoom during a match');
+  check(await cancels('t-zone'), 'a touch on the joystick area should be cancelled (no browser zoom/scroll)');
+  check(await cancels('c'), 'a touch on the garden should be cancelled (no browser zoom/scroll)');
+  // (headless Chrome can't synthesize a real pinch, so this checks what stops one: cancelled touches and a locked viewport)
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 110, y: 300, id: 1 }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 170, y: 300, id: 1 }] });
+  await page.waitForTimeout(100);
+  const sx = await page.evaluate(() => window.__touch.sx);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  check(sx > 0.5, 'dragging the joystick right should push right (sx ' + sx + ')');
+  // pause menu: unlocked again
+  await page.evaluate(() => window.__game.togglePause()); await ticks(page, 2); await page.waitForTimeout(100);
+  check(!(await page.evaluate(() => document.documentElement.classList.contains('inmatch'))), 'the pause menu should allow zoom again');
+  check(!(await vp()).includes('user-scalable=no'), 'viewport should allow zoom on the pause menu');
+  noErrors(errors); await ctx.close();
+});
+
+test('full screen: the in-match button and the Settings switch toggle it; iPhone gets the home-screen tip', async () => {
+  const { page, errors, ctx } = await open('?touch', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  const full = () => page.evaluate(() => !!document.fullscreenElement);
+  await page.evaluate(() => window.__game.startMatch()); await ticks(page, 60); await page.waitForTimeout(100);
+  check(await page.evaluate(() => getComputedStyle(document.getElementById('t-full')).display !== 'none'), 'the full screen button should show in a match');
+  await page.tap('#t-full'); await page.waitForTimeout(300);
+  check(await full(), 'tapping the full screen button should go full screen');
+  check(await page.evaluate(() => document.getElementById('t-full').getAttribute('aria-label')) === 'Exit full screen', 'button label should flip to Exit full screen');
+  await page.tap('#t-full'); await page.waitForTimeout(300);
+  check(!(await full()), 'tapping it again should leave full screen');
+  await page.evaluate(() => { window.__game.togglePause(); window.__game.showScreen('settings'); window.__game.renderSettings(); });
+  await page.tap('#btn-set-full'); await page.waitForTimeout(300);
+  check(await full(), 'the Settings switch should go full screen');
+  check(await page.evaluate(() => document.getElementById('btn-set-full').getAttribute('aria-checked')) === 'true', 'the Settings switch should read On');
+  noErrors(errors); await ctx.close();
+  // a browser with no Fullscreen API (iPhone Safari) explains Add to Home Screen instead
+  const ctx2 = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true }); live.add(ctx2); await route(ctx2);
+  await ctx2.addInitScript(() => { for (const k of ['requestFullscreen', 'webkitRequestFullscreen']) Object.defineProperty(Element.prototype, k, { value: undefined });
+    for (const k of ['fullscreenEnabled', 'webkitFullscreenEnabled']) Object.defineProperty(Document.prototype, k, { get: () => false }); });
+  const P = await open('?touch', {}, ctx2);
+  await P.page.evaluate(() => { window.__game.showScreen('settings'); window.__game.renderSettings(); });
+  check(await P.page.evaluate(() => document.getElementById('btn-set-full').textContent) === 'How?', 'without full screen support the switch should offer How?');
+  await P.page.tap('#btn-set-full'); await P.page.waitForTimeout(200);
+  check(await P.page.evaluate(() => /Add to Home Screen/.test(document.getElementById('toasts').textContent)), 'How? should explain Add to Home Screen');
+  noErrors(P.errors); await ctx2.close();
 });
 
 test('reduced motion: screen shake starts off and the title camera holds still', async () => {
