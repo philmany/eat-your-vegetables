@@ -181,7 +181,13 @@ test('pause menu, Escape, and auto-pause when the tab is hidden', async () => {
 
 test('online (two tabs): host, join, ready, play, and the guest leaving hands over to a bot', async () => {
   const ctx = await browser.newContext({ viewport: { width: 1100, height: 700 } }); live.add(ctx); await route(ctx);
-  const H = await open('?net=local', {}, ctx), G = await open('?net=local', {}, ctx);
+  // The host tab renders the 3D title at full speed on the runner's software GPU; on GitHub's 2-core runners that starved
+  // the guest tab so its page.goto never reached DOMContentLoaded (also red on main). Freeze the host while the guest loads.
+  const H = await open('?net=local', {}, ctx);
+  const hcdp = await ctx.newCDPSession(H.page);
+  await hcdp.send('Page.setWebLifecycleState', { state: 'frozen' });
+  const G = await open('?net=local', {}, ctx);
+  await hcdp.send('Page.setWebLifecycleState', { state: 'active' });
   await H.page.click('#btn-online'); await H.page.click('#btn-on-host');
   await H.page.waitForFunction(() => /^\d{4}$/.test(document.getElementById('on-codeval').textContent), null, { timeout: 10000 });
   const code = await H.page.textContent('#on-codeval');
