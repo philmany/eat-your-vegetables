@@ -190,6 +190,61 @@ test('phone: touch controls show in a match, portrait shows the turn-your-phone 
   noErrors(errors); await ctx.close();
 });
 
+// Phones on their side, from small and short (browser bars showing) to very wide. In a match and in the tutorial, with every
+// optional HUD piece showing at once (hint, achievement toast, banner, ping, comeback tags), no two HUD blocks or touch
+// controls may overlap and none may leave the screen. Menu buttons must stay on screen and clear of each other.
+const PHONES = [[568, 320], [667, 375], [740, 300], [800, 360], [844, 330], [844, 390], [932, 430], [960, 360], [1100, 320], [1280, 400], [1024, 600]];
+const layoutProblems = page => page.evaluate(() => {
+  const shown = e => { if (!e) return false; for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return false; } const q = e.getBoundingClientRect(); return q.width > 0 && q.height > 0; };
+  const rect = e => { if (e.id === 'banner') { const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect(); } return e.getBoundingClientRect(); };
+  const ids = ['hud-tl', 'slabel', 'sc0', 'sc1', 'hud-tr', 'hud-bc', 'hint', 'banner', 'tut', 't-roll', 't-hedge', 't-sp', 't-atk', 't-pause', 't-full', 'stick'];
+  const els = ids.map(id => document.getElementById(id)).concat([document.querySelector('#toasts>.toast:last-child')]).filter(e => shown(e) && (e.textContent.trim() || e.closest('#touch')));
+  const name = e => e.id || 'toast', out = [], W = innerWidth, H = innerHeight;
+  const boxes = els.map(e => [name(e), rect(e)]);
+  for (const [n, q] of boxes) if (q.left < -1 || q.top < -1 || q.right > W + 1 || q.bottom > H + 1) out.push(`${n} leaves the screen`);
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const [a, p] = boxes[i], [b, q] = boxes[j], w = Math.min(p.right, q.right) - Math.max(p.left, q.left), h = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
+    if (w > 1 && h > 1) out.push(`${a} overlaps ${b} by ${Math.round(w)}x${Math.round(h)}`);
+  }
+  return out;
+});
+const menuProblems = page => page.evaluate(() => {
+  const scr = [...document.querySelectorAll('.screen')].find(s => !s.classList.contains('hidden')); if (!scr) return [];
+  const bs = [...scr.querySelectorAll('button')].filter(b => b.offsetParent && getComputedStyle(b).visibility !== 'hidden').map(b => [b.id || b.textContent.trim(), b.getBoundingClientRect()]).filter(([, q]) => q.width);
+  const out = [], W = innerWidth, H = innerHeight, sx = scr.scrollHeight > scr.clientHeight + 2;
+  for (const [n, q] of bs) if (!sx && (q.left < -1 || q.top < -1 || q.right > W + 1 || q.bottom > H + 1)) out.push(`${scr.id}: ${n} leaves the screen`);
+  for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) { const [a, p] = bs[i], [b, q] = bs[j];
+    if (Math.min(p.right, q.right) - Math.max(p.left, q.left) > 1 && Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top) > 1) out.push(`${scr.id}: ${a} overlaps ${b}`); }
+  return out;
+});
+const busyHud = page => page.evaluate(() => {
+  const g = window.__game, $ = id => document.getElementById(id);
+  $('hint').textContent = 'TAP THE PLOT TO PICK UP POTATO TOSS';
+  g.ach.toast({ name: 'GARDEN LEGEND', desc: '150 lifetime knockouts.' });
+  g.hud.showBanner(g.tut ? 'TUTORIAL COMPLETE<small>GO EAT YOUR VEGGIES!</small>' : 'GREEN TEAM TAKES ROUND 1<small>MORE SEEDS</small>', 9);
+  $('net-ping').classList.remove('hidden'); $('net-ping').textContent = 'PING 80 MS';
+  for (const i of ['sc0', 'sc1']) $(i).classList.add('comeback');
+});
+test('phone layout: touch controls, HUD and menus never overlap on wide landscape phones', async () => {
+  const { page, errors, ctx } = await open('?touch', { viewport: { width: PHONES[0][0], height: PHONES[0][1] }, hasTouch: true, isMobile: true });
+  const bad = [];
+  for (const [w, h] of PHONES) {
+    await page.setViewportSize({ width: w, height: h }); await page.waitForTimeout(150);
+    for (const s of ['title', 'select', 'tips', 'controls', 'settings', 'achievements', 'online']) {
+      await page.evaluate(s => { const g = window.__game; g.toTitle(); if (s === 'select') { g.showScreen('select'); g.renderCosmetics(); } else if (s === 'achievements') g.openAch('title'); else if (s === 'online') g.net.openMenu(); else g.showScreen(s); }, s);
+      await page.waitForTimeout(60);
+      for (const p of await menuProblems(page)) bad.push(`${w}x${h} ${p}`);
+    }
+    for (const mode of ['match', 'tutorial']) {
+      await page.evaluate(m => { const g = window.__game; g.toTitle(); if (m === 'match') g.startMatch(); else g.startTutorial(); }, mode);
+      await ticks(page, 240); await busyHud(page); await page.waitForTimeout(600); // let the toast and banner pop-in animations settle
+      for (const p of await layoutProblems(page)) bad.push(`${w}x${h} ${mode}: ${p}`);
+    }
+  }
+  check(bad.length === 0, 'overlapping or off-screen UI:\n  ' + bad.join('\n  '));
+  noErrors(errors);
+});
+
 test('phone: a match blocks pinch and double-tap zoom, menus still pinch-zoom', async () => {
   const { page, errors, ctx } = await open('?touch', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
   const cdp = await ctx.newCDPSession(page);
