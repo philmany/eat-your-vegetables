@@ -40,8 +40,14 @@ async function open(query = '', ctxOpts = {}, ctx) {
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-  await page.goto(ORIGIN + query);
-  await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('hidden'), null, { timeout: 60000 });
+  // Wait for the DOM, then for the game itself to say it's ready. The page's "load" event also waits on things the game
+  // doesn't need (fonts, icons); on GitHub's runners the second tab of the online test sometimes never fired it within 30 s.
+  // If that happens, the requests still open are printed so the cause shows up in the log instead of a bare timeout.
+  const open_ = new Map(); page.on('request', r => open_.set(r, r.url())); for (const ev of ['requestfinished', 'requestfailed']) page.on(ev, r => open_.delete(r));
+  await page.goto(ORIGIN + query, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('hidden'), null, { timeout: 60000 })
+    .catch(e => { throw new Error('game never finished loading; requests still open: ' + ([...open_.values()].join(', ') || 'none') + '\n' + e.message); });
+  page.waitForLoadState('load', { timeout: 15000 }).catch(() => { if (!page.isClosed()) console.log('      note: page load event still pending after 15 s; open requests: ' + ([...open_.values()].join(', ') || 'none')); });
   return { page, errors, ctx };
 }
 // Run the game's fixed-step simulation n ticks in one go (fast-forward without waiting for real time).
