@@ -1264,10 +1264,69 @@ addEventListener('resize',()=>fitUI());
 /* =====================================================================
    SECTION 6 — MODELS (characters, weapons, props) built from primitives
    ===================================================================== */
-function eyes(parent,y,z,sep,r=0.085,tilt=0){
+// Storybook eyes: a white disc, a big coloured iris, a navy pupil and two catch-lights (the larger one up and out),
+// plus a soft blush under each eye. Read as "cute" from the iso camera even at phone size.
+function eyes(parent,y,z,sep,r=0.085,tilt=0,iris=PAL.navy){
   for(const s of [-1,1]){
-    const w=M(CYL(r,r,0.03,10),PAL.white,s*sep,y,z,parent,false); w.rotation.x=Math.PI/2; w.rotation.y=s*tilt;
-    const p=M(CYL(r*0.45,r*0.45,0.036,8),PAL.navy,s*sep*1.02,y+0.004,z+0.012,parent,false); p.rotation.x=Math.PI/2;
+    const disc=(rr,col,dx,dy,dz)=>{ const d=M(CYL(rr,rr,0.03,10),col,s*sep+dx,y+dy,z+dz,parent,false); d.rotation.x=Math.PI/2; d.rotation.y=s*tilt; return d; };
+    disc(r*1.06,PAL.white,0,0,0);
+    disc(r*0.66,iris,s*sep*0.02,-r*0.08,0.008);
+    disc(r*0.36,PAL.navy,s*sep*0.02,-r*0.06,0.014);
+    disc(r*0.2,0xFFFFFF,s*r*0.22,r*0.2,0.02);
+    disc(r*0.1,0xFFFFFF,-s*r*0.18,-r*0.3,0.02);
+    const b=M(CYL(r*0.6,r*0.6,0.02,10),0xF59AAE,s*(sep+r*0.55),y-r*1.35,z-0.025,parent,false); b.rotation.x=Math.PI/2; b.rotation.y=s*0.5; b.scale.set(1,1,0.6);
+  }
+}
+// Fantasy gear: each critter is a little storybook adventurer (knight, rogue, berserker, hedge wizard), added on top of
+// the round body so the cosmetics still fit. Capes hang from the shoulders at the back; gems glow softly.
+function fantasyGear(P,key){
+  const B=P.B, gold=0xE9B949, goldS=0xB88426;
+  const crown=()=>{ const g=new THREE.Group(); P.head.add(g); P.extra.crown=g; return g; };
+  const gem=(col,x,y,z,parent=B,r=0.04)=>M(new THREE.OctahedronGeometry(r,0),col,x,y,z,parent,false,{emissive:col,emissiveIntensity:0.55});
+  const cape=(col,trim,w=0.44,h=0.46,y0=0.78)=>{ const g=new THREE.Group(); g.position.set(0,y0,-0.24); g.rotation.x=0.22; B.add(g);
+    M(BOX(w,h,0.035),col,0,-h/2,0,g); M(BOX(w*1.02,0.05,0.04),trim,0,-h+0.02,0,g,false);
+    for(const sx of [-1,1]) M(ICO(0.045,0),gold,sx*w*0.42,-0.01,0.03,g,false); return g; };
+  if(key==='rabbit'){ // Carrot Knight: short leaf-green cape, one round silver pauldron, a chest strap with a sun gem
+    cape(0x3E6B3A,gold,0.44,0.34,0.8);
+    const pd=M(ICO(0.13,1),0xC9CFDA,0.27,0.66,0,B); pd.scale.set(1,0.62,1); M(ICO(0.03,0),gold,0.33,0.7,0.06,B,false);
+    const st=M(BOX(0.05,0.5,0.03),0x7B4832,0.02,0.5,0.255,B,false); st.rotation.z=0.62;
+    gem(0xFFC93C,0,0.52,0.29);
+    const cr=crown(); // a little gold circlet with a sun gem, sitting between the ears
+    const ring=M(CYL(0.2,0.215,0.045,12),gold,0,0.21,0.02,cr); ring.rotation.x=-0.25;
+    for(let i=0;i<3;i++){ const a=(i-1)*0.5; const pk=M(CONE(0.03,0.08,4),gold,Math.sin(a)*0.2,0.27,Math.cos(a)*0.2+0.0,cr); pk.rotation.set(Math.cos(a)*0.3,0,-Math.sin(a)*0.3); }
+    gem(0xFFC93C,0,0.23,0.23,cr,0.04);
+  } else if(key==='raccoon'){ // Shadow Rogue: plum cowl round the neck, short ragged cape, a dagger-bright gem clasp
+    const cw=M(CYL(0.25,0.3,0.12,10),0x5B3A5E,0,0.76,0,B); cw.scale.set(1,1,0.92);
+    M(CYL(0.26,0.26,0.03,10),0x3E2640,0,0.82,0,B,false);
+    const c=cape(0x5B3A5E,0x3E2640,0.46,0.36,0.78);
+    for(const x of [-0.15,0,0.15]){ const t=M(CONE(0.07,0.12,4),0x5B3A5E,x,-0.41,0,c); t.rotation.x=Math.PI; }
+    gem(0x9FF5C8,0,0.72,0.27);
+    const cr=crown(); // a rogue's hood, pushed back behind the ears
+    const hd=M(G('hood',()=>new THREE.SphereGeometry(1,12,7,0,Math.PI*2,0,Math.PI*0.5)),0x5B3A5E,0,-0.04,-0.13,cr); hd.scale.set(0.3,0.3,0.24); hd.rotation.x=-1.9;
+    M(CONE(0.07,0.16,5),0x5B3A5E,0,-0.1,-0.36,cr).rotation.x=-2.4;
+  } else if(key==='goose'){ // Beet Berserker: bronze breastplate, a shaggy fur mantle, a war-paint stripe on the cheek
+    const bp=M(ICO(0.24,1),0xB8763E,0,0.42,0.12,B); bp.scale.set(1.0,0.85,0.7);
+    M(BOX(0.04,0.3,0.03),0x8A5424,0,0.45,0.3,B,false);
+    for(let i=0;i<9;i++){ const a=i/9*Math.PI*2; const t=M(CONE(0.06,0.1,4),0xD9C7A0,Math.sin(a)*0.2,0.66,Math.cos(a)*0.22-0.02,B); t.rotation.set(Math.cos(a)*1.3,0,-Math.sin(a)*1.3); }
+    gem(0xF2493B,0,0.5,0.3);
+    for(const sx of [-1,1]) M(BOX(0.03,0.08,0.02),0xF2493B,sx*0.15,-0.02,0.07,P.head,false).rotation.z=sx*0.3;
+    const cr=crown(); // a little bronze helm with two curled horns
+    const hm=M(G('helm',()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,0,Math.PI*0.5)),0xB8763E,0,0.04,-0.01,cr); hm.scale.set(0.17,0.13,0.2);
+    M(CYL(0.175,0.175,0.03,12),0x8A5424,0,0.045,-0.01,cr,false).scale.set(1,1,1.15);
+    for(const sx of [-1,1]){ const h1=M(CONE(0.045,0.12,6),0xEFE6D2,sx*0.18,0.1,0,cr); h1.rotation.z=-sx*1.0; const h2=M(CONE(0.025,0.08,5),0xEFE6D2,sx*0.24,0.19,0,cr); h2.rotation.z=-sx*0.2; }
+  } else if(key==='possum'){ // Hedge Wizard: midnight star mantle, a glowing mint crystal pendant
+    const mt=M(CYL(0.2,0.32,0.09,12),0x2E3A6B,0,0.74,0,B); mt.scale.set(1,1,0.95);
+    M(CYL(0.325,0.325,0.025,12),gold,0,0.695,0,B,false).scale.set(1,1,0.95);
+    for(let i=0;i<6;i++){ const a=i/6*Math.PI*2+0.3; M(ICO(0.02,0),gold,Math.sin(a)*0.27,0.74,Math.cos(a)*0.26,B,false); }
+    M(CYL(0.008,0.008,0.14,4),gold,0,0.6,0.29,B,false);
+    gem(0x9FF5C8,0,0.52,0.31,B,0.055);
+    const cr=crown(); // a floppy pointed wizard hat with gold stars, tipped to one side
+    const hb=new THREE.Group(); hb.position.set(0,0.2,-0.03); hb.rotation.set(-0.15,0,0.12); cr.add(hb);
+    M(CYL(0.3,0.31,0.025,14),0x2E3A6B,0,0,0,hb);
+    const h1=M(CONE(0.17,0.24,10),0x2E3A6B,0,0.13,0,hb);
+    const h2=M(CONE(0.08,0.17,8),0x2E3A6B,0.05,0.3,-0.06,hb); h2.rotation.set(-0.55,0,-0.5);
+    M(CYL(0.175,0.175,0.035,10),gold,0,0.03,0,hb,false);
+    for(const [x,y,z] of [[0.08,0.11,0.12],[-0.07,0.15,0.1],[0.01,0.21,0.07]]) M(new THREE.OctahedronGeometry(0.025,0),gold,x,y,z,hb,false,{emissive:gold,emissiveIntensity:0.4});
   }
 }
 // A lumpy potato: a squashed low-poly blob, a couple of bumps and dark "eyes". Used in hand, in flight and in plots.
@@ -1334,7 +1393,7 @@ function buildCharacter(key){
     M(ICO(0.3,1),fur,0,0,0,head);
     M(ICO(0.12,1),PAL.white,0,-0.08,0.22,head).scale.set(1.2,0.8,0.8);
     M(BOX(0.07,0.05,0.05),0xF58FB0,0,-0.03,0.31,head,false);
-    eyes(head,0.05,0.265,0.12);
+    eyes(head,0.05,0.265,0.12,0.085,0,0x3E7A4A);
     for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.11,0.22,-0.03); e.rotation.z=-s*0.15; head.add(e);
       M(BOX(0.11,0.48,0.07),fur,0,0.22,0,e); M(BOX(0.06,0.36,0.02),0xF7A8B8,0,0.22,0.04,e,false); P.ears.push(e); }
     M(ICO(0.1,0),PAL.white,0,0.36,-0.3,B);
@@ -1351,7 +1410,7 @@ function buildCharacter(key){
     M(BOX(0.46,0.13,0.08),dk,0,0.04,0.235,head,false);
     for(const s of [-1,1]){ const t=M(BOX(0.12,0.08,0.06),dk,s*0.27,0.0,0.18,head,false); t.rotation.z=s*0.5; }
     M(BOX(0.07,0.14,0.05),lt,0,0.17,0.24,head,false);
-    eyes(head,0.045,0.28,0.12,0.075);
+    eyes(head,0.045,0.28,0.12,0.075,0,0x8A5A34);
     for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.19,0.22,-0.02); head.add(e);
       M(CONE(0.09,0.16,4),fur,0,0.06,0,e); M(CONE(0.05,0.1,4),dk,0,0.05,0.03,e,false); P.ears.push(e); }
     const tail=new THREE.Group(); tail.position.set(0,0.32,-0.26); tail.rotation.x=-0.9; B.add(tail);
@@ -1373,7 +1432,8 @@ function buildCharacter(key){
     M(BOX(0.34,0.1,0.12),PAL.white,0,-0.04,-0.01,head,false);
     const beak=M(BOX(0.11,0.06,0.17),0x4A4D5C,0,0.0,0.2,head); P.extra.beakLow=M(BOX(0.1,0.035,0.14),0x4A4D5C,0,-0.05,0.18,head);
     for(const s of [-1,1]){ M(CYL(0.05,0.05,0.03,8),PAL.white,s*0.12,0.05,0.09,head,false).rotation.z=Math.PI/2;
-      M(CYL(0.025,0.025,0.035,6),PAL.navy,s*0.13,0.055,0.1,head,false).rotation.z=Math.PI/2; }
+      M(CYL(0.025,0.025,0.035,6),PAL.navy,s*0.13,0.055,0.1,head,false).rotation.z=Math.PI/2;
+      M(CYL(0.011,0.011,0.02,6),0xFFFFFF,s*0.148,0.07,0.11,head,false).rotation.z=Math.PI/2; }
     for(const [arm,s] of [[armL,1],[armR,-1]]){ const w=M(BOX(0.08,0.3,0.34),wing,0,-0.12,-0.06,arm); w.rotation.x=0.2; M(ICO(0.07,0),wing,0,-0.26,0,arm); }
     for(const leg of [legL,legR]){ M(CYL(0.035,0.035,0.16,5),dk,0,-0.08,0,leg); M(BOX(0.18,0.04,0.22),dk,0,-0.17,0.05,leg); }
     P.extra.neck=neck;
@@ -1387,7 +1447,7 @@ function buildCharacter(key){
     M(ICO(0.05,0),pink,0,-0.06,0.46,head,false);
     const mouth=M(BOX(0.12,0.05,0.1),0x5A1E32,0,-0.13,0.36,head,false); mouth.visible=false; P.extra.mouth=mouth; // shown while hissing
     for(const s of [-1,1]) M(CONE(0.015,0.05,4),PAL.white,s*0.04,-0.11,0.4,mouth,false).rotation.x=Math.PI;
-    eyes(head,0.06,0.255,0.11,0.08);
+    eyes(head,0.06,0.255,0.11,0.08,0,0x3A5BA8);
     for(const s of [-1,1]){ const lid=M(BOX(0.18,0.06,0.04),grey,s*0.11,0.11,0.265,head,false); lid.rotation.z=-s*0.2; }
     for(let i=0;i<3;i++){ const t=M(CONE(0.04,0.14,4),grey,(i-1)*0.07,0.24,-0.02,head); t.rotation.z=(i-1)*0.6; }
     for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.18,0.18,-0.04); head.add(e);
@@ -1399,6 +1459,7 @@ function buildCharacter(key){
     limb(armL,grey,pink); limb(armR,grey,pink);
     M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legL); M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legR);
   }
+  fantasyGear(P,key);
   addOutlines(root);
   // fold each rigid body part into a few meshes (parts that animate on their own, like the goose's beak, stay separate)
   const keep=new Set(Object.values(P.extra)), groups=[]; root.traverse(o=>{ if(o.isGroup) groups.push(o); });
@@ -1422,6 +1483,7 @@ const COS_COL = { denim:0x4D6A94, denimS:0x37506F, denimL:0x7C95B8, brass:0xE0A9
 function addCosmetic(P,key,id){
   const out=[], f=COS_FIT[key], C=COS_COL;
   if(!id||id==='none'||!COSMETICS[id]) return out;
+  if((id==='hat'||id==='bluehat')&&P.extra.crown) P.extra.crown.visible=false; // a hat replaces the fantasy headgear
   const grp=parent=>{ const g=new THREE.Group(); parent.add(g); out.push([parent,g]); return g; };
   // the lower half of a slightly larger body shell: shorts/trouser seat that hugs the round body
   const seat=(g,col,from)=>{ const geo=G('seat'+from,()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,Math.PI*from,Math.PI*(1-from)));
@@ -1489,7 +1551,7 @@ function addCosmetic(P,key,id){
   for(const [,o] of out) addOutlines(o,0.02,0.07);
   return out;
 }
-function removeCosmetic(P,list){ for(const [p,o] of list) p.remove(o); for(const e of P.ears) e.visible=true; }
+function removeCosmetic(P,list){ for(const [p,o] of list) p.remove(o); for(const e of P.ears) e.visible=true; if(P.extra.crown) P.extra.crown.visible=true; }
 const HEDGE_TPL={};
 function makeHedgeModel(parent, x, z, player=false){
   const k=player?'p':'s';
