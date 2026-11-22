@@ -160,20 +160,25 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .screen.dim{background:rgba(10,12,18,.62)}
 /* see-through black card under the title menu so it pops off the 3D garden */
 /* Title menu card: wide, dark and see-through (blurred garden behind), with roomy spacing between buttons. */
-.menu-card{display:flex;flex-direction:column;align-items:center;gap:18px;width:min(720px,calc(100vw - 32px));
-  padding:clamp(26px,4.5vh,44px) clamp(18px,5vw,64px) clamp(24px,4vh,40px);
+.menu-card{display:flex;flex-direction:column;align-items:center;gap:18px;width:min(640px,calc(100vw - 32px));
+  padding:clamp(24px,4vh,40px) clamp(18px,4vw,48px) clamp(22px,3.6vh,34px);
   background:rgba(8,10,16,.55);border-radius:22px;box-shadow:0 14px 44px rgba(0,0,0,.38),inset 0 0 0 2px rgba(245,239,220,.08);
   -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-.menu-card .btngrp{display:flex;flex-direction:column;align-items:center;gap:14px}
-.menu-card .btngrp.sub{gap:10px;margin-top:4px}
+.menu-card .btngrp{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:var(--colw)}
+.menu-card .btngrp .btn{min-width:0;width:100%}
+.menu-card .btngrp.sub{gap:8px}
+/* every column on the title card shares one width (--colw), so the three tiers line up edge to edge */
+#title .menu-card{--colw:min(300px,72vw)}
 /* green buttons on the title are secondary: smaller and quieter than Play / Online Play */
-.menu-card .btn.green{font-size:16px;letter-spacing:1.5px;min-width:200px;padding:10px 24px}
-@media (max-height:820px){ .menu-card{gap:12px} .menu-card .btngrp{gap:10px} .menu-card .btngrp.sub{gap:8px} }
-@media (max-width:520px){ .menu-card .btn{min-width:min(240px,70vw)} .menu-card .btn.green{min-width:min(200px,62vw)} }
+.menu-card .btn.green{font-size:16px;letter-spacing:1.5px;padding:9px 20px 8px}
+/* small tan buttons: one tidy row of three equal buttons, a little wider than the columns above */
+#title .menu-card>.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:calc(var(--colw) + 150px);max-width:100%;margin-top:4px}
+#title .menu-card>.row .btn{min-width:0;padding:9px 8px 8px;font-size:15px;letter-spacing:1px}
+@media (max-height:820px){ .menu-card{gap:12px} .menu-card .btngrp{gap:10px} .menu-card .btngrp.sub{gap:7px} }
 /* Storybook logo: rounded Grandstander letters with a cel-shaded face (three hard light bands), a thick navy ink outline,
    a hard drop shadow, a slow magic glint that sweeps across the letters, and a few twinkling sparkles around them.
    The letters sit on a gentle wave (each word tilted a little differently) so the logo feels hand-lettered. */
-#title h1{position:relative;margin:0 0 4px;text-align:center;line-height:.9;transform:rotate(-3deg);font-family:var(--display);font-weight:900;
+#title h1{position:relative;margin:0;text-align:center;line-height:.86;transform:rotate(-2.5deg);font-family:var(--display);font-weight:900;
   filter:drop-shadow(0 5px 0 #0E1220) drop-shadow(0 10px 14px rgba(0,0,0,.35))}
 #title h1 span{display:block;position:relative;padding:0 .08em;color:var(--navy);-webkit-text-stroke:var(--sw) var(--navy)}
 /* the span itself is the thick navy ink; ::after lays the banded colour face exactly on top, so the stroke never eats into it */
@@ -183,9 +188,9 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
   -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;animation:logo-glint 5.5s ease-in-out infinite}
 #title h1 .t2::after{animation-delay:.35s}
 @keyframes logo-glint{0%,55%{background-position:120% 0,0 0}85%,100%{background-position:-20% 0,0 0}}
-#title h1 .t1{font-size:clamp(36px,4.8vw,62px);letter-spacing:.02em;--sw:clamp(8px,.9vw,12px);transform:rotate(1.5deg) translateX(-.4em);
+#title h1 .t1{font-size:clamp(32px,4.2vw,54px);letter-spacing:.06em;--sw:.17em;transform:rotate(1deg);
   --bands:linear-gradient(180deg,#FFE58A 0 36%,#F2B51E 36% 70%,#C8861A 70% 100%)}
-#title h1 .t2{font-size:clamp(60px,10vw,120px);letter-spacing:.01em;margin-top:-.02em;--sw:clamp(12px,1.4vw,18px);
+#title h1 .t2{font-size:clamp(60px,9.4vw,112px);letter-spacing:.06em;margin-top:.02em;padding-bottom:.16em;--sw:.13em;
   --bands:linear-gradient(180deg,#FFB86A 0 36%,#F28A2A 36% 70%,#B85A16 70% 100%)}
 /* sparkles: four-point stars that twinkle in turn (they hold still, fully shown, under reduced motion) */
 #title h1 i{position:absolute;width:var(--s);height:var(--s);pointer-events:none;background:#FFF6C8;
@@ -195,8 +200,12 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 @media (prefers-reduced-motion:reduce){ #title h1 i{animation:none!important;transform:none;opacity:.9} #title h1 span::after{animation:none!important} }
 /* music on/off, bottom-right of the title screen */
 #btn-music{position:absolute;right:16px;bottom:16px;min-width:0;font-size:15px;letter-spacing:1.5px;padding:10px 18px}
-#title .tag{font-family:var(--num);font-weight:800;font-size:22px;letter-spacing:1.8px;color:var(--navy);background:var(--white);padding:2px 18px 0;
-  clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);margin-bottom:18px}
+/* the logo and its tagline travel together as one block */
+#title .brand{display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.6vh,14px);margin-bottom:clamp(2px,1vh,10px)}
+/* tagline: quiet cream small caps between two short leafy rules, so it supports the logo instead of competing with it */
+#title .tag{display:flex;align-items:center;gap:12px;font-family:var(--ui);font-weight:700;font-size:clamp(14px,1.5vw,18px);letter-spacing:3px;text-transform:uppercase;margin-top:-.2em;
+  color:var(--white);text-shadow:0 2px 0 rgba(14,18,32,.8)}
+#title .tag::before,#title .tag::after{content:"";width:34px;height:3px;border-radius:2px;background:#A9D65E;box-shadow:0 2px 0 rgba(14,18,32,.8)}
 .panel{background:rgba(26,32,48,.94);padding:28px 36px;clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
   max-width:min(760px,92vw)}
 .panel h2{font-family:var(--display);font-weight:900;color:var(--corn);margin:0 0 14px;font-size:36px;letter-spacing:1.2px}
@@ -451,10 +460,11 @@ body.night #nightvig{display:block}
   .card{width:168px;padding:8px 10px 10px} .card img{width:112px;margin:0 auto} .card .bl{display:none} .card .nm{font-size:24px} #select h2{font-size:38px} }
 /* short landscape screens (phones on their side): the title card goes two columns, logo left and buttons right */
 @media (max-height:560px) and (min-aspect-ratio:4/3){
-  #title .menu-card{display:grid;grid-template-columns:auto auto;column-gap:40px;row-gap:12px;width:auto;align-items:center;justify-items:center}
-  #title h1{grid-column:1;grid-row:1/3;align-self:center} #title .tag{grid-column:1;grid-row:3;margin:0}
-  #title .btngrp{grid-column:2;grid-row:1} #title .btngrp.sub{grid-row:2;margin:0} #title .menu-card>.row{grid-column:2;grid-row:3}
-  #title h1 .t1{font-size:56px} #title h1 .t2{font-size:104px}
+  #title .menu-card{display:grid;grid-template-columns:auto auto;column-gap:44px;row-gap:10px;width:auto;align-items:center;justify-items:center;--colw:260px}
+  #title .brand{grid-column:1;grid-row:1/4;align-self:center;margin:0}
+  #title .btngrp{grid-column:2;grid-row:1} #title .btngrp.sub{grid-row:2;margin:0} #title .menu-card>.row{grid-column:2;grid-row:3;width:var(--colw);grid-template-columns:1fr 1fr}
+  #title .menu-card>.row #btn-ach{grid-column:1/3;grid-row:1}
+  #title h1 .t1{font-size:50px} #title h1 .t2{font-size:100px}
   #title{padding-bottom:52px}
 }
 /* the tutorial card sits top right: on narrow screens it would cover the orange seed counter, which the tutorial doesn't use */
@@ -609,8 +619,8 @@ body.touch #mute{display:none}
 
 <!-- ================= SCREENS ================= -->
 <div id="title" role="region" aria-label="Title menu" class="screen hidden"><div class="menu-card">
-  <h1 aria-label="Eat Your Veggies!"><span class="t1" data-t="Eat Your" aria-hidden="true">Eat Your</span><span class="t2" data-t="Veggies!" aria-hidden="true">Veggies!</span><i aria-hidden="true" style="--s:30px;--d:0s;left:6%;top:4%"></i><i aria-hidden="true" style="--s:20px;--d:.8s;left:78%;top:-4%"></i><i aria-hidden="true" style="--s:34px;--d:1.5s;right:-2%;top:46%"></i><i aria-hidden="true" style="--s:18px;--d:.4s;left:-3%;top:70%"></i><i aria-hidden="true" style="--s:22px;--d:1.9s;left:55%;bottom:-6%"></i></h1>
-  <div class="tag">✦ A 2 v 2 Garden Brawl ✦</div>
+  <div class="brand"><h1 aria-label="Eat Your Veggies!"><span class="t1" data-t="Eat Your" aria-hidden="true">Eat Your</span><span class="t2" data-t="Veggies!" aria-hidden="true">Veggies!</span><i aria-hidden="true" style="--s:26px;--d:0s;left:2%;top:2%"></i><i aria-hidden="true" style="--s:30px;--d:1.2s;right:-3%;top:30%"></i><i aria-hidden="true" style="--s:18px;--d:.6s;left:-2%;bottom:6%"></i></h1>
+  <div class="tag">A 2v2 Garden Brawl</div></div>
   <div class="btngrp"><button class="btn" id="btn-play">Play</button>
   <button class="btn" id="btn-online">Online Play</button></div>
   <div class="btngrp sub"><button class="btn green" id="btn-tutorial">Tutorial</button>
