@@ -237,7 +237,10 @@ test('phone layout: touch controls, HUD and menus never overlap on wide landscap
     }
     for (const mode of ['match', 'tutorial']) {
       await page.evaluate(m => { const g = window.__game; g.toTitle(); if (m === 'match') g.startMatch(); else g.startTutorial(); }, mode);
-      await ticks(page, 240); await busyHud(page); await page.waitForTimeout(600); // let the toast and banner pop-in animations settle
+      await ticks(page, 240); await busyHud(page);
+      // jump the toast slide-in and banner pop to their end state (on slow CI runners they were still mid-way after 600 ms)
+      await page.evaluate(() => { for (const a of document.getAnimations()) if (a.effect && a.effect.getComputedTiming().iterations !== Infinity) a.finish(); });
+      await page.waitForTimeout(100);
       for (const p of await layoutProblems(page)) bad.push(`${w}x${h} ${mode}: ${p}`);
     }
   }
