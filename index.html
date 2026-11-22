@@ -2088,7 +2088,8 @@ class Character {
     if(this.key==='goose' && this.honkT>0){ m.head.position.z=0.2+Math.sin((0.5-this.honkT)*12)*0.08; m.extra.beakLow.rotation.x=0.5; m.head.rotation.y=headY; }
     else if(this.key==='goose'){ m.head.position.z=0.2; m.extra.beakLow.rotation.x=0; m.head.rotation.y=Math.sin(t*1.5)*0.2+headY; }
     else m.head.rotation.y=headY;
-    m.head.position.y=headUp;
+    if(m.head.userData.y0===undefined) m.head.userData.y0=m.head.position.y; // the neck height each model was built with
+    m.head.position.y=m.head.userData.y0+headUp;
     if(this.key==='possum'){ const h=this.honkT>0; m.extra.mouth.visible=h; m.head.position.z=0.04+(h?0.06+Math.sin((0.5-this.honkT)*40)*0.012:0); if(h) rx-=0.12; }
     // ears and tail trail behind the motion (they flop back when running, flick on a hit)
     for(const e of m.ears) e.rotation.x=Math.sin(t*4+this.phase)*0.12-(moving?0.25+Math.abs(Math.sin(this.phase))*0.15*MO:0)-A.lean*0.6+A.wob*0.05;
