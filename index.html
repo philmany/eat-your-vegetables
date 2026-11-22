@@ -99,6 +99,9 @@
       ears and tail that trail the motion, footstep dust, glowing weapon swooshes (SwingTrail) and sparkles (FX.sparkle)
       for respawns, pickups and Seed Surge. Reduced motion cuts sway and bounce to 40% (MOTION_AMP) and drops dust and
       most sparkles (FLAIR), keeping every pose that tells you what is happening.
+  30. Seed drops (Nov 22): magic seeds only pop out of the centre plaza. Hits no longer knock seeds loose. Each critter
+      carries the seeds it banked since its team's last surge (c.carry, part of the team pot); when it is knocked out it
+      drops 75% of them, rounded up (KO_DROP), and the pot loses that many. The Golden Seed and bounty bonus are unchanged.
 -->
 <html lang="en">
 <head>
@@ -702,7 +705,7 @@ body.touch #mute{display:none}
       <div class="tip" style="--tc:var(--corn)"><h3>SEED SURGES</h3>
         <p>Magic seeds pop out of the <b>centre plaza</b>. Walk over them (<span class="kb">or press <b>E</b></span><span class="tc">or tap them</span>) to bank them for your team.</p>
         <p>Bank <b>12</b> and your team gets a <b>SEED SURGE</b>: faster running and faster attacks for 10 s. Most surges wins the round.</p>
-        <p>Getting hit makes your team <b>drop seeds</b>, so don't get greedy.</p></div>
+        <p>Get knocked out and you <b>drop 75%</b> of the seeds you banked, so don't get greedy.</p></div>
       <div class="tip" style="--tc:#F26B5B"><h3>HEALTH</h3>
         <p>You have <b>8 hearts</b>. There's no slow regen, so heal on purpose:</p>
         <p>Every seed you pick up heals <b>half a heart</b>. <span class="kb">Walk into</span><span class="tc">Tap</span> a <b>berry bush</b> (look for the red cross) to heal <b>2 hearts</b> (it regrows in 20 s).</p>
@@ -770,6 +773,7 @@ const BASE_SPEED = 4.4, CHAR_R = 0.32;
 // near its side every so often, and the leading team's top scorer carries a bounty.
 const CB_SURGE_GAP = 1, CB_KO_GAP = 3, CB_RESPAWN = 3, CB_FIRST_SEED = 3, CB_SEED_EVERY = 15;
 const GOLD_SEEDS = 3, GOLD_HEAL = 10, GOLD_ENERGY = 15, BOUNTY_SEEDS = 3;
+const KO_DROP = 0.75; // a knocked-out critter drops this share of the seeds it carries, rounded up
 
 const WEAPONS = {
   sword:{ name:'CARROT SWORD', kind:'melee', dmg:10, cd:0.42, range:1.65, arc:Math.PI*0.8, knock:3, windup:0.07, anim:0.3,
@@ -1913,7 +1917,7 @@ class SeedSystem {
     this.goldBeam=new THREE.Mesh(CYL(0.3,0.36,3.2,14,true),toonMat({color:PAL.corn,emissive:0xFFC93C,emissiveIntensity:0.7,transparent:true,opacity:0.16,depthWrite:false,side:THREE.DoubleSide})); this.goldG.add(this.goldBeam);
     this.sid=0; this.reset();
   }
-  reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; this.render(0); }
+  reset(){ this.seeds=[]; this.pool=[0,0]; this.spawnT=2.5; for(const c of this.game.chars||[]) c.carry=0; this.render(0); }
   // a Golden Seed for the trailing team, on their half between their base and the plaza (or at x,z)
   spawnGold(team,x,z){
     const ar=this.game.arena;
@@ -1949,7 +1953,7 @@ class SeedSystem {
   }
   collect(c,k){
     const s=this.seeds[k]; this.seeds.splice(k,1); const n=s.gold?GOLD_SEEDS:1, heal=s.gold?GOLD_HEAL:HEAL_PER_SEED, en=s.gold?GOLD_ENERGY:ENERGY_PER_SEED;
-    this.pool[c.team]=Math.min(SEED_GOAL,this.pool[c.team]+n); c.stats.seeds+=n; if(s.gold) c.stats.gold=(c.stats.gold|0)+1;
+    const before=this.pool[c.team]; this.pool[c.team]=Math.min(SEED_GOAL,before+n); c.carry=(c.carry|0)+this.pool[c.team]-before; c.stats.seeds+=n; if(s.gold) c.stats.gold=(c.stats.gold|0)+1;
     const gain=[]; if(c.hp<MAX_HP){ c.hp=Math.min(MAX_HP,c.hp+heal); gain.push('+'+heal+' HP'); }
     if(c.energy<100){ c.energy=Math.min(100,c.energy+en); gain.push('+'+en+' EN'); }
     if(gain.length) this.game.fx.float(gain.join('  '),new V3(c.pos.x,1.7,c.pos.z),'heal',0.7);
@@ -2741,7 +2745,7 @@ const TUT_STEPS=[
   {id:'berries', n:'BERRY BUSHES', t:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). <b>Tap the bush</b> under the marker and you walk over and eat it. Bushes only feed hurt critters, then regrow in <b>20 s</b>.', d:'Still hurt? <b>Berry bushes</b> (look for the floating red cross) heal <b>2 full hearts</b> (20 HP). Walk into the bush under the marker to eat. Bushes only feed hurt critters, then regrow in <b>20 s</b>.'},
   {id:'surge', n:'SEED SURGE', d:'Every seed goes into your team\'s pot (top centre). Bank <b>12</b> for a <b>SEED SURGE</b>: faster running and attacks for 10 s. <b>Most surges wins the round.</b> Grab the last few!'},
   {id:'comeback', n:'COMEBACKS', d:'Falling behind? Your team gets a small <b>COMEBACK</b> boost: <b>3 s</b> respawns and a <b>Golden Seed</b> near your side (worth <b>3 seeds</b>, heals 1 heart). The leader wears a gold <b>BOUNTY</b> tag: KO them for <b>+1 knockout</b>. Grab the Golden Seed!'},
-  {id:'hedge', n:'HEDGES', t:'Tap <b>HEDGE</b> (above Attack) to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting hit makes your team <b>drop seeds</b>, so use cover.'},
+  {id:'hedge', n:'HEDGES', t:'Tap <b>HEDGE</b> (above Attack) to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting knocked out <b>drops your seeds</b>, so use cover.', d:'Press <b>Q</b> to plant a hedge on the tile you face (<b>20 Energy</b>, up to 3 at once). Hedges block movement and shots. Getting knocked out <b>drops your seeds</b>, so use cover.'},
   {id:'shield', n:'PICK UP A WEAPON', t:'Ripe plots glow gold. <b>Tap the Pumpkin</b> plot under the marker: you walk over and grab the <b>Pumpkin Shield</b>. You can also tap berry bushes and seeds. Picked-up weapons snap after 12 uses.', d:'Ripe plots glow gold. Walk to the <b>Pumpkin</b> plot under the marker and press <b>E</b> to grab the <b>Pumpkin Shield</b>. Picked-up weapons snap after 12 uses.'},
   {id:'block', n:'BLOCK', t:'The Possum is throwing celery at you. <b>Face it</b>: you turn to the nearest enemy by yourself (or drag Attack to aim). The shield blocks most damage from the <b>front</b>. Block 3 shots.', d:'The Possum is throwing celery at you. <b>Face it</b> with the mouse: the shield blocks most damage from the <b>front</b>. Block 3 shots.', goal:3, unit:'BLOCKS'},
   {id:'bulwark', n:'BULWARK', t:'Tap the blue <b>special</b> button for <b>Bulwark</b>: a dome that eats enemy shots and protects teammates standing inside it.', d:'<b>Right-click</b> for <b>Bulwark</b>: a dome that eats enemy shots and protects teammates standing inside it.'},
@@ -3044,8 +3048,9 @@ class Game {
     audio.play('hit'); audio.play('crunch'); this.hitstop=3; this.personal(t,()=>this.shake(0.22)); this.personal(src,()=>this.shake(0.12));
     if(this.tut){ if(t.isPlayer) t.hp=Math.max(t.hp,10); else if(t.hp<=20) t.hp=MAX_HP; this.tut.onHit(t,src,bm); }
     const ko=t.hp<=0;
-    const pool=this.seeds.pool[t.team];
-    if(pool>0){ const n=Math.min(pool,ko?randi(3,4):randi(1,2)); this.seeds.pool[t.team]-=n; this.seeds.scatter(t,n); t.dropFlash=1.0; audio.play('scatter'); }
+    // only a knockout drops seeds: 75% of what this critter carries, rounded up, taken out of its team's pot
+    const n=ko?Math.min(this.seeds.pool[t.team],Math.ceil((t.carry|0)*KO_DROP)):0;
+    if(n>0){ this.seeds.pool[t.team]-=n; t.carry-=n; this.seeds.scatter(t,n); t.dropFlash=1.0; audio.play('scatter'); }
     if(ko) this.knockout(t,src,wtype);
     return true;
   }
@@ -3076,7 +3081,7 @@ class Game {
     if(!this.seeds.seeds.some(s=>s.gold)){ cb.seedT-=dt; if(cb.seedT<=0){ this.seeds.spawnGold(trail); cb.seedT=CB_SEED_EVERY; } }
   }
   seedSurge(team){
-    this.bonus[team]++; this.seeds.pool[team]=0;
+    this.bonus[team]++; this.seeds.pool[team]=0; for(const c of this.chars) if(c.team===team) c.carry=0;
     for(const c of this.chars) if(c.team===team){ c.buffT=BUFF_TIME; this.fx.burst(new V3(c.pos.x,0.8,c.pos.z),[PAL.corn,PAL.white],16,4,4); }
     audio.play('fanfare'); this.hud.flashSeeds(team); this.hud.showBanner(`<span style="color:${team?'#F28A2A':'#6CC24A'}">${TEAM_NAME[team]}</span> SEED SURGE!<small>+SPEED · +ATTACK SPEED · 10s</small>`,2);
   }
