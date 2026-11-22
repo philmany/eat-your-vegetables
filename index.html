@@ -2137,9 +2137,12 @@ class SwingTrail {
     const idx=[]; for(let i=0;i<n-1;i++){ const a=i*2; idx.push(a,a+1,a+2,a+1,a+3,a+2); } geo.setIndex(idx);
     this.mesh=new THREE.Mesh(geo,TRAIL_MAT); this.mesh.frustumCulled=false; this.mesh.visible=false; this.mesh.renderOrder=5; scene.add(this.mesh);
     this.count=0; this.c=new THREE.Color(); this.a=new V3(); this.b=new V3();
+    // drawn (as a zero-size, black ribbon) for the first few frames so its buffers reach the GPU at load, not mid-fight
+    this.mesh.visible=true; this.warm=3;
   }
   update(weapon,key,active){
-    if(!active && this.count===0){ if(this.mesh.visible) this.mesh.visible=false; return; }
+    if(!active && this.count===0){ if(this.warm>0){ this.warm--; return; } if(this.mesh.visible) this.mesh.visible=false; return; }
+    this.warm=0;
     const P=this.pos, n=TRAIL_N;
     P.copyWithin(6,0,(n-1)*6);
     if(active && weapon){ const sp=TRAIL_SPAN[key]||TRAIL_SPAN.sword; weapon.updateWorldMatrix(true,false);
