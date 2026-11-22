@@ -2088,7 +2088,8 @@ class Character {
     if(this.key==='goose' && this.honkT>0){ m.head.position.z=0.2+Math.sin((0.5-this.honkT)*12)*0.08; m.extra.beakLow.rotation.x=0.5; m.head.rotation.y=headY; }
     else if(this.key==='goose'){ m.head.position.z=0.2; m.extra.beakLow.rotation.x=0; m.head.rotation.y=Math.sin(t*1.5)*0.2+headY; }
     else m.head.rotation.y=headY;
-    m.head.position.y=headUp;
+    if(m.head.userData.y0===undefined) m.head.userData.y0=m.head.position.y; // the neck height each model was built with
+    m.head.position.y=m.head.userData.y0+headUp;
     if(this.key==='possum'){ const h=this.honkT>0; m.extra.mouth.visible=h; m.head.position.z=0.04+(h?0.06+Math.sin((0.5-this.honkT)*40)*0.012:0); if(h) rx-=0.12; }
     // ears and tail trail behind the motion (they flop back when running, flick on a hit)
     for(const e of m.ears) e.rotation.x=Math.sin(t*4+this.phase)*0.12-(moving?0.25+Math.abs(Math.sin(this.phase))*0.15*MO:0)-A.lean*0.6+A.wob*0.05;
@@ -2137,9 +2138,12 @@ class SwingTrail {
     const idx=[]; for(let i=0;i<n-1;i++){ const a=i*2; idx.push(a,a+1,a+2,a+1,a+3,a+2); } geo.setIndex(idx);
     this.mesh=new THREE.Mesh(geo,TRAIL_MAT); this.mesh.frustumCulled=false; this.mesh.visible=false; this.mesh.renderOrder=5; scene.add(this.mesh);
     this.count=0; this.c=new THREE.Color(); this.a=new V3(); this.b=new V3();
+    // stays drawn (as a zero-size, black ribbon) until it has been rendered once, so its buffers reach the GPU at load
+    // rather than the first time someone swings mid-fight
+    this.warm=true; this.mesh.visible=true; this.mesh.onAfterRender=()=>{ this.warm=false; };
   }
   update(weapon,key,active){
-    if(!active && this.count===0){ if(this.mesh.visible) this.mesh.visible=false; return; }
+    if(!active && this.count===0){ if(!this.warm && this.mesh.visible) this.mesh.visible=false; return; }
     const P=this.pos, n=TRAIL_N;
     P.copyWithin(6,0,(n-1)*6);
     if(active && weapon){ const sp=TRAIL_SPAN[key]||TRAIL_SPAN.sword; weapon.updateWorldMatrix(true,false);

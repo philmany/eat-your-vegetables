@@ -267,10 +267,12 @@ test('animation: swing swoosh shows then clears, hits and round-end poses stay f
     for (let k = 0; k < 5; k++) g.fixedUpdate(1 / 60);
     g.roundTime = 0.01; g.bonus[c.team] = 3; for (let k = 0; k < 30; k++) g.fixedUpdate(1 / 60);
     const ok = g.chars.every(o => { const m = o.m.rig; return [m.position.x, m.position.y, m.rotation.x, m.rotation.z, m.scale.y].every(Number.isFinite); });
-    return { shown, cleared, ok, state: g.state }; });
+    const heads = g.chars.every(o => o.m.head.position.y > 0.8); // heads sit on top of the body, never sunk into it
+    return { shown, cleared, ok, heads, state: g.state }; });
   check(r.shown, 'the sword swoosh should show while swinging');
   check(r.cleared, 'the sword swoosh should clear after the swing');
   check(r.ok, 'a critter pose became NaN');
+  check(r.heads, 'a critter head dropped below its neck');
   noErrors(errors); await ctx.close();
 });
 
