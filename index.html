@@ -483,41 +483,52 @@ body.touch .kb{display:none} body:not(.touch) .tc{display:none}
 
 /* ---------- Touch controls (shown only on touch screens, only during a match or the tutorial) ----------
    Same cel-shaded sticker look as the menu buttons: cream rim, thick navy ink ring, three hard light bands. */
-#touch{position:fixed;inset:0;z-index:12;pointer-events:none;display:none;--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+:root{--sal:env(safe-area-inset-left,0px);--sar:env(safe-area-inset-right,0px);--sab:env(safe-area-inset-bottom,0px)}
+#touch{position:fixed;inset:0;z-index:12;pointer-events:none;display:none}
 #touch.on{display:block}
 #touch .zone{position:absolute;left:0;bottom:0;width:44%;height:70%;pointer-events:auto;touch-action:none}
+/* joystick: a round stepping stone in the garden. Cream rim, navy ink ring, three hard soil bands, a tan groove and
+   four corn-yellow arrows; the knob is a cel-shaded green sprout. It rests faded and lights up under your thumb. */
 #stick{position:absolute;left:calc(var(--sal) + 112px);top:calc(100% - var(--sab) - 104px);width:136px;height:136px;margin:-68px 0 0 -68px;border-radius:50%;
-  background:radial-gradient(circle,rgba(26,32,48,.15) 0 54%,rgba(26,32,48,.42) 55%);box-shadow:inset 0 0 0 4px rgba(245,239,220,.7),0 0 0 3px rgba(26,32,48,.55);
-  opacity:.6;transition:opacity .15s;pointer-events:none}
+  background:#F5EFDC;isolation:isolate;filter:drop-shadow(0 4px 0 rgba(14,18,32,.45));opacity:.62;transition:opacity .15s;pointer-events:none}
+#stick::before,#stick::after{content:"";position:absolute;border-radius:50%;z-index:-1}
+#stick::before{inset:3px;background:var(--navy)}
+#stick::after{inset:7px;background:radial-gradient(circle,transparent 0 47%,rgba(245,239,220,.55) 47% 50%,transparent 50%),
+  linear-gradient(180deg,rgba(176,120,74,.9) 0 32%,rgba(123,78,46,.9) 32% 70%,rgba(85,51,30,.92) 70% 100%)}
+#stick .ar{position:absolute;inset:0;width:100%;height:100%;z-index:0}
 #stick.on{opacity:1;transition:none}
-#knob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:#F5EFDC;isolation:isolate}
+#knob{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:#F5EFDC;isolation:isolate;z-index:1;
+  filter:drop-shadow(0 3px 0 rgba(14,18,32,.5))}
 #knob::before,#knob::after{content:"";position:absolute;border-radius:50%;z-index:-1}
 #knob::before{inset:3px;background:var(--navy)}
-#knob::after{inset:7px;background:linear-gradient(180deg,#A9D65E 0 34%,#6C9A3A 34% 70%,#3E6127 70%)}
-.tbtn{--b1:#FFB45E;--b2:#F28A2A;--b3:#B85A16;--tx:var(--navy);position:absolute;pointer-events:auto;touch-action:none;border-radius:50%;background:#F5EFDC;
+#knob::after{inset:7px;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.6) 0 11%,transparent 12%),linear-gradient(180deg,#A9D65E 0 34%,#6C9A3A 34% 70%,#3E6127 70%)}
+#knob .lf{position:absolute;left:50%;top:-13px;width:26px;height:26px;margin-left:-8px;z-index:2}
+.tbtn{zoom:var(--bz,1);--b1:#FFB45E;--b2:#F28A2A;--b3:#B85A16;--tx:var(--navy);position:absolute;pointer-events:auto;touch-action:none;border-radius:50%;background:#F5EFDC;
   display:flex;flex-direction:column;align-items:center;justify-content:center;isolation:isolate;font-family:var(--ui);font-weight:700;color:var(--tx);text-transform:uppercase;
   letter-spacing:0.6px;line-height:1;text-align:center;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
   filter:drop-shadow(0 4px 0 rgba(14,18,32,.55));transition:transform .06s}
 .tbtn::before,.tbtn::after{content:"";position:absolute;border-radius:50%;z-index:-1;pointer-events:none}
 .tbtn::before{inset:3px;background:var(--navy)}
-.tbtn::after{inset:7px;background:linear-gradient(180deg,var(--b1) 0 32%,var(--b2) 32% 70%,var(--b3) 70% 100%)}
+.tbtn::after{inset:7px;background:radial-gradient(circle at 30% 24%,rgba(255,255,255,.6) 0 7%,transparent 7.5%),linear-gradient(180deg,var(--b1) 0 32%,var(--b2) 32% 70%,var(--b3) 70% 100%)}
 .tbtn.down{transform:translateY(3px) scale(.95)}
 .tbtn.down::after{background:linear-gradient(180deg,var(--b2) 0 14%,var(--b1) 14% 30%,var(--b2) 30% 82%,var(--b3) 82% 100%)}
-.tbtn .ic{width:46%;height:46%;display:block;position:relative;z-index:1}
-.tbtn .lb{position:relative;z-index:1;font-size:12px;margin-top:2px;text-shadow:0 1px 0 rgba(255,255,255,.35)}
-.tbtn .sub{position:relative;z-index:1;font-family:var(--num);font-weight:800;font-size:11px;letter-spacing:0.5px;line-height:.9}
+.tbtn .ic{width:48%;height:48%;display:block;position:relative;z-index:1;margin-top:-4px}
+.tbtn .lb,.tbtn .sub{position:absolute;z-index:2;left:50%;bottom:-7px;transform:translateX(-50%);white-space:nowrap;background:var(--navy);color:#F5EFDC;
+  font-family:var(--ui);font-weight:700;font-size:11px;letter-spacing:1px;line-height:1;padding:4px 10px 3px;text-shadow:none;
+  clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);box-shadow:inset 0 -2px 0 rgba(242,181,30,.9)}
+.tbtn .sub{font-family:var(--num);font-weight:800}
+.tbtn .ic{filter:drop-shadow(0 2px 0 rgba(26,32,48,.35))}
 /* a dark sweep shows recharge (roll) or energy still missing (special, hedge) */
 .tbtn .cd{position:absolute;inset:7px;border-radius:50%;z-index:0;pointer-events:none;background:conic-gradient(rgba(14,18,32,.62) calc(var(--p,0)*1%),transparent 0)}
-.tbtn.off .ic,.tbtn.off .lb,.tbtn.off .sub{opacity:.55}
+.tbtn.off .ic{opacity:.55} .tbtn.off .lb,.tbtn.off .sub{color:#AEB4C4}
 #t-atk{right:calc(var(--sar) + 26px);bottom:calc(var(--sab) + 26px);width:108px;height:108px}
 #t-atk .ic{width:44%;height:44%}
 #t-sp{--b1:#9FDDF7;--b2:#3E9BD1;--b3:#22628C;--tx:#F5EFDC;right:calc(var(--sar) + 150px);bottom:calc(var(--sab) + 20px);width:80px;height:80px}
-#t-sp .lb,#t-sp .sub{text-shadow:0 2px 0 var(--navy)}
 #t-sp.ready{animation:spReady 1.1s ease-in-out infinite alternate}
 @keyframes spReady{to{filter:drop-shadow(0 4px 0 rgba(14,18,32,.55)) drop-shadow(0 0 10px #63C8F2)}}
 #t-hedge{--b1:#A9D65E;--b2:#6C9A3A;--b3:#3E6127;--tx:#F5EFDC;right:calc(var(--sar) + 46px);bottom:calc(var(--sab) + 150px);width:66px;height:66px}
-#t-hedge .lb{text-shadow:0 2px 0 var(--navy);font-size:11px}
-#t-roll{--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;left:calc(var(--sal) + clamp(232px,31vw,340px));bottom:calc(var(--sab) + 30px);width:84px;height:84px}
+#t-roll{--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;left:max(calc((var(--sal) + 194px) / var(--bz,1)),calc(var(--sal) + clamp(232px,31vw,340px)));bottom:calc(var(--sab) + 30px);width:84px;height:84px}
+#t-pause,#t-full{zoom:1}
 #t-pause{right:calc(var(--sar) + 10px);top:10px;width:48px;height:48px;border-radius:0;--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;filter:none;
   clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
 #t-pause::before{border-radius:0;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
@@ -533,7 +544,17 @@ html.standalone #t-full{display:none}
 /* make room for the pause button and keep HUD text clear of the thumbs */
 body.touch #hud-tr{right:calc(68px / var(--hz,1))}
 body.touch #tut{right:calc(68px / var(--tz,1));top:10px}
-body.touch #hint{bottom:calc(84px / var(--hz,1))}
+body.touch #hint{bottom:calc((122px * var(--bz,1) + 6px) / var(--hz,1))} /* just above the Roll and Lunge buttons */
+/* achievement toasts would sit on the Attack button: on touch they go top left under the player card, newest only, no blurb */
+body.touch #toasts{left:calc(var(--sal) / var(--hz,1) + 18px);right:auto;bottom:auto;top:200px;flex-direction:column}
+body.touch #toasts>.toast:not(:last-child){display:none}
+body.touch .toast{min-width:0;padding:6px 14px 8px 12px} body.touch .toast .n~.d{display:none}
+/* round and KO banners stay in the open middle of the screen, clear of the player card, the joystick and the right-hand buttons */
+body.touch #banner{left:calc(var(--sal) + max(186px,300px * var(--hz,1)));right:calc(var(--sar) + 128px);top:calc(14% + 34px);font-size:clamp(24px,min(4.4vw,8.5vh),60px);line-height:1.05}
+/* tutorial on narrow touch screens: the seed counter sits right after the player card, the tutorial card to its right */
+@media (max-width:1100px){ body.touch #hud.tutorial #hud-tc{left:300px} }
+/* in the tutorial the card fills the top right, so banners sit low, just above the hint line */
+body.touch #hud.tutorial #banner{top:auto;bottom:calc(var(--sab) + 122px * var(--bz,1) + 12px + 24px * var(--hz,1))}
 body.touch #mute{display:none}
 @media (max-height:600px),(max-width:1200px){ body.touch #hud-bc{display:none} } /* the roll button sits where the portrait bar would be */
 /* landscape only: a "turn your phone" card covers the game in portrait on touch screens */
@@ -607,7 +628,7 @@ body.touch #mute{display:none}
 <div id="toasts" role="status" aria-live="polite"></div>
 <!-- Touch controls: left joystick (floating), roll beside it towards the centre; attack, special and hedge on the right. -->
 <div id="touch">
-  <div class="zone" id="t-zone"><div id="stick"><div id="knob"></div></div></div>
+  <div class="zone" id="t-zone"><div id="stick"><svg class="ar" viewBox="0 0 136 136" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#1A2030" stroke-width="9"><g transform="rotate(0 68 68)"><path d="M59 23l9-9 9 9"/></g><g transform="rotate(90 68 68)"><path d="M59 23l9-9 9 9"/></g><g transform="rotate(180 68 68)"><path d="M59 23l9-9 9 9"/></g><g transform="rotate(270 68 68)"><path d="M59 23l9-9 9 9"/></g></g><g stroke="#F2B51E" stroke-width="4.5"><g transform="rotate(0 68 68)"><path d="M59 23l9-9 9 9"/></g><g transform="rotate(90 68 68)"><path d="M59 23l9-9 9 9"/></g><g transform="rotate(180 68 68)"><path d="M59 23l9-9 9 9"/></g><g transform="rotate(270 68 68)"><path d="M59 23l9-9 9 9"/></g></g></svg><div id="knob"><svg class="lf" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21C3 11 9 4 21 3c0 11-7 17-18 18z" fill="#A9D65E" stroke="#1A2030" stroke-width="2.4" stroke-linejoin="round"/><path d="M5 19C9 14 13 10 17 7" stroke="#3E6127" stroke-width="2" fill="none" stroke-linecap="round"/></svg></div></div></div>
   <div class="tbtn" id="t-roll" role="button" aria-label="Dodge roll"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M17.5 2.5v4h-4"/></svg><span class="lb">Roll</span><i class="cd"></i></div>
   <div class="tbtn" id="t-hedge" role="button" aria-label="Plant a hedge"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><circle cx="7" cy="14" r="5"/><circle cx="17" cy="14" r="5"/><circle cx="12" cy="9" r="6"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg><span class="lb">Hedge</span><i class="cd"></i></div>
   <div class="tbtn" id="t-sp" role="button" aria-label="Weapon special"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.5l2.6 6.6 7 .5-5.4 4.5 1.7 6.9L12 16.2 6.1 20l1.7-6.9L2.4 8.6l7-.5z"/></svg><span class="sub" id="t-sp-n">LUNGE</span><i class="cd"></i></div>
@@ -1266,6 +1287,8 @@ tapRing.rotation.x=-Math.PI/2; tapRing.renderOrder=5; tapRing.visible=false; sce
 function fitUI(){
   const W=innerWidth, H=innerHeight, tch=document.body.classList.contains('touch'), root=document.documentElement.style;
   root.setProperty('--hz',String(+clamp(tch?Math.min(H/700,W/1180):Math.min(H/620,W/1000),0.5,1).toFixed(3)));
+  // touch buttons shrink a little on short screens (phones with the browser bar showing) so the right-hand cluster clears pause/full screen
+  root.setProperty('--bz',String(+clamp(Math.min(H/400,W/760),0.72,1).toFixed(3)));
   root.setProperty('--tz',String(+clamp(Math.min(H/560,W/900),0.62,1).toFixed(3)));
   for(const s of document.querySelectorAll('.screen')){ if(s.classList.contains('hidden')) continue;
     const was=s.style.zoom; s.style.zoom=''; let t=1e9,b=-1e9,l=1e9,r=-1e9;
