@@ -40,8 +40,14 @@ async function open(query = '', ctxOpts = {}, ctx) {
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
-  await page.goto(ORIGIN + query);
-  await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('hidden'), null, { timeout: 60000 });
+  // Wait for the DOM, then for the game itself to say it's ready. The page's "load" event also waits on things the game
+  // doesn't need (fonts, icons); on GitHub's runners the second tab of the online test sometimes never fired it within 30 s.
+  // If that happens, the requests still open are printed so the cause shows up in the log instead of a bare timeout.
+  const open_ = new Map(); page.on('request', r => open_.set(r, r.url())); for (const ev of ['requestfinished', 'requestfailed']) page.on(ev, r => open_.delete(r));
+  await page.goto(ORIGIN + query, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('hidden'), null, { timeout: 60000 })
+    .catch(e => { throw new Error('game never finished loading; requests still open: ' + ([...open_.values()].join(', ') || 'none') + '\n' + e.message); });
+  page.waitForLoadState('load', { timeout: 15000 }).catch(() => { if (!page.isClosed()) console.log('      note: page load event still pending after 15 s; open requests: ' + ([...open_.values()].join(', ') || 'none')); });
   return { page, errors, ctx };
 }
 // Run the game's fixed-step simulation n ticks in one go (fast-forward without waiting for real time).
@@ -218,17 +224,25 @@ test('phone: a match blocks pinch and double-tap zoom, menus still pinch-zoom', 
 
 test('full screen: the in-match button and the Settings switch toggle it; iPhone gets the home-screen tip', async () => {
   const { page, errors, ctx } = await open('?touch', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
-  const full = () => page.evaluate(() => !!document.fullscreenElement);
-  await page.evaluate(() => window.__game.startMatch()); await ticks(page, 60); await page.waitForTimeout(100);
+  const warns = []; page.on('console', m => { if (m.type() === 'warning') warns.push(m.text()); });
+  // going in and out of full screen is asynchronous and slow on a busy CI runner, so wait for it (up to 5 s) instead of a fixed sleep,
+  // and report any fullscreenerror the browser raised so a real refusal reads differently from a slow one
+  await page.evaluate(() => { window.__fsLog = []; for (const ev of ['fullscreenchange', 'fullscreenerror']) document.addEventListener(ev, () => window.__fsLog.push(ev + ':' + !!document.fullscreenElement)); });
+  const waitFull = async (want, msg) => { const ok = await page.waitForFunction(w => !!document.fullscreenElement === w, want, { timeout: 5000 }).then(() => true, () => false);
+    check(ok, msg + ' (events: ' + (await page.evaluate(() => window.__fsLog.join(', ') || 'none')) + '; warnings: ' + (warns.join(' | ') || 'none') + ')'); };
+  await page.evaluate(() => window.__game.startMatch()); await ticks(page, 60);
+  await page.waitForFunction(() => document.getElementById('touch').classList.contains('on'), null, { timeout: 5000 });
   check(await page.evaluate(() => getComputedStyle(document.getElementById('t-full')).display !== 'none'), 'the full screen button should show in a match');
-  await page.tap('#t-full'); await page.waitForTimeout(300);
-  check(await full(), 'tapping the full screen button should go full screen');
+  await page.tap('#t-full');
+  await waitFull(true, 'tapping the full screen button should go full screen');
+  await page.waitForFunction(() => document.getElementById('t-full').getAttribute('aria-label') === 'Exit full screen', null, { timeout: 2000 }).catch(() => {});
   check(await page.evaluate(() => document.getElementById('t-full').getAttribute('aria-label')) === 'Exit full screen', 'button label should flip to Exit full screen');
-  await page.tap('#t-full'); await page.waitForTimeout(300);
-  check(!(await full()), 'tapping it again should leave full screen');
+  await page.tap('#t-full');
+  await waitFull(false, 'tapping it again should leave full screen');
   await page.evaluate(() => { window.__game.togglePause(); window.__game.showScreen('settings'); window.__game.renderSettings(); });
-  await page.tap('#btn-set-full'); await page.waitForTimeout(300);
-  check(await full(), 'the Settings switch should go full screen');
+  await page.tap('#btn-set-full');
+  await waitFull(true, 'the Settings switch should go full screen');
+  await page.waitForFunction(() => document.getElementById('btn-set-full').getAttribute('aria-checked') === 'true', null, { timeout: 2000 }).catch(() => {});
   check(await page.evaluate(() => document.getElementById('btn-set-full').getAttribute('aria-checked')) === 'true', 'the Settings switch should read On');
   noErrors(errors); await ctx.close();
   // a browser with no Fullscreen API (iPhone Safari) explains Add to Home Screen instead

@@ -1201,7 +1201,7 @@ const touchUI={
   enterFull(){ const d=document.documentElement;
     try{ const f=d.requestFullscreen?()=>d.requestFullscreen({navigationUI:'hide'}):()=>d.webkitRequestFullscreen(); const p=f();
       const lock=()=>{ try{ if(TOUCH.on) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} };
-      if(p&&p.then) p.then(lock).catch(()=>{}); else lock(); }catch(e){} },
+      if(p&&p.then) p.then(lock).catch(e=>console.warn('[fullscreen] refused:',e&&e.message)); else lock(); }catch(e){ console.warn('[fullscreen] failed:',e&&e.message); } },
   exitFull(){ try{ const p=document.exitFullscreen?document.exitFullscreen():document.webkitExitFullscreen&&document.webkitExitFullscreen(); if(p&&p.catch) p.catch(()=>{}); }catch(e){} },
   toggleFull(){ if(this.standalone()) return;
     if(!this.canFull()){ this.homeHint(); return; }
