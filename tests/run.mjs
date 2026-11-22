@@ -110,6 +110,30 @@ test('a full bot-vs-bot match plays to the results screen', async () => {
   noErrors(errors); await ctx.close();
 });
 
+test('seeds: only spawn in the centre plaza; a hit drops none, a knockout drops 75% of what that critter carries', async () => {
+  const { page, errors, ctx } = await open('?autoplay');
+  await page.evaluate(() => window.__game.startMatch());
+  await ticks(page, 60 * 5);
+  const r = await page.evaluate(() => {
+    const g = window.__game, S = g.seeds; g.state = 'playing'; g.cb.team = -1; g.cb.bounty = -1;
+    S.seeds = []; S.spawnBatch(); S.update(1, 0, false);
+    const far = S.seeds.reduce((m, s) => Math.max(m, Math.hypot(s.tx, s.tz)), 0);
+    const [a, b] = g.chars.filter(c => c.team === 0), foe = g.chars.find(c => c.team === 1);
+    S.seeds = []; S.pool[0] = 0; a.carry = 0; b.carry = 0;
+    for (let k = 0; k < 5; k++) { S.seeds.push({ x: 0, z: 0, y: 0.3, state: 'float', pick: 0, gold: false }); S.collect(a, S.seeds.length - 1); }
+    for (let k = 0; k < 2; k++) { S.seeds.push({ x: 0, z: 0, y: 0.3, state: 'float', pick: 0, gold: false }); S.collect(b, S.seeds.length - 1); }
+    const dir = { x: 1, y: 0, z: 0 };
+    a.invuln = 0; a.hp = 80; g.damage(a, 5, foe, dir, 0, false); const afterHit = [S.pool[0], S.seeds.length];
+    a.invuln = 0; a.hp = 1; g.damage(a, 50, foe, dir, 0, false);
+    return { far, afterHit, pool: S.pool[0], loose: S.seeds.length, carryA: a.carry, carryB: b.carry, ko: a.ko };
+  });
+  check(r.far <= 1.31, 'centre spawns should land inside the plaza, farthest was ' + r.far);
+  check(r.afterHit[0] === 7 && r.afterHit[1] === 0, 'a plain hit should not drop seeds: ' + r.afterHit);
+  check(r.ko, 'the critter should be knocked out');
+  check(r.loose === 4 && r.pool === 3 && r.carryA === 1 && r.carryB === 2, '5 carried seeds should drop 4 (75% rounded up): ' + JSON.stringify(r));
+  noErrors(errors); await ctx.close();
+});
+
 test('performance: draw calls stay low and nothing leaks during a long fight', async () => {
   const { page, errors, ctx } = await open('?autoplay');
   await page.evaluate(() => window.__game.startMatch());
