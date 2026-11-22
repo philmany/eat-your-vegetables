@@ -1,0 +1,16 @@
+{
+  "name": "eat-your-vegetables",
+  "private": true,
+  "description": "Eat Your Veggies! The game itself is index.html (no build step). This file only sets up the headless browser tests.",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run.mjs",
+    "test:shots": "node tests/run.mjs --shots"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.2",
+    "peerjs": "1.5.5",
+    "playwright": "^1.50.0",
+    "three": "0.160.0"
+  }
+}
