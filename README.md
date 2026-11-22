@@ -42,3 +42,14 @@ cd eat-your-vegetables
 python3 -m http.server 8000
 # open http://localhost:8000
 ```
+
+## Tests
+
+Headless browser tests (Playwright + axe-core) cover boot, keyboard navigation, a full bot match, draw-call and memory budgets, the tutorial, pause, two-tab Online Play, phone touch controls, reduced motion and menu accessibility. Three.js and PeerJS load from `node_modules`, so no internet is needed:
+
+```sh
+cd eat-your-vegetables
+npm install
+npx playwright install chromium
+npm test              # add --shots (npm run test:shots) to save screenshots of every screen to tests/screens/
+```
