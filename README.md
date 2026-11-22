@@ -35,7 +35,7 @@ Music toggles from the title screen.
 
 ## Tech
 
-One self-contained `index.html` using [Three.js](https://threejs.org/) 0.160 (from unpkg) and a locked isometric camera. No build step; serve the folder with any static host:
+One self-contained `index.html` using [Three.js](https://threejs.org/) 0.160 (from unpkg), a locked isometric camera, and one font family, [Grandstander](https://fonts.google.com/specimen/Grandstander) (Google Fonts), for every bit of text. Critter animation is code-driven (squash and stretch, springy lean, wind-ups, hit reactions, weapon swooshes, sparkles) and tones itself down when the system asks for reduced motion. No build step; serve the folder with any static host:
 
 ```sh
 cd eat-your-vegetables

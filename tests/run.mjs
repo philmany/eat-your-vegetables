@@ -188,6 +188,23 @@ test('reduced motion: screen shake starts off and the title camera holds still',
   noErrors(errors); await ctx.close();
 });
 
+test('animation: swing swoosh shows then clears, hits and round-end poses stay finite', async () => {
+  const { page, errors, ctx } = await open('?autoplay');
+  const r = await page.evaluate(() => { const g = window.__game; g.startMatch(); for (let k = 0; k < 240; k++) g.fixedUpdate(1 / 60);
+    const c = g.player; c.controller = { update: () => ({ mx: 0, mz: 0, aim: null }) }; c.atkCd = 0; g.weapons.basic(c);
+    for (let k = 0; k < 8; k++) g.fixedUpdate(1 / 60); const shown = c.trail.mesh.visible;
+    for (let k = 0; k < 60; k++) g.fixedUpdate(1 / 60); const cleared = !c.trail.mesh.visible;
+    const e = g.chars.find(o => o.team !== c.team); g.damage(c, 1, e, { x: 1, y: 0, z: 0 }, 3, false);
+    for (let k = 0; k < 5; k++) g.fixedUpdate(1 / 60);
+    g.roundTime = 0.01; g.bonus[c.team] = 3; for (let k = 0; k < 30; k++) g.fixedUpdate(1 / 60);
+    const ok = g.chars.every(o => { const m = o.m.rig; return [m.position.x, m.position.y, m.rotation.x, m.rotation.z, m.scale.y].every(Number.isFinite); });
+    return { shown, cleared, ok, state: g.state }; });
+  check(r.shown, 'the sword swoosh should show while swinging');
+  check(r.cleared, 'the sword swoosh should clear after the swing');
+  check(r.ok, 'a critter pose became NaN');
+  noErrors(errors); await ctx.close();
+});
+
 test('accessibility: no serious axe-core issues on the menus', async () => {
   const { page, errors, ctx } = await open();
   await page.addScriptTag({ path: AXE_JS });
