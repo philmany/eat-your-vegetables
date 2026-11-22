@@ -102,6 +102,16 @@
   30. Seed drops (Nov 22): magic seeds only pop out of the centre plaza. Hits no longer knock seeds loose. Each critter
       carries the seeds it banked since its team's last surge (c.carry, part of the team pot); when it is knocked out it
       drops 75% of them, rounded up (KO_DROP), and the pot loses that many. The Golden Seed and bounty bonus are unchanged.
+  31. Storybook fantasy look pass (Nov 22): the critters are rebuilt from one shared kit (buildCharacter): big round head,
+      one outfit (Rabbit knight tunic + steel helm, Raccoon hooded rogue cloak, Goose beet-red kilt + fur collar + horned
+      helm, Possum star robe + wizard hat), leather belt and boots, and nothing else strapped on (capes, pauldrons,
+      straps, pendants, floating gems and the old overalls/pants/hats/boots/sunglasses/skull cosmetics are gone).
+      Cosmetics are now OUTFIT COLOURS (CLASSIC, MOSS, EMBER, FROST, ROYAL, HARVEST, MIDNIGHT): they swap the critter's
+      own cloth and trim materials (P.cloth, P.trim via setOutfit) and add no parts. Bots wear classic colours. Weapons get
+      gold and leather fittings. Arena: round topiary hedges, round fence posts with mossy stone lantern pillars (light
+      pools at night), warm sandstone plaza, a rune circle of standing stones round the seed dais, toadstool clusters
+      outside the fence. Menus and HUD: rounded navy panels with a thin gold trim and a hard cel drop shadow (no more
+      cut corners), rounded sticker buttons, banners tilted instead of slanted.
 -->
 <html lang="en">
 <head>
@@ -136,20 +146,20 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 /* ---------- Buttons: cel-shaded sticker. Thin cream rim (the button's own fill; turns corn yellow on hover) around a
    thick navy ink outline (::before), around three hard light bands (::after: highlight / base / shadow). Same angular
    cut corners. Colours from the mockup palette. Reads on the dark beet card, the navy panels and the bright garden. ---------- */
-.btn{--b1:#FFB45E;--b2:#F28A2A;--b3:#B85A16;--tx:var(--navy);--rim:#F5EFDC;
+.btn{--b1:#FFB45E;--b2:#F28A2A;--b3:#B85A16;--tx:var(--navy);--rim:#F5EFDC;border-radius:16px;
   position:relative;isolation:isolate;font-family:var(--ui);font-weight:700;font-size:21px;letter-spacing:1.2px;text-transform:uppercase;color:var(--tx);
   background:var(--rim);border:0;padding:14px 38px 14px;cursor:pointer;min-width:240px;
-  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+  box-shadow:0 5px 0 rgba(14,18,32,.55);
   text-shadow:0 1px 0 rgba(255,255,255,.35);transition:transform .07s ease-out}
 .btn::before,.btn::after{content:"";position:absolute;z-index:-1;pointer-events:none}
-.btn::before{inset:2px;background:var(--navy);clip-path:polygon(11px 0,100% 0,100% calc(100% - 11px),calc(100% - 11px) 100%,0 100%,0 11px)}
-.btn::after{inset:6px;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);
+.btn::before{inset:2px;background:var(--navy);border-radius:14px}
+.btn::after{inset:6px;border-radius:10px;
   background:linear-gradient(180deg,var(--b1) 0 32%,var(--b2) 32% 70%,var(--b3) 70% 100%);transition:filter .07s}
 .btn:hover,.btn:focus-visible{transform:translateY(-2px);--rim:#F2B51E}
 .btn:hover::after,.btn:focus-visible::after{filter:brightness(1.1) saturate(1.08);
   background:linear-gradient(180deg,var(--b1) 0 38%,var(--b2) 38% 74%,var(--b3) 74% 100%)}
 .btn:focus-visible{outline:none}
-.btn:active{transform:translateY(3px)}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(14,18,32,.55)}
 .btn:active::after{filter:brightness(.94);background:linear-gradient(180deg,var(--b2) 0 14%,var(--b1) 14% 30%,var(--b2) 30% 82%,var(--b3) 82% 100%)}
 .btn.green{--b1:#A9D65E;--b2:#6C9A3A;--b3:#3E6127;--tx:#F5EFDC;text-shadow:0 2px 0 var(--navy)}
 .btn.ghost{--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A}
@@ -162,7 +172,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 /* Title menu card: wide, dark and see-through (blurred garden behind), with roomy spacing between buttons. */
 .menu-card{display:flex;flex-direction:column;align-items:center;gap:18px;width:min(640px,calc(100vw - 32px));
   padding:clamp(24px,4vh,40px) clamp(18px,4vw,48px) clamp(22px,3.6vh,34px);
-  background:rgba(8,10,16,.55);border-radius:22px;box-shadow:0 14px 44px rgba(0,0,0,.38),inset 0 0 0 2px rgba(245,239,220,.08);
+  background:rgba(8,10,16,.55);border-radius:22px;box-shadow:0 14px 44px rgba(0,0,0,.38),inset 0 0 0 2px rgba(233,185,73,.35);
   -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 .menu-card .btngrp{display:flex;flex-direction:column;align-items:stretch;gap:12px;width:var(--colw)}
 .menu-card .btngrp .btn{min-width:0;width:100%}
@@ -206,18 +216,18 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #title .tag{display:flex;align-items:center;gap:12px;font-family:var(--ui);font-weight:700;font-size:clamp(14px,1.5vw,18px);letter-spacing:3px;text-transform:uppercase;margin-top:-.2em;
   color:var(--white);text-shadow:0 2px 0 rgba(14,18,32,.8)}
 #title .tag::before,#title .tag::after{content:"";width:34px;height:3px;border-radius:2px;background:#A9D65E;box-shadow:0 2px 0 rgba(14,18,32,.8)}
-.panel{background:rgba(26,32,48,.94);padding:28px 36px;clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px);
+.panel{background:rgba(26,32,48,.94);padding:28px 36px;border-radius:22px;box-shadow:inset 0 0 0 2px rgba(233,185,73,.5),0 0 0 3px #0E1220,0 6px 0 3px rgba(14,18,32,.55);
   max-width:min(760px,92vw)}
 .panel h2{font-family:var(--display);font-weight:900;color:var(--corn);margin:0 0 14px;font-size:36px;letter-spacing:1.2px}
 .controls-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 22px;font-size:17px}
 .controls-grid b{font-family:var(--num);font-weight:800;font-size:19px;color:var(--orange);letter-spacing:0.5px}
 #select h2{font-family:var(--display);font-weight:900;font-size:49px;margin:0;color:var(--corn);text-shadow:0 5px 0 var(--navy)}
 .cards{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
-.card{width:220px;background:var(--navy);padding:14px 14px 18px;cursor:pointer;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);
+.card{width:220px;background:var(--navy);padding:14px 14px 18px;cursor:pointer;border-radius:20px;box-shadow:inset 0 0 0 2px rgba(233,185,73,.5),0 0 0 3px #0E1220,0 6px 0 3px rgba(14,18,32,.55);
   transition:transform .12s;border-bottom:8px solid var(--team)}
 .card:hover{transform:translateY(-6px) scale(1.03)}
-.card.sel{outline:4px solid var(--corn);outline-offset:-4px}
-.card img{width:100%;aspect-ratio:1;display:block;background:var(--team);clip-path:polygon(0 8%,8% 0,92% 0,100% 8%,100% 100%,0 100%)}
+.card.sel{box-shadow:inset 0 0 0 4px var(--corn),0 0 0 3px #0E1220,0 6px 0 3px rgba(14,18,32,.55),0 0 22px rgba(242,181,30,.45)}
+.card img{width:100%;aspect-ratio:1;display:block;background:var(--team);border-radius:14px}
 .card .nm{font-family:var(--display);font-weight:900;font-size:26px;margin-top:8px;color:var(--white)}
 .card .tm{font-family:var(--num);font-weight:800;font-size:16px;color:var(--team);letter-spacing:0.9px;line-height:1}
 .card .wp{font-size:14px;color:var(--corn);margin-top:4px}
@@ -225,10 +235,10 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
 #splash{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:15}
 #splash div{font-family:var(--display);font-weight:900;font-size:clamp(60px,11vw,160px);color:var(--corn);text-shadow:0 8px 0 var(--orange-s),0 16px 0 var(--navy);
-  transform:skewX(-8deg)}
+  transform:rotate(-3deg)}
 #splash div.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
-@keyframes pop{from{transform:skewX(-8deg) scale(2.2);opacity:0}to{transform:skewX(-8deg) scale(1);opacity:1}}
-#results .banner{font-family:var(--display);font-weight:900;font-size:clamp(46px,7vw,90px);transform:skewX(-8deg);text-shadow:0 6px 0 var(--navy)}
+@keyframes pop{from{transform:rotate(-3deg) scale(2.2);opacity:0}to{transform:rotate(-3deg) scale(1);opacity:1}}
+#results .banner{font-family:var(--display);font-weight:900;font-size:clamp(46px,7vw,90px);transform:rotate(-3deg);text-shadow:0 6px 0 var(--navy)}
 table.stats{border-collapse:collapse;font-size:18px;margin:8px 0 6px;min-width:520px}
 table.stats th{font-family:var(--num);font-weight:800;font-size:17px;color:var(--corn);letter-spacing:0.9px;padding:4px 10px;text-align:center}
 #results .panel{overflow-x:auto;max-width:none} /* sized to the table; fitUI zooms the screen down on small windows */
@@ -250,7 +260,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #hearts{display:flex;gap:3px;margin-top:8px}
 #hearts svg{width:28px;height:24px;filter:drop-shadow(0 2px 0 var(--navy))}
 .elabel{font-family:var(--ui);font-weight:700;font-variant:small-caps;letter-spacing:1.8px;font-size:13px;margin-top:6px;text-shadow:0 2px 0 var(--navy)}
-#energy{position:relative;width:240px;height:16px;background:#11182A;border:3px solid var(--navy);box-sizing:content-box;margin-top:3px;filter:drop-shadow(0 3px 0 rgba(26,32,48,.8))}
+#energy{position:relative;width:240px;height:16px;background:#11182A;border:3px solid var(--navy);border-radius:10px;overflow:hidden;box-sizing:content-box;margin-top:3px;filter:drop-shadow(0 3px 0 rgba(26,32,48,.8))}
 #energy-fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#3E9BD1;transition:width .12s}
 #energy.ready #energy-fill{background:#63C8F2;box-shadow:0 0 10px #63C8F2}
 #energy .tick{position:absolute;top:0;bottom:0;width:2px;background:rgba(26,32,48,.55)}
@@ -259,7 +269,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #hud-tc{position:absolute;left:50%;top:12px;transform:translateX(-50%);text-align:center}
 .slabel{font-family:var(--display);font-weight:900;font-size:17px;letter-spacing:2.4px;text-shadow:0 3px 0 var(--navy)}
 .scounters{display:flex;gap:14px;margin-top:4px}
-.sc{background:rgba(26,32,48,.82);padding:4px 14px 8px;min-width:200px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);border-bottom:5px solid var(--team);transition:box-shadow .3s}
+.sc{background:rgba(26,32,48,.82);padding:4px 14px 8px;min-width:200px;border-radius:16px;box-shadow:inset 0 0 0 2px rgba(233,185,73,.4),0 4px 0 rgba(14,18,32,.45);border-bottom:5px solid var(--team);transition:box-shadow .3s}
 .sc .num{font-family:var(--num);font-weight:800;font-size:30px;line-height:1;color:var(--team)}
 .sc .num small{font-size:24px;color:var(--white)}
 .sc .icons{display:flex;gap:3px;justify-content:center}
@@ -278,12 +288,12 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #wins i{width:14px;height:14px;transform:rotate(45deg);background:#343A4C;display:block;border:2px solid var(--navy)}
 #wins i.g{background:var(--green)} #wins i.o{background:var(--orange)}
 #hud-bc{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px;background:rgba(26,32,48,.82);
-  padding:10px 18px 10px;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 100%,0 100%)}
+  padding:10px 18px 10px;border-radius:20px;box-shadow:inset 0 0 0 2px rgba(233,185,73,.4),0 4px 0 rgba(14,18,32,.45)}
 .sp{position:relative;width:64px}
 .sp img{width:64px;height:64px;border-radius:50%;display:block;border:4px solid var(--team);background:var(--navy)}
 .sp.me img{box-shadow:0 0 0 3px var(--corn)}
 .sp.ko img{filter:grayscale(1) brightness(.6)}
-.sp .hb{height:7px;background:#11182A;margin-top:5px;overflow:hidden}
+.sp .hb{height:7px;background:#11182A;margin-top:5px;overflow:hidden;border-radius:4px}
 .sp .hb b{display:block;height:100%;width:100%;background:#4CD964}
 .sp .cd{position:absolute;left:0;top:0;width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-family:var(--num);font-weight:800;font-size:31px;text-shadow:0 3px 0 var(--navy)}
 .sp .sd{position:absolute;right:-4px;top:-4px;width:16px;height:20px;background:var(--mint);border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
@@ -310,7 +320,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .fl.gold{color:var(--corn);font-family:var(--display);font-weight:900;font-size:28px}
 #tips .panel{max-width:min(980px,94vw)}
 .tipcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:4px 0 6px}
-.tip{background:#2A3757;padding:12px 16px 14px;border-top:6px solid var(--tc);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.tip{background:#2A3757;padding:12px 16px 14px;border-top:6px solid var(--tc);border-radius:16px}
 .tip h3{font-family:var(--display);font-weight:900;font-size:23px;margin:0 0 6px;color:var(--tc);letter-spacing:0.6px}
 .tip p{margin:0 0 6px;font-size:14px;line-height:1.35;color:#E3E6EE;font-family:var(--body);font-weight:600}
 .tip p b{color:var(--corn);font-weight:normal}
@@ -326,7 +336,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .fl.honk{font-family:var(--display);font-weight:900;font-size:23px;color:var(--navy);background:var(--white);padding:6px 10px 4px;text-shadow:none;
   clip-path:polygon(0 0,100% 0,100% 78%,30% 78%,14% 100%,16% 78%,0 78%);padding-bottom:12px}
 #banner{position:absolute;left:0;right:0;top:30%;text-align:center;font-family:var(--display);font-weight:900;font-size:clamp(34px,5vw,70px);color:var(--corn);
-  text-shadow:0 5px 0 var(--orange-s),0 10px 0 var(--navy);transform:skewX(-8deg);opacity:0;transition:opacity .2s}
+  text-shadow:0 5px 0 var(--orange-s),0 10px 0 var(--navy);opacity:0;transition:opacity .2s}
 #banner.on{opacity:1;animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
 #banner small{display:block;font-family:var(--num);font-weight:800;font-size:.5em;color:var(--white);letter-spacing:1.4px;text-shadow:0 3px 0 var(--navy)}
 #fps{position:fixed;left:8px;bottom:6px;font-family:var(--num);font-weight:800;font-size:16px;color:var(--navy);z-index:30;pointer-events:none}
@@ -336,7 +346,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 /* ---------- Achievements ---------- */
 #toasts{position:fixed;right:18px;bottom:20px;display:flex;flex-direction:column-reverse;gap:10px;z-index:40;pointer-events:none;max-width:calc(100vw - 36px)}
 .toast{background:rgba(26,32,48,.96);border-left:8px solid var(--corn);padding:8px 18px 10px 14px;min-width:260px;max-width:340px;
-  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);animation:toastIn .45s cubic-bezier(.2,1.5,.4,1)}
+  border-radius:16px;box-shadow:inset 0 0 0 2px rgba(233,185,73,.4),0 4px 0 rgba(14,18,32,.45);animation:toastIn .45s cubic-bezier(.2,1.5,.4,1)}
 .toast.out{animation:toastOut .35s forwards}
 .toast .k{font-family:var(--num);font-weight:800;font-size:13px;letter-spacing:1.4px;color:var(--corn);line-height:1}
 .toast .n{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.1;color:var(--white)}
@@ -344,7 +354,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 @keyframes toastIn{from{transform:translateX(120%)}to{transform:none}}
 @keyframes toastOut{to{transform:translateX(120%);opacity:0}}
 #ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;max-height:min(58vh,560px);overflow:auto;padding-right:4px;width:min(720px,84vw)}
-.ach{background:#2A3757;padding:8px 12px 10px;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);border-bottom:5px solid var(--wc,#3A4560)}
+.ach{background:#2A3757;padding:8px 12px 10px;border-radius:14px;border-bottom:5px solid var(--wc,#3A4560)}
 .ach.locked{opacity:.55;filter:grayscale(.7)}
 .ach{display:flex;gap:10px;align-items:flex-start}
 .ach .tx{flex:1;min-width:0}
@@ -370,7 +380,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .setrow .sub{font-size:13px;color:#C9CFDD;line-height:1.3;max-width:300px}
 .setrow .btn{min-width:130px}
 #tut{position:absolute;right:18px;top:14px;width:min(380px,calc(100vw - 36px));background:rgba(26,32,48,.95);padding:14px 18px 14px;border-left:8px solid var(--corn);
-  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%);pointer-events:auto}
+  border-radius:18px;box-shadow:inset 0 0 0 2px rgba(233,185,73,.4),0 4px 0 rgba(14,18,32,.45);pointer-events:auto}
 #tut .k{font-family:var(--num);font-weight:800;font-size:14px;letter-spacing:1.4px;color:var(--corn);line-height:1}
 #tut .n{font-family:var(--display);font-weight:900;font-size:24px;line-height:1.1;color:var(--white);margin:2px 0 6px}
 #tut .d{font-size:14px;line-height:1.4;color:#E3E6EE;font-family:var(--body);font-weight:600}
@@ -386,15 +396,15 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 #hud.tutorial #hud-tr{display:none}
 /* ---------- Cosmetics picker, night vignette ---------- */
 .cosrow{display:flex;align-items:center;gap:14px;background:rgba(26,32,48,.94);padding:6px 18px 6px 6px;max-width:min(940px,94vw);
-  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
-#cos-prev{width:96px;height:110px;flex:none;background:radial-gradient(circle at 50% 70%,#3A4A3A,#1A2030 70%)}
+  border-radius:20px;box-shadow:inset 0 0 0 2px rgba(233,185,73,.5),0 0 0 3px #0E1220,0 6px 0 3px rgba(14,18,32,.55)}
+#cos-prev{width:96px;height:110px;flex:none;border-radius:14px;background:radial-gradient(circle at 50% 70%,#3A4A3A,#1A2030 70%)}
 .coslbl{font-family:var(--display);font-weight:900;font-size:19px;color:var(--white);letter-spacing:0.6px;margin-bottom:6px}
 .coslbl span{color:var(--corn)}
 .coslbl small{font-family:var(--num);font-weight:800;font-size:12px;letter-spacing:0.9px;color:#9AA3B8;margin-left:12px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{font-family:var(--num);font-weight:800;font-size:15px;letter-spacing:0.7px;line-height:1;padding:7px 12px 5px;border:0;cursor:pointer;color:var(--white);background:#2A3757;box-shadow:inset 0 -4px 0 #11182A}
+.chip{font-family:var(--num);font-weight:800;font-size:15px;letter-spacing:0.7px;line-height:1;padding:7px 12px 5px;border:0;border-radius:999px;cursor:pointer;color:var(--white);background:#2A3757;box-shadow:inset 0 -4px 0 #11182A}
 .chip:hover{background:#34446A}
-.chip.special{color:#EFE6D2}
+.chip .sw{display:inline-block;width:14px;height:14px;border-radius:50%;margin:-3px 7px 0 0;vertical-align:middle;box-shadow:0 0 0 2px var(--navy),0 0 0 3px rgba(245,239,220,.5)}
 .chip.sel{background:var(--corn);color:var(--navy);box-shadow:inset 0 -4px 0 var(--corn-s,#C8861A)}
 #nightvig{position:fixed;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 45%,rgba(3,8,26,.6) 100%)}
 body.night #nightvig{display:block}
@@ -405,20 +415,20 @@ body.night #nightvig{display:block}
 .on-menu{display:flex;flex-direction:column;gap:14px;align-items:center}
 .joinrow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;justify-content:center}
 #on-code{font-family:var(--num);font-weight:800;font-size:31px;letter-spacing:5.4px;width:190px;text-align:center;padding:4px 0 0 12px;border:0;background:#11182A;color:var(--corn);
-  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);outline:none}
+  border-radius:12px;outline:none}
 #on-code::placeholder{color:#7A85A3}
 .on-or{font-family:var(--num);font-weight:800;font-size:16px;letter-spacing:1.8px;color:#9AA3B8}
 #on-err{min-height:22px;font-family:var(--num);font-weight:800;font-size:17px;letter-spacing:0.7px;color:#FF8A6A;text-align:center}
 #on-kind{font-family:var(--num);font-weight:800;font-size:12px;letter-spacing:0.9px;color:#9AA3B8;text-align:center}
 .codebar{display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
-.codebox{background:#11182A;padding:6px 22px 2px;text-align:center;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.codebox{background:#11182A;padding:6px 22px 2px;text-align:center;border-radius:14px}
 .codebox small{display:block;font-family:var(--num);font-weight:800;font-size:12px;letter-spacing:1.4px;color:#9AA3B8;line-height:1}
 .codebox b{font-family:var(--num);font-weight:800;font-size:45px;letter-spacing:6.3px;color:var(--corn);line-height:1;padding-left:14px}
 .linkcol{display:flex;flex-direction:column;gap:8px;min-width:0;flex:1 1 260px;max-width:420px}
 #on-link{font-family:var(--ui);font-weight:700;font-size:12px;padding:9px 10px;border:0;background:#11182A;color:#C9CFDD;width:100%;outline:none;user-select:all;-webkit-user-select:all}
 .slots{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:stretch;margin:6px 0 12px}
 .slot{background:#11182A;padding:10px 12px;display:flex;gap:12px;align-items:center;border-left:6px solid var(--team,#3A4560);min-height:96px;
-  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%)}
+  border-radius:14px}
 .slot img{width:72px;height:72px;flex:none;background:var(--team,#2A3757)}
 .slot .who{font-family:var(--num);font-weight:800;font-size:13px;letter-spacing:1.4px;color:#9AA3B8;line-height:1}
 .slot .nm{font-family:var(--display);font-weight:900;font-size:23px;line-height:1.1;color:var(--white)}
@@ -431,7 +441,7 @@ body.night #nightvig{display:block}
 .vs{font-family:var(--display);font-weight:900;font-size:28px;color:var(--orange);align-self:center}
 .mcards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
 .mcard{width:108px;background:#11182A;padding:6px 6px 8px;cursor:pointer;text-align:center;border-bottom:5px solid var(--team);position:relative;
-  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  border-radius:12px}
 .mcard img{width:84px;height:84px;display:block;margin:0 auto;background:var(--team)}
 .mcard .nm{font-family:var(--num);font-weight:800;font-size:15px;letter-spacing:0.9px;line-height:1.1;margin-top:4px}
 .mcard .wp{font-size:10px;color:#9AA3B8;letter-spacing:1px}
@@ -515,7 +525,7 @@ body.touch .kb{display:none} body:not(.touch) .tc{display:none}
 .tbtn .ic{width:48%;height:48%;display:block;position:relative;z-index:1;margin-top:-4px}
 .tbtn .lb,.tbtn .sub{position:absolute;z-index:2;left:50%;bottom:-7px;transform:translateX(-50%);white-space:nowrap;background:var(--navy);color:#F5EFDC;
   font-family:var(--ui);font-weight:700;font-size:11px;letter-spacing:1px;line-height:1;padding:4px 10px 3px;text-shadow:none;
-  clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);box-shadow:inset 0 -2px 0 rgba(242,181,30,.9)}
+  border-radius:8px;box-shadow:inset 0 -2px 0 rgba(242,181,30,.9)}
 .tbtn .sub{font-family:var(--num);font-weight:800}
 .tbtn .ic{filter:drop-shadow(0 2px 0 rgba(26,32,48,.35))}
 /* a dark sweep shows recharge (roll) or energy still missing (special, hedge) */
@@ -529,16 +539,16 @@ body.touch .kb{display:none} body:not(.touch) .tc{display:none}
 #t-hedge{--b1:#A9D65E;--b2:#6C9A3A;--b3:#3E6127;--tx:#F5EFDC;right:calc(var(--sar) + 46px);bottom:calc(var(--sab) + 150px);width:66px;height:66px}
 #t-roll{--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;left:max(calc((var(--sal) + 194px) / var(--bz,1)),calc(var(--sal) + clamp(232px,31vw,340px)));bottom:calc(var(--sab) + 30px);width:84px;height:84px}
 #t-pause,#t-full{zoom:1}
-#t-pause{right:calc(var(--sar) + 10px);top:10px;width:48px;height:48px;border-radius:0;--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;filter:none;
-  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
-#t-pause::before{border-radius:0;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
-#t-pause::after{border-radius:0;inset:6px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+#t-pause{right:calc(var(--sar) + 10px);top:10px;width:48px;height:48px;--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;filter:none;
+  border-radius:12px}
+#t-pause::before{border-radius:11px}
+#t-pause::after{inset:6px;border-radius:9px}
 #t-pause .ic{width:40%;height:40%}
 /* full screen toggle sits under pause, same square sticker look; hidden where there is nothing to toggle (home-screen app) */
-#t-full{right:calc(var(--sar) + 10px);top:66px;width:48px;height:48px;border-radius:0;--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;filter:none;
-  clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
-#t-full::before{border-radius:0;clip-path:polygon(7px 0,100% 0,100% calc(100% - 7px),calc(100% - 7px) 100%,0 100%,0 7px)}
-#t-full::after{border-radius:0;inset:6px;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+#t-full{right:calc(var(--sar) + 10px);top:66px;width:48px;height:48px;--b1:#F4E3B8;--b2:#D9B878;--b3:#A9824A;filter:none;
+  border-radius:12px}
+#t-full::before{border-radius:11px}
+#t-full::after{inset:6px;border-radius:9px}
 #t-full .ic{width:46%;height:46%} #t-full .ic .x{display:none} #t-full.is-full .ic .o{display:none} #t-full.is-full .ic .x{display:inline}
 html.standalone #t-full{display:none}
 /* make room for the pause button and keep HUD text clear of the thumbs */
@@ -726,7 +736,7 @@ body.touch #mute{display:none}
 <div id="select" role="region" aria-label="Pick your warrior" class="screen dim hidden">
   <h2>PICK YOUR WARRIOR</h2>
   <div class="cards" id="cards"></div>
-  <div class="cosrow"><canvas id="cos-prev"></canvas><div class="cosbox"><div class="coslbl">COSMETIC FOR <span id="cos-who">RABBIT</span><small>ONE ITEM · JUST FOR LOOKS</small></div><div class="chips" id="cos-chips"></div></div></div>
+  <div class="cosrow"><canvas id="cos-prev"></canvas><div class="cosbox"><div class="coslbl">OUTFIT COLOURS FOR <span id="cos-who">RABBIT</span><small>JUST FOR LOOKS</small></div><div class="chips" id="cos-chips"></div></div></div>
   <div class="row"><button class="btn ghost" id="btn-select-back">Back</button><button class="btn" id="btn-fight">Fight!</button></div>
 </div>
 <div id="tips" role="region" aria-label="Before you brawl" class="screen dim hidden">
@@ -823,12 +833,14 @@ const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWA
 // Berry bushes: walk into a ripe bush while hurt to eat. 20 HP = 2 full hearts, four times a seed.
 const BERRY_HEAL=20, BERRY_REGROW=20, BERRY_R=1.1;
 const BERRY_BUSHES=[[3,6],[12,9],[13,0],[2,15]]; // [i, j] tiles, point-symmetric about the centre
-// Cosmetics: one per character, purely visual. 'only' limits an item to one critter.
+// Cosmetics: outfit colours, one per character, purely visual. Each swaps the cloth and trim colours of the critter's
+// own outfit (tunic, cloak, kilt or robe, plus the matching headpiece where it is cloth). NONE = the critter's classic colours.
 const COSMETICS = {
-  none:{ name:'NONE' }, overalls:{ name:'OVERALLS' }, pants:{ name:'PANTS' }, hat:{ name:'STRAW HAT' },
-  boots:{ name:'BIG RED BOOTS' }, shades:{ name:'BIG SUNGLASSES' }, bluehat:{ name:'BLUE HAT' }, skull:{ name:'SKULL HELMET', only:'raccoon' },
+  none:{ name:'CLASSIC' }, moss:{ name:'MOSS', cols:[0x55803A,0xE9DDB8] }, ember:{ name:'EMBER', cols:[0xB8402A,0xF2B51E] },
+  frost:{ name:'FROST', cols:[0x4A7FB0,0xE8F0F6] }, royal:{ name:'ROYAL', cols:[0x6E3F96,0xF2B51E] },
+  harvest:{ name:'HARVEST', cols:[0xD08A22,0x6B4228] }, midnight:{ name:'MIDNIGHT', cols:[0x262B40,0x9FF5C8] },
 };
-const COS_ORDER=['none','overalls','pants','hat','bluehat','boots','shades','skull'];
+const COS_ORDER=['none','moss','ember','frost','royal','harvest','midnight'];
 const cosmeticsFor=k=>COS_ORDER.filter(id=>!COSMETICS[id].only||COSMETICS[id].only===k);
 const CHARS = {
   rabbit:{ name:'RABBIT', team:0, weapon:'sword', blurb:'Knighted by the Radish Council. Takes it far too seriously.', fur:0xEDE3D3 },
@@ -1314,58 +1326,6 @@ function eyes(parent,y,z,sep,r=0.085,tilt=0,iris=PAL.navy){
     const b=M(CYL(r*0.6,r*0.6,0.02,10),0xF58FB0,s*(sep+r*0.55),y-r*1.35,z-0.025,parent,false); b.rotation.x=Math.PI/2; b.rotation.y=s*0.5; b.scale.set(1,1,0.6);
   }
 }
-// Fantasy gear: each critter is a little storybook adventurer (knight, rogue, berserker, hedge wizard), added on top of
-// the round body so the cosmetics still fit. Capes hang from the shoulders at the back; gems glow softly.
-function fantasyGear(P,key){
-  const B=P.B, gold=0xE9B949, goldS=0xB88426;
-  const crown=()=>{ const g=new THREE.Group(); P.head.add(g); P.extra.crown=g; return g; };
-  const gem=(col,x,y,z,parent=B,r=0.04)=>M(new THREE.OctahedronGeometry(r,0),col,x,y,z,parent,false,{emissive:col,emissiveIntensity:0.55});
-  const cape=(col,trim,w=0.44,h=0.46,y0=0.78)=>{ const g=new THREE.Group(); g.position.set(0,y0,-0.24); g.rotation.x=0.22; B.add(g);
-    M(BOX(w,h,0.035),col,0,-h/2,0,g); M(BOX(w*1.02,0.05,0.04),trim,0,-h+0.02,0,g,false);
-    for(const sx of [-1,1]) M(ICO(0.045,0),gold,sx*w*0.42,-0.01,0.03,g,false); return g; };
-  if(key==='rabbit'){ // Carrot Knight: short leaf-green cape, one round silver pauldron, a chest strap with a sun gem
-    cape(0x3E6B3A,gold,0.44,0.34,0.8);
-    const pd=M(ICO(0.13,1),0xC9CFDA,0.27,0.66,0,B); pd.scale.set(1,0.62,1); M(ICO(0.03,0),gold,0.33,0.7,0.06,B,false);
-    const st=M(BOX(0.05,0.5,0.03),0x7B4832,0.02,0.5,0.255,B,false); st.rotation.z=0.62;
-    gem(0xFFC93C,0,0.52,0.29);
-    const cr=crown(); // a little gold circlet with a sun gem, sitting between the ears
-    const ring=M(CYL(0.2,0.215,0.045,12),gold,0,0.21,0.02,cr); ring.rotation.x=-0.25;
-    for(let i=0;i<3;i++){ const a=(i-1)*0.5; const pk=M(CONE(0.03,0.08,4),gold,Math.sin(a)*0.2,0.27,Math.cos(a)*0.2+0.0,cr); pk.rotation.set(Math.cos(a)*0.3,0,-Math.sin(a)*0.3); }
-    gem(0xFFC93C,0,0.23,0.23,cr,0.04);
-  } else if(key==='raccoon'){ // Shadow Rogue: plum cowl round the neck, short ragged cape, a dagger-bright gem clasp
-    const cw=M(CYL(0.25,0.3,0.12,10),0x5B3A5E,0,0.76,0,B); cw.scale.set(1,1,0.92);
-    M(CYL(0.26,0.26,0.03,10),0x3E2640,0,0.82,0,B,false);
-    const c=cape(0x5B3A5E,0x3E2640,0.46,0.36,0.78);
-    for(const x of [-0.15,0,0.15]){ const t=M(CONE(0.07,0.12,4),0x5B3A5E,x,-0.41,0,c); t.rotation.x=Math.PI; }
-    gem(0x9FF5C8,0,0.72,0.27);
-    const cr=crown(); // a rogue's hood, pushed back behind the ears
-    const hd=M(G('hood',()=>new THREE.SphereGeometry(1,12,7,0,Math.PI*2,0,Math.PI*0.5)),0x5B3A5E,0,-0.04,-0.13,cr); hd.scale.set(0.3,0.3,0.24); hd.rotation.x=-1.9;
-    M(CONE(0.07,0.16,5),0x5B3A5E,0,-0.1,-0.36,cr).rotation.x=-2.4;
-  } else if(key==='goose'){ // Beet Berserker: bronze breastplate, a shaggy fur mantle, a war-paint stripe on the cheek
-    const bp=M(ICO(0.24,1),0xB8763E,0,0.42,0.12,B); bp.scale.set(1.0,0.85,0.7);
-    M(BOX(0.04,0.3,0.03),0x8A5424,0,0.45,0.3,B,false);
-    for(let i=0;i<9;i++){ const a=i/9*Math.PI*2; const t=M(CONE(0.06,0.1,4),0xD9C7A0,Math.sin(a)*0.2,0.66,Math.cos(a)*0.22-0.02,B); t.rotation.set(Math.cos(a)*1.3,0,-Math.sin(a)*1.3); }
-    gem(0xF2493B,0,0.5,0.3);
-    for(const sx of [-1,1]) M(BOX(0.03,0.08,0.02),0xF2493B,sx*0.15,-0.02,0.07,P.head,false).rotation.z=sx*0.3;
-    const cr=crown(); // a little bronze helm with two curled horns
-    const hm=M(G('helm',()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,0,Math.PI*0.5)),0xB8763E,0,0.04,-0.01,cr); hm.scale.set(0.17,0.13,0.2);
-    M(CYL(0.175,0.175,0.03,12),0x8A5424,0,0.045,-0.01,cr,false).scale.set(1,1,1.15);
-    for(const sx of [-1,1]){ const h1=M(CONE(0.045,0.12,6),0xEFE6D2,sx*0.18,0.1,0,cr); h1.rotation.z=-sx*1.0; const h2=M(CONE(0.025,0.08,5),0xEFE6D2,sx*0.24,0.19,0,cr); h2.rotation.z=-sx*0.2; }
-  } else if(key==='possum'){ // Hedge Wizard: midnight star mantle, a glowing mint crystal pendant
-    const mt=M(CYL(0.2,0.32,0.09,12),0x2E3A6B,0,0.74,0,B); mt.scale.set(1,1,0.95);
-    M(CYL(0.325,0.325,0.025,12),gold,0,0.695,0,B,false).scale.set(1,1,0.95);
-    for(let i=0;i<6;i++){ const a=i/6*Math.PI*2+0.3; M(ICO(0.02,0),gold,Math.sin(a)*0.27,0.74,Math.cos(a)*0.26,B,false); }
-    M(CYL(0.008,0.008,0.14,4),gold,0,0.6,0.29,B,false);
-    gem(0x9FF5C8,0,0.52,0.31,B,0.055);
-    const cr=crown(); // a floppy pointed wizard hat with gold stars, tipped to one side
-    const hb=new THREE.Group(); hb.position.set(0,0.2,-0.03); hb.rotation.set(-0.15,0,0.12); cr.add(hb);
-    M(CYL(0.3,0.31,0.025,14),0x2E3A6B,0,0,0,hb);
-    const h1=M(CONE(0.17,0.24,10),0x2E3A6B,0,0.13,0,hb);
-    const h2=M(CONE(0.08,0.17,8),0x2E3A6B,0.05,0.3,-0.06,hb); h2.rotation.set(-0.55,0,-0.5);
-    M(CYL(0.175,0.175,0.035,10),gold,0,0.03,0,hb,false);
-    for(const [x,y,z] of [[0.08,0.11,0.12],[-0.07,0.15,0.1],[0.01,0.21,0.07]]) M(new THREE.OctahedronGeometry(0.025,0),gold,x,y,z,hb,false,{emissive:gold,emissiveIntensity:0.4});
-  }
-}
 // A lumpy potato: a squashed low-poly blob, a couple of bumps and dark "eyes". Used in hand, in flight and in plots.
 function potatoModel(g,s=1){
   M(ICO(0.13*s,1),PAL.potato,0,0,0,g).scale.set(1,0.8,1.3);
@@ -1383,14 +1343,16 @@ function buildWeapon(key){
   if(key==='sword'){
     const b=M(CONE(0.085,0.78,6),PAL.carrot,0,0,0.5,g); b.rotation.x=Math.PI/2;
     for(const z of [0.3,0.48,0.66]){ const r=M(CYL(0.07-(z-0.3)*0.1,0.07-(z-0.3)*0.1,0.025,6),PAL.carrotS,0,0,z,g,false); r.rotation.x=Math.PI/2; }
-    M(BOX(0.24,0.05,0.06),PAL.woodS,0,0,0.1,g);
+    M(BOX(0.26,0.055,0.07),FG.gold,0,0,0.1,g); for(const x of [-0.14,0.14]) M(ICO(0.04,1),FG.gold,x,0,0.1,g); // gold crossguard
+    const gp=M(CYL(0.032,0.032,0.13,8),FG.leather,0,0,0.0,g); gp.rotation.x=Math.PI/2;
     for(const a of [-0.5,0,0.5]){ const l=M(CONE(0.04,0.22,4),PAL.leaf,Math.sin(a)*0.06,0,-0.05,g); l.rotation.x=-Math.PI/2; l.rotation.z=a; }
     g.rotation.x=-0.8;
   } else if(key==='kunai'){ // a lumpy potato held in the paw
     potatoModel(g,1); g.position.z=0.06;
   } else if(key==='flail'){
-    const h=M(CYL(0.035,0.035,0.4,6),PAL.wood,0,0,0.12,g); h.rotation.x=Math.PI/2;
-    M(ICO(0.035),PAL.navy,0,0,0.36,g); M(ICO(0.035),PAL.navy,0,0,0.43,g);
+    const h=M(CYL(0.035,0.035,0.4,8),FG.leather,0,0,0.12,g); h.rotation.x=Math.PI/2;
+    M(ICO(0.05,1),FG.gold,0,0,-0.08,g); const cp=M(CYL(0.05,0.045,0.06,8),FG.gold,0,0,0.31,g); cp.rotation.x=Math.PI/2;
+    M(ICO(0.035,1),FG.steelS,0,0,0.37,g); M(ICO(0.035,1),FG.steelS,0,0,0.44,g);
     M(ICO(0.17,0),PAL.beet,0,0,0.6,g);
     const st=M(CONE(0.03,0.14,4),PAL.beetS,0,0.15,0.6,g); st.rotation.z=0.2;
     M(BOX(0.1,0.02,0.14),PAL.leaf,0.05,0.22,0.6,g).rotation.z=0.5;
@@ -1399,6 +1361,7 @@ function buildWeapon(key){
     const s=M(CYL(0.045,0.055,1.15,6),PAL.celery,0,0,0.22,g); s.rotation.x=Math.PI/2;
     M(BOX(0.02,0.02,1.0),PAL.celeryS,0.04,0.02,0.2,g,false);
     for(const a of [-0.6,0,0.6]){ const l=M(CONE(0.07,0.24,4),PAL.leaf,Math.sin(a)*0.06,0,0.85,g); l.rotation.x=Math.PI/2; l.rotation.z=a; }
+    for(const z of [0.5,0.74]){ const b=M(CYL(0.062,0.062,0.035,8),FG.gold,0,0,z,g,false); b.rotation.x=Math.PI/2; } // gold bindings
     const orb=M(ICO(0.07,0),PAL.mint,0,0,0.95,g,false,{emissive:0x5fe8b8,emissiveIntensity:0.8});
     g.rotation.x=-1.15;
   } else if(key==='shield'){ // a thick pumpkin slice held face-out, ribs and stem on top
@@ -1407,12 +1370,23 @@ function buildWeapon(key){
     const rim=M(CYL(0.24,0.24,0.14,10),PAL.carrotS,0,0,-0.01,f,false); rim.rotation.x=Math.PI/2;
     for(const x of [-0.15,0,0.15]){ M(BOX(0.035,0.5-Math.abs(x)*1.2,0.04),PAL.carrotS,x,0,0.065,f,false); }
     M(CYL(0.035,0.05,0.14,5),PAL.woodS,0,0.33,0,f);
+    const bs=M(ICO(0.075,1),FG.gold,0,0,0.075,f); bs.scale.z=0.6; // gold boss
     const lf=M(BOX(0.16,0.02,0.1),PAL.leaf,0.09,0.31,0,f,false); lf.rotation.z=-0.4;
     M(BOX(0.06,0.06,0.1),PAL.woodS,0,0,-0.1,f,false); // grip
     g.rotation.x=0.35;
   }
   return addOutlines(g,0.014,0.1);
 }
+// ---- Critter look (Nov 22 overhaul): one storybook fantasy style for all four ----
+// Every critter is built from the same small kit, so the four read as one set:
+//   a big round head with the shared storybook eyes and blush, a short round body wearing ONE outfit (a tunic, cloak,
+//   kilt or robe), a leather belt with a gold buckle, stubby arms with mitten paws, round leather boots, and ONE
+//   signature headpiece that names the class at a glance (knight helm, rogue hood, horned helm, wizard hat).
+// Nothing else is strapped on: no capes, pauldrons, straps, pendants or floating gems. The outfit's two colours are
+// the critter's own materials (P.cloth, P.trim), so an outfit colour swaps materials and never adds parts.
+const FG={ gold:0xE9B949, goldS:0xB88426, leather:0x6B4228, leatherS:0x4B2B1E, steel:0xBAC2CE, steelS:0x8A94A6, bronze:0xB8763E, bone:0xEFE6D2 };
+const OUTFIT={ rabbit:[0x3E6B3A,0xE9B949], raccoon:[0x5B3A5E,0xD9C7A0], goose:[0xA8323E,0xE9B949], possum:[0x2E3A6B,0xE9B949] };
+const outfitMat=(col,slot)=>mat(col,{name:slot}); // a name keeps outfit materials apart from same-coloured props
 function buildCharacter(key){
   const d=CHARS[key], fur=d.fur;
   const root=new THREE.Group(), rig=new THREE.Group(); rig.position.y=0.5; root.add(rig);
@@ -1421,181 +1395,146 @@ function buildCharacter(key){
   const armL=new THREE.Group(), armR=new THREE.Group(); armL.position.set(0.28,0.58,0.02); armR.position.set(-0.28,0.58,0.02); B.add(armL,armR);
   const handL=new THREE.Group(), handR=new THREE.Group(); handL.position.y=-0.26; handR.position.y=-0.26; armL.add(handL); armR.add(handR);
   const head=new THREE.Group(); B.add(head);
-  const P={root,rig,B,legL,legR,armL,armR,handL,handR,head,ears:[],tail:null,extra:{}};
-  const limb=(arm,col,mitt)=>{ M(BOX(0.1,0.24,0.1),col,0,-0.12,0,arm); M(ICO(0.075,0),mitt,0,-0.26,0,arm); };
-  if(key==='rabbit'){
-    M(ICO(0.3,1),fur,0,0.48,0,B).scale.set(1,1.05,0.9);
-    M(ICO(0.2,1),PAL.white,0,0.44,0.13,B).scale.set(1,1,0.7);
-    head.position.set(0,0.98,0.02);
-    M(ICO(0.3,1),fur,0,0,0,head);
-    M(ICO(0.12,1),PAL.white,0,-0.08,0.22,head).scale.set(1.2,0.8,0.8);
-    M(BOX(0.07,0.05,0.05),0xF58FB0,0,-0.03,0.31,head,false);
-    eyes(head,0.05,0.265,0.12,0.085,0,0x3E7A4A);
-    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.11,0.22,-0.03); e.rotation.z=-s*0.15; head.add(e);
-      M(BOX(0.11,0.48,0.07),fur,0,0.22,0,e); M(BOX(0.06,0.36,0.02),0xF7A8B8,0,0.22,0.04,e,false); P.ears.push(e); }
-    M(ICO(0.1,0),PAL.white,0,0.36,-0.3,B);
-    limb(armL,fur,fur); limb(armR,fur,fur);
-    M(BOX(0.16,0.09,0.3),fur,0,-0.15,0.05,legL); M(BOX(0.16,0.09,0.3),fur,0,-0.15,0.05,legR);
-  } else if(key==='raccoon'){
+  const cloth=outfitMat(OUTFIT[key][0],'cloth'), trim=outfitMat(OUTFIT[key][1],'trim');
+  const P={key,root,rig,B,legL,legR,armL,armR,handL,handR,head,ears:[],tail:null,extra:{},cloth,trim};
+  // --- the shared kit ---
+  const ball=(r,col,x,y,z,parent,sx=1,sy=1,sz=1,cast=true)=>{ const m=M(ICO(r,2),col,x,y,z,parent,cast); m.scale.set(sx,sy,sz); return m; };
+  const shell=(id,from,to)=>G('shell'+id,()=>new THREE.SphereGeometry(1,16,8,0,Math.PI*2,from,to));
+  const body=(r,col,y,sx,sy,sz,z=0)=>ball(r,col,0,y,z,B,sx,sy,sz);
+  const skirt=(rt,rb,h,y,z=0)=>{ M(CYL(rt,rb,h,14),cloth,0,y,z,B); M(CYL(rb+0.012,rb+0.012,0.045,14),trim,0,y-h/2+0.02,z,B,false); };
+  const belt=(y,rx,rz,z=0)=>{ const b=M(CYL(1,1,0.065,16),FG.leather,0,y,z,B); b.scale.set(rx,1,rz);
+    M(BOX(0.1,0.085,0.035),FG.gold,0,y,z+rz+0.006,B,false); M(BOX(0.05,0.04,0.04),FG.leather,0,y,z+rz+0.012,B,false); };
+  const sleeves=(paw,flare=0)=>{ for(const a of [armL,armR]){ M(CYL(0.065,0.075+flare,0.2,8),cloth,0,-0.1,0,a); ball(0.078,paw,0,-0.255,0,a); } };
+  const boots=()=>{ for(const l of [legL,legR]){ M(CYL(0.062,0.058,0.12,8),FG.leather,0,-0.08,0,l); ball(0.088,FG.leather,0,-0.148,0.045,l,1,0.62,1.4); } };
+  const star=(x,y,z,s,parent,col=FG.gold)=>{ const m=M(new THREE.OctahedronGeometry(s,0),col,x,y,z,parent,false); m.scale.z=0.45; return m; };
+  if(key==='rabbit'){ // CARROT KNIGHT: green tunic with a carrot crest, round steel helm with a gold ridge (ears through the top)
+    body(0.3,cloth,0.47,1,1.02,0.92);
+    skirt(0.27,0.31,0.14,0.25);
+    belt(0.4,0.3,0.276);
+    const cr=M(CONE(0.045,0.13,6),PAL.carrot,0,0.56,0.272,B,false); cr.rotation.x=Math.PI; // crest: a carrot, point down
+    for(const s of [-1,1]) M(BOX(0.025,0.06,0.015),PAL.leaf,s*0.02,0.645,0.262,B,false).rotation.z=s*0.4;
+    ball(0.1,PAL.white,0,0.36,-0.29,B);                                                      // tail puff
+    head.position.set(0,0.99,0.02);
+    ball(0.32,fur,0,0,0,head);
+    ball(0.12,PAL.white,0,-0.1,0.24,head,1.25,0.8,0.8);
+    M(BOX(0.075,0.05,0.05),0xF58FB0,0,-0.05,0.33,head,false);
+    eyes(head,0.02,0.29,0.125,0.095,0,0x3E7A4A);
+    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.11,0.24,-0.03); e.rotation.z=-s*0.15; head.add(e);
+      M(BOX(0.11,0.46,0.07),fur,0,0.22,0,e); M(BOX(0.06,0.34,0.02),0xF7A8B8,0,0.22,0.04,e,false); P.ears.push(e); }
+    const hm=new THREE.Group(); hm.position.set(0,0.0,-0.01); hm.rotation.x=-0.28; head.add(hm);
+    M(shell('helm',0,Math.PI*0.36),FG.steel,0,0,0,hm).scale.setScalar(0.345);
+    const rim=M(CYL(0.315,0.315,0.04,18),FG.steelS,0,0.155,0,hm); rim.scale.set(1,1,1);
+    const rg=M(G('ridge',()=>new THREE.TorusGeometry(0.345,0.022,5,16,Math.PI*0.78)),FG.gold,0,0,0,hm,false); rg.rotation.set(0,Math.PI/2,Math.PI*0.11);
+    sleeves(fur); boots();
+  } else if(key==='raccoon'){ // SHADOW ROGUE: plum hooded cloak (ears poke through), striped tail out the back
     const dk=0x3A3F52, lt=0xE6E3EC;
-    M(ICO(0.31,1),fur,0,0.48,0,B).scale.set(1.05,1,0.95);
-    M(ICO(0.2,1),lt,0,0.44,0.14,B).scale.set(1,1,0.7);
-    head.position.set(0,0.97,0.02);
-    M(ICO(0.29,1),fur,0,0,0,head).scale.set(1.12,0.95,1);
-    const sn=M(CONE(0.12,0.22,6),lt,0,-0.08,0.3,head); sn.rotation.x=Math.PI/2;
-    M(ICO(0.05,0),dk,0,-0.08,0.42,head,false);
-    M(BOX(0.46,0.13,0.08),dk,0,0.04,0.235,head,false);
-    for(const s of [-1,1]){ const t=M(BOX(0.12,0.08,0.06),dk,s*0.27,0.0,0.18,head,false); t.rotation.z=s*0.5; }
-    M(BOX(0.07,0.14,0.05),lt,0,0.17,0.24,head,false);
-    eyes(head,0.045,0.28,0.12,0.075,0,0x8A5A34);
-    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.19,0.22,-0.02); head.add(e);
-      M(CONE(0.09,0.16,4),fur,0,0.06,0,e); M(CONE(0.05,0.1,4),dk,0,0.05,0.03,e,false); P.ears.push(e); }
-    const tail=new THREE.Group(); tail.position.set(0,0.32,-0.26); tail.rotation.x=-0.9; B.add(tail);
-    for(let i=0;i<5;i++){ const r=0.11-i*0.012; M(CYL(r,r,0.13,8),i%2?dk:fur,0,-0.07-i*0.13,0,tail); }
-    M(ICO(0.06,0),dk,0,-0.72,0,tail);
+    body(0.31,cloth,0.47,1.05,1,0.95);
+    skirt(0.29,0.34,0.18,0.24);
+    belt(0.41,0.315,0.3);
+    M(BOX(0.12,0.09,0.06),FG.leather,0.2,0.36,0.2,B).rotation.y=0.6;                          // a little coin pouch
+    head.position.set(0,0.98,0.02);
+    ball(0.31,fur,0,0,0,head,1.1,0.95,1);
+    const sn=M(CONE(0.12,0.22,8),lt,0,-0.09,0.31,head); sn.rotation.x=Math.PI/2;
+    ball(0.038,dk,0,-0.09,0.425,head);
+    M(BOX(0.48,0.13,0.08),dk,0,0.02,0.25,head,false);
+    for(const s of [-1,1]){ const t=M(BOX(0.12,0.08,0.06),dk,s*0.28,-0.02,0.19,head,false); t.rotation.z=s*0.5; }
+    eyes(head,0.025,0.3,0.125,0.085,0,0x8A5A34);
+    const hood=M(G('hood2',()=>new THREE.SphereGeometry(1,16,9,Math.PI/2+0.95,Math.PI*2-1.9,0,Math.PI*0.7)),cloth,0,0.0,-0.02,head);
+    hood.scale.set(0.365,0.335,0.35);
+    const tip=M(CONE(0.09,0.2,8),cloth,0,0.17,-0.33,head); tip.rotation.x=-2.2;
+    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.2,0.24,-0.02); head.add(e);
+      M(CONE(0.085,0.16,5),fur,0,0.06,0,e); M(CONE(0.05,0.1,5),dk,0,0.05,0.03,e,false); P.ears.push(e); }
+    const tail=new THREE.Group(); tail.position.set(0,0.32,-0.28); tail.rotation.x=-0.9; B.add(tail);
+    for(let i=0;i<5;i++){ const r=0.11-i*0.012; M(CYL(r,r,0.13,10),i%2?dk:fur,0,-0.07-i*0.13,0,tail); }
+    ball(0.06,dk,0,-0.72,0,tail);
     P.tail=tail;
-    limb(armL,fur,dk); limb(armR,fur,dk);
-    M(BOX(0.15,0.09,0.24),dk,0,-0.15,0.04,legL); M(BOX(0.15,0.09,0.24),dk,0,-0.15,0.04,legR);
-  } else if(key==='goose'){
+    sleeves(dk); boots();
+  } else if(key==='goose'){ // BEET BERSERKER: beet-red kilt, a shaggy fur collar, a little bronze helm with curled horns
     const dk=0x2B3142, wing=0x7E6650, belly=0xE8DCC6;
-    M(ICO(0.33,1),fur,0,0.46,-0.02,B).scale.set(1,0.85,1.2);
-    M(ICO(0.24,1),belly,0,0.42,0.14,B).scale.set(1,0.9,0.8);
-    const tl=M(CONE(0.14,0.28,5),dk,0,0.56,-0.4,B); tl.rotation.x=-1.9;
-    const neck=M(CYL(0.075,0.1,0.5,8),dk,0,0.86,0.14,B); neck.rotation.x=0.18;
-    M(CYL(0.13,0.13,0.09,8),PAL.tomato,0,0.68,0.1,B);
-    const sc=M(BOX(0.09,0.22,0.03),PAL.tomato,0.06,0.6,-0.04,B); sc.rotation.z=0.2;
+    body(0.33,fur,0.46,1,0.85,1.2,-0.02);
+    ball(0.24,belly,0,0.44,0.15,B,1,0.9,0.8);
+    const tl=M(CONE(0.14,0.28,6),dk,0,0.56,-0.42,B); tl.rotation.x=-1.9;
+    skirt(0.34,0.41,0.2,0.25,-0.02);
+    belt(0.37,0.345,0.4,-0.02);
+    const neck=M(CYL(0.075,0.1,0.5,10),dk,0,0.86,0.14,B); neck.rotation.x=0.18;
+    const col=M(G('collar',()=>new THREE.TorusGeometry(0.15,0.075,7,14)),0xD9C7A0,0,0.69,0.1,B); col.rotation.x=Math.PI/2-0.15;
+    for(let i=0;i<7;i++){ const a=i/7*Math.PI*2; const t=M(CONE(0.04,0.08,4),0xC4B08A,Math.sin(a)*0.2,0.66,0.1+Math.cos(a)*0.2,B,false); t.rotation.set(Math.cos(a)*2.2,0,-Math.sin(a)*2.2); }
     head.position.set(0,1.14,0.2);
-    M(ICO(0.17,1),dk,0,0,0,head).scale.set(0.9,0.9,1.2);
+    ball(0.17,dk,0,0,0,head,0.95,0.92,1.2);
     M(BOX(0.34,0.1,0.12),PAL.white,0,-0.04,-0.01,head,false);
-    const beak=M(BOX(0.11,0.06,0.17),0x4A4D5C,0,0.0,0.2,head); P.extra.beakLow=M(BOX(0.1,0.035,0.14),0x4A4D5C,0,-0.05,0.18,head);
-    for(const s of [-1,1]){ M(CYL(0.05,0.05,0.03,8),PAL.white,s*0.12,0.05,0.09,head,false).rotation.z=Math.PI/2;
-      M(CYL(0.025,0.025,0.035,6),PAL.navy,s*0.13,0.055,0.1,head,false).rotation.z=Math.PI/2;
-      M(CYL(0.011,0.011,0.02,6),PAL.white,s*0.148,0.07,0.11,head,false).rotation.z=Math.PI/2; }
-    for(const [arm,s] of [[armL,1],[armR,-1]]){ const w=M(BOX(0.08,0.3,0.34),wing,0,-0.12,-0.06,arm); w.rotation.x=0.2; M(ICO(0.07,0),wing,0,-0.26,0,arm); }
-    for(const leg of [legL,legR]){ M(CYL(0.035,0.035,0.16,5),dk,0,-0.08,0,leg); M(BOX(0.18,0.04,0.22),dk,0,-0.17,0.05,leg); }
+    M(BOX(0.11,0.06,0.17),0x4A4D5C,0,0.0,0.2,head); P.extra.beakLow=M(BOX(0.1,0.035,0.14),0x4A4D5C,0,-0.05,0.18,head);
+    for(const s of [-1,1]){ M(CYL(0.055,0.055,0.03,10),PAL.white,s*0.12,0.05,0.09,head,false).rotation.z=Math.PI/2;
+      M(CYL(0.03,0.03,0.035,8),PAL.navy,s*0.13,0.055,0.1,head,false).rotation.z=Math.PI/2;
+      M(CYL(0.012,0.012,0.02,6),PAL.white,s*0.148,0.072,0.11,head,false).rotation.z=Math.PI/2; }
+    const hm=M(shell('ghelm',0,Math.PI*0.5),FG.bronze,0,0.035,-0.01,head); hm.scale.set(0.178,0.17,0.215);
+    const gr=M(G('gridge',()=>new THREE.TorusGeometry(1,0.12,5,14,Math.PI)),trim,0,0.035,-0.01,head,false); gr.rotation.y=Math.PI/2; gr.scale.set(0.215,0.172,0.18);
+    M(CYL(0.18,0.18,0.03,14),0x8A5424,0,0.04,-0.01,head,false).scale.set(1,1,1.17);
+    for(const s of [-1,1]){ const h1=M(CONE(0.045,0.13,7),FG.bone,s*0.19,0.1,0,head); h1.rotation.z=-s*1.0;
+      const h2=M(CONE(0.026,0.09,6),FG.bone,s*0.25,0.2,0,head); h2.rotation.z=-s*0.2; }
+    for(const a of [armL,armR]){ const w=ball(0.2,wing,0,-0.12,-0.05,a,0.32,0.85,1); w.rotation.x=0.25;  }
+    boots();
     P.extra.neck=neck;
-  } else if(key==='possum'){
+  } else if(key==='possum'){ // HEDGE WIZARD: long star robe and a floppy wizard hat in the same cloth, gold trim
     const face=0xF4F1F6, dk=0x3A3F52, pink=0xF58FB0, grey=0x8E889C;
-    M(ICO(0.3,1),fur,0,0.47,0,B).scale.set(1,0.95,1.05);
-    for(let i=0;i<6;i++){ const t=M(CONE(0.05,0.16,4),grey,rand(-0.18,0.18),rand(0.55,0.75),rand(-0.25,-0.05),B); t.rotation.set(rand(-1.2,-0.4),0,rand(-0.6,0.6)); }
-    head.position.set(0,0.96,0.04);
-    M(ICO(0.26,1),face,0,0,0,head).scale.set(0.98,0.9,1.12);
-    const sn=M(CONE(0.11,0.3,6),face,0,-0.06,0.3,head); sn.rotation.x=Math.PI/2;
-    M(ICO(0.05,0),pink,0,-0.06,0.46,head,false);
-    const mouth=M(BOX(0.12,0.05,0.1),0x5A1E32,0,-0.13,0.36,head,false); mouth.visible=false; P.extra.mouth=mouth; // shown while hissing
+    body(0.3,cloth,0.47,1,0.95,1.02);
+    skirt(0.27,0.34,0.22,0.24);
+    belt(0.42,0.296,0.3);
+    star(0.12,0.56,0.262,0.035,B); star(-0.15,0.27,0.305,0.03,B); star(0.1,0.22,0.315,0.025,B);
+    head.position.set(0,0.97,0.04);
+    ball(0.28,face,0,0,0,head,0.98,0.9,1.1);
+    const sn=M(CONE(0.11,0.3,8),face,0,-0.07,0.31,head); sn.rotation.x=Math.PI/2;
+    ball(0.05,pink,0,-0.07,0.47,head);
+    const mouth=M(BOX(0.12,0.05,0.1),0x5A1E32,0,-0.14,0.37,head,false); mouth.visible=false; P.extra.mouth=mouth; // shown while hissing
     for(const s of [-1,1]) M(CONE(0.015,0.05,4),PAL.white,s*0.04,-0.11,0.4,mouth,false).rotation.x=Math.PI;
-    eyes(head,0.06,0.255,0.11,0.08,0,0x3A5BA8);
-    for(const s of [-1,1]){ const lid=M(BOX(0.18,0.06,0.04),grey,s*0.11,0.11,0.265,head,false); lid.rotation.z=-s*0.2; }
-    for(let i=0;i<3;i++){ const t=M(CONE(0.04,0.14,4),grey,(i-1)*0.07,0.24,-0.02,head); t.rotation.z=(i-1)*0.6; }
-    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.18,0.18,-0.04); head.add(e);
-      const ear=M(CYL(0.08,0.08,0.03,8),dk,0,0.04,0,e); ear.rotation.x=Math.PI/2; P.ears.push(e); }
-    const tail=new THREE.Group(); tail.position.set(0,0.3,-0.28); B.add(tail);
+    eyes(head,0.04,0.265,0.115,0.088,0,0x3A5BA8);
+    for(const s of [-1,1]){ const lid=M(BOX(0.19,0.06,0.04),grey,s*0.115,0.1,0.275,head,false); lid.rotation.z=-s*0.2; }
+    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.22,0.1,-0.04); head.add(e);
+      const ear=M(CYL(0.08,0.08,0.03,10),dk,0,0.04,0,e); ear.rotation.set(Math.PI/2,0,s*0.5); P.ears.push(e); }
+    const hb=new THREE.Group(); hb.position.set(0,0.19,-0.03); hb.rotation.set(-0.15,0,0.12); head.add(hb);
+    M(CYL(0.31,0.32,0.03,16),cloth,0,0,0,hb);
+    M(CONE(0.18,0.26,12),cloth,0,0.14,0,hb);
+    const h2=M(CONE(0.085,0.19,10),cloth,0.05,0.32,-0.07,hb); h2.rotation.set(-0.6,0,-0.55);
+    M(CYL(0.185,0.185,0.04,14),trim,0,0.035,0,hb,false);
+    star(0.08,0.13,0.13,0.03,hb); star(-0.07,0.18,0.1,0.022,hb);
+    const tail=new THREE.Group(); tail.position.set(0,0.3,-0.3); B.add(tail);
     let seg=tail; for(let i=0;i<5;i++){ const g=new THREE.Group(); g.position.set(0,0,i?-0.13:0); g.rotation.x=i?-0.45:0.5; seg.add(g);
       M(CYL(0.04-i*0.005,0.045-i*0.005,0.14,6),pink,0,0,-0.065,g).rotation.x=Math.PI/2; seg=g; }
     P.tail=tail;
-    limb(armL,grey,pink); limb(armR,grey,pink);
-    M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legL); M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legR);
+    sleeves(pink,0.03); boots();
   }
-  fantasyGear(P,key);
   addOutlines(root);
   // fold each rigid body part into a few meshes (parts that animate on their own, like the goose's beak, stay separate)
   const keep=new Set(Object.values(P.extra)), groups=[]; root.traverse(o=>{ if(o.isGroup) groups.push(o); });
   for(const g of groups) flattenMeshes(g,false,keep);
   return P;
 }
-// Free the one-off merged buffers of a critter built for a portrait or the cosmetics preview.
+// Free the one-off merged buffers of a critter built for a portrait or the outfit preview.
 function disposeMerged(root){ root.traverse(o=>{ if(o.isMesh&&o.userData.merged) o.geometry.dispose(); }); }
-// ---- Cosmetics: built onto a critter's rig parts so they move with it. Returns [parent, object] pairs to remove later.
-// Per-critter fit: body centre / radius / scale, head radius, and whether ears poke through hats.
-const COS_FIT = {
-  // ey/ez/es/er: where the eyes sit on the head (height, depth, half-spacing, size) for the sunglasses
-  rabbit:{ by:0.48, bz:0,     r:0.3,  s:[1,1.05,0.9],  hr:0.3,  hy:0,    earsOut:true,  ey:0.05,  ez:0.285, es:0.12, er:0.085 },
-  raccoon:{by:0.48, bz:0,     r:0.31, s:[1.05,1,0.95], hr:0.29, hy:0,    earsOut:false, ey:0.045, ez:0.3,   es:0.12, er:0.08 },
-  goose:{  by:0.46, bz:-0.02, r:0.33, s:[1,0.85,1.2],  hr:0.17, hy:0.02, earsOut:true,  ey:0.05,  ez:0.18,  es:0.085,er:0.065 },
-  possum:{ by:0.47, bz:0,     r:0.3,  s:[1,0.95,1.05], hr:0.25, hy:0,    earsOut:false, ey:0.06,  ez:0.275, es:0.11, er:0.08 },
-};
-const COS_COL = { denim:0x4D6A94, denimS:0x37506F, denimL:0x7C95B8, brass:0xE0A93A, pants:0x8A5A34, pantsS:0x5E3A22, belt:0x3A2A1E,
-  straw:0xE6C77A, strawS:0xB8944C, band:0xC23B2E, boot:0xD23A2A, bootS:0x8E2018, sole:0x2E2228, bone:0xEFE6D2, boneS:0xC9BBA0, crack:0x5A4A3E,
-  lens:0x1B1E2B, frame:0x2A2430, glint:0xBFE6FF, cap:0x3E7CC9, capS:0x2A5A99, capL:0x8FC0EE };
-function addCosmetic(P,key,id){
-  const out=[], f=COS_FIT[key], C=COS_COL;
-  if(!id||id==='none'||!COSMETICS[id]) return out;
-  if((id==='hat'||id==='bluehat')&&P.extra.crown) P.extra.crown.visible=false; // a hat replaces the fantasy headgear
-  const grp=parent=>{ const g=new THREE.Group(); parent.add(g); out.push([parent,g]); return g; };
-  // the lower half of a slightly larger body shell: shorts/trouser seat that hugs the round body
-  const seat=(g,col,from)=>{ const geo=G('seat'+from,()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,Math.PI*from,Math.PI*(1-from)));
-    const m=M(geo,col,0,f.by,f.bz,g); m.scale.set(f.r*f.s[0]*1.07,f.r*f.s[1]*1.07,f.r*f.s[2]*1.07); return m; };
-  const legTubes=(col,cuff)=>{ for(const leg of [P.legL,P.legR]){ const g=grp(leg); M(CYL(0.085,0.08,0.13,8),col,0,-0.03,0,g); if(cuff) M(CYL(0.095,0.095,0.035,8),cuff,0,-0.09,0,g); } };
-  const front=f.r*f.s[2]*0.93+f.bz;
-  if(id==='overalls'){
-    const g=grp(P.B); seat(g,C.denim,0.5);
-    const bib=M(BOX(0.26,0.2,0.04),C.denim,0,f.by+0.07,front,g); bib.rotation.x=-0.18;
-    M(BOX(0.1,0.06,0.02),C.denimS,0,f.by+0.06,front+0.025,g,false); // bib pocket
-    for(const sx of [-1,1]){
-      const st=M(BOX(0.05,0.035,f.r*f.s[2]*1.75),C.denimS,sx*0.1,f.by+f.r*f.s[1]*0.8,f.bz,g); st.rotation.x=0.05;
-      M(ICO(0.03,0),C.brass,sx*0.1,f.by+0.16,front+0.01,g,false); }
-    legTubes(C.denim,C.denimL);
-  } else if(id==='pants'){
-    const g=grp(P.B); seat(g,C.pants,0.55);
-    const belt=M(CYL(1,1,0.05,14),C.belt,0,f.by+0.015,f.bz,g); belt.scale.set(f.r*f.s[0]*1.06,1,f.r*f.s[2]*1.06);
-    M(BOX(0.08,0.06,0.03),C.brass,0,f.by+0.015,front+0.02,g,false);
-    legTubes(C.pants,C.pantsS);
-  } else if(id==='hat'){
-    const g=grp(P.head), hr=f.hr; g.position.set(0,f.hy+hr*0.62,0); g.rotation.set(-0.12,0,0.12);
-    M(CYL(hr*1.75,hr*1.85,0.035,14),C.straw,0,0,0,g);
-    M(CYL(hr*0.78,hr*0.88,hr*0.55,12),C.straw,0,hr*0.28,0,g);
-    M(CYL(hr*0.9,hr*0.9,0.05,12),C.band,0,0.045,0,g,false);
-    M(CYL(hr*0.7,hr*0.78,0.03,12),C.strawS,0,hr*0.56,0,g,false); // crown top weave
-    if(!f.earsOut) for(const e of P.ears) e.visible=false;
-  } else if(id==='boots'){
-    for(const leg of [P.legL,P.legR]){ const g=grp(leg);
-      M(BOX(0.2,0.12,0.32),C.boot,0,-0.13,0.06,g); M(BOX(0.215,0.035,0.34),C.sole,0,-0.195,0.06,g);
-      M(CYL(0.095,0.09,0.15,8),C.boot,0,-0.03,0,g); M(CYL(0.11,0.11,0.04,8),C.bootS,0,0.05,0,g,false);
-      M(ICO(0.05,0),C.boot,0,-0.1,0.2,g).scale.set(1.6,1,1); }
-  } else if(id==='shades'){ // oversized round sunglasses: dark lenses, chunky frame, a sky glint on each lens
-    const g=grp(P.head), lr=f.er*1.55; g.position.set(0,f.ey,f.ez+0.02);
-    for(const sx of [-1,1]){
-      const rim=M(CYL(lr*1.12,lr*1.12,0.03,14),C.frame,sx*f.es*1.08,0,0,g); rim.rotation.x=Math.PI/2;
-      const lens=M(CYL(lr,lr,0.035,14),C.lens,sx*f.es*1.08,0,0.006,g,false); lens.rotation.x=Math.PI/2;
-      const gl=M(BOX(lr*0.5,lr*0.16,0.01),C.glint,sx*f.es*1.08-lr*0.25,lr*0.4,0.026,g,false); gl.rotation.z=0.5;
-      const arm=M(BOX(0.025,0.025,f.ez*0.9),C.frame,sx*(f.es*1.08+lr*1.05),0.01,-f.ez*0.45,g,false); arm.rotation.y=sx*0.12; }
-    M(BOX(f.es*0.55,0.03,0.03),C.frame,0,lr*0.35,0.005,g,false);           // bridge
-  } else if(id==='bluehat'){ // a blue baseball cap with the brim to the front
-    const g=grp(P.head), hr=f.hr; g.position.set(0,f.hy+hr*0.42,0); g.rotation.x=-0.18;
-    const crown=M(G('capcrown',()=>new THREE.SphereGeometry(1,14,7,0,Math.PI*2,0,Math.PI/2)),C.cap,0,0,0,g); crown.scale.set(hr*1.04,hr*0.82,hr*1.06);
-    M(CYL(hr*1.05,hr*1.05,0.04,14),C.capS,0,0.01,0,g,false);                // band
-    const brim=M(BOX(hr*1.2,0.03,hr*0.6),C.capS,0,0.04,hr*1.12,g); brim.rotation.x=-0.3;
-    M(BOX(hr*0.34,hr*0.2,0.02),C.capL,0,hr*0.42,hr*0.92,g,false).rotation.x=-0.5; // little front badge
-    M(ICO(0.035,0),C.capS,0,hr*0.84,0,g,false);                            // top button
-    if(!f.earsOut) for(const e of P.ears) e.visible=false;
-  } else if(id==='skull'){
-    // Original design: a bone mask with deep sockets, a muzzle guard, a crest, curled horns and a crack over one brow.
-    const g=grp(P.head);
-    const shell=M(G('skullshell',()=>new THREE.SphereGeometry(1,14,8,0,Math.PI*2,0,Math.PI*0.66)),C.bone,0,0.02,0,g); shell.scale.set(0.4,0.325,0.365);
-    for(const sx of [-1,1]){
-      const so=M(CYL(0.08,0.072,0.03,10),0x1A1520,sx*0.12,0.05,0.33,g,false); so.rotation.set(Math.PI/2,0,0); so.rotation.y=sx*0.38; so.scale.set(1,1,1.2);
-      M(ICO(0.024,0),0xFFF3C8,sx*0.114,0.064,0.352,g,false);                                   // eye glint inside the socket
-      const horn=new THREE.Group(); horn.position.set(sx*0.21,0.24,-0.04); horn.rotation.set(-0.35,0,-sx*0.85); g.add(horn);
-      M(CONE(0.05,0.13,6),C.boneS,0,0.06,0,horn); const tip=M(CONE(0.03,0.09,5),C.bone,0,0.14,0.03,horn,false); tip.rotation.x=0.7;
-      const fang=M(CONE(0.024,0.065,4),C.bone,sx*0.075,-0.155,0.4,g,false); fang.rotation.x=Math.PI; }
-    const muz=M(CONE(0.14,0.23,7),C.bone,0,-0.05,0.35,g); muz.rotation.x=Math.PI/2; muz.scale.set(1,1,0.8);   // muzzle guard
-    for(const sx of [-1,1]) M(BOX(0.024,0.014,0.05),0x1A1520,sx*0.032,0.0,0.42,g,false).rotation.x=0.4;  // nostril slots
-    M(BOX(0.035,0.06,0.3),C.boneS,0,0.33,-0.02,g).rotation.x=0.1;                               // crest
-    const c1=M(BOX(0.02,0.11,0.02),C.crack,0.09,0.22,0.295,g,false); c1.rotation.set(-0.5,0,0.45);
-    const c2=M(BOX(0.016,0.06,0.02),C.crack,0.125,0.17,0.315,g,false); c2.rotation.set(-0.35,0,-0.5);
-    for(const e of P.ears) e.visible=false;
-  }
-  for(const [,o] of out) addOutlines(o,0.02,0.07);
-  return out;
+// ---- Outfit colours (the cosmetics): swap the critter's outfit materials for another cloth + trim pair. No parts are
+// added, so every critter keeps one clean silhouette. Returns a list for removeCosmetic (kept for the callers' shape).
+function setOutfit(P,cloth,trim){
+  const c=outfitMat(cloth,'cloth'), t=outfitMat(trim,'trim'), oc=P.cloth, ot=P.trim;
+  if(c===oc&&t===ot) return;
+  P.root.traverse(o=>{ if(!o.isMesh) return; if(o.material===oc) o.material=c; else if(o.material===ot) o.material=t; });
+  P.cloth=c; P.trim=t;
 }
-function removeCosmetic(P,list){ for(const [p,o] of list) p.remove(o); for(const e of P.ears) e.visible=true; if(P.extra.crown) P.extra.crown.visible=true; }
+function addCosmetic(P,key,id){
+  const o=COSMETICS[id]&&COSMETICS[id].cols; setOutfit(P,...(o||OUTFIT[key])); return [];
+}
+function removeCosmetic(P,list){ setOutfit(P,...OUTFIT[P.key]); }
 const HEDGE_TPL={};
+// Hedges are round storybook topiary: a soft leafy mound (a few overlapping smooth balls on a low dark base) instead of a cube.
+// Player hedges are smaller, sit in a little wooden planter and carry a couple of red berries so you can tell them apart.
 function makeHedgeModel(parent, x, z, player=false){
   const k=player?'p':'s';
-  if(!HEDGE_TPL[k]){ const g=new THREE.Group(), h=player?0.75:0.95, col=player?PAL.sproutS:PAL.hedge;
-    M(BOX(0.92,h,0.92),col,0,h/2,0,g);
-    for(const [a,b] of [[-0.25,-0.25],[0.25,-0.2],[-0.2,0.25],[0.22,0.24],[0,0]]) M(ICO(0.24,0),player?PAL.sprout:PAL.hedgeT,a,h+0.02,b,g);
-    if(player){ M(BOX(0.94,0.08,0.94),PAL.woodS,0,0.04,0,g); for(const s of [-1,1]) M(ICO(0.07,0),PAL.tomato,s*0.3,h*0.7,0.47,g,false); }
+  if(!HEDGE_TPL[k]){ const g=new THREE.Group(), h=player?0.72:0.92, lo=player?PAL.sproutS:PAL.hedge, hi=player?PAL.sprout:PAL.hedgeT;
+    const blob=(r,col,a,y,b,sy=0.9)=>{ M(ICO(r,1),col,a,y,b,g).scale.set(1,sy,1); };
+    M(CYL(0.44,0.46,0.16,10),PAL.hedgeS,0,0.08,0,g);
+    blob(0.42,lo,0,h*0.42,0,0.95);
+    for(const [a,b] of [[-0.2,-0.2],[0.21,-0.18],[-0.18,0.21],[0.2,0.2]]) blob(0.27,lo,a,h*0.5,b);
+    for(const [a,b,r] of [[-0.1,-0.08,0.27],[0.13,0.1,0.24],[0.0,0.12,0.2]]) blob(r,hi,a,h*0.78,b,0.85);
+    if(player){ M(CYL(0.46,0.42,0.14,8),PAL.wood,0,0.07,0,g); M(CYL(0.47,0.47,0.04,8),PAL.woodS,0,0.14,0,g,false);
+      for(const [a,y,b] of [[0.3,h*0.62,0.3],[-0.32,h*0.5,0.26],[0.12,h*0.86,0.32]]) M(ICO(0.06,0),PAL.tomato,a,y,b,g,false); }
     HEDGE_TPL[k]=flattenMeshes(addOutlines(g,0.02,0.2)); }
   const g=HEDGE_TPL[k].clone(); g.position.set(x,0,z); parent.add(g); return g;
 }
@@ -1632,7 +1571,7 @@ class Arena {
     stones.forEach((j,k)=>bed.setMatrixAt(k,tr(0,0.02,tileC(j)))); bed.receiveShadow=true; R.add(bed);
     const slabs=new THREE.InstancedMesh(BOX(0.74,0.06,0.7),mat(0xFFFFFF),stones.length*N); let k=0; const c=new THREE.Color();
     for(const j of stones) for(let i=0;i<N;i++){ slabs.setMatrixAt(k,tr(tileC(i)+rand(-0.05,0.05),0.045,tileC(j)+rand(-0.05,0.05),rand(-0.18,0.18),rand(0.85,1.05)));
-      slabs.setColorAt(k,c.setHex((i+j)%2?PAL.pebble:0x8F8E84)); k++; }
+      slabs.setColorAt(k,c.setHex((i+j)%2?0xB9A988:0xA39477)); k++; }
     slabs.receiveShadow=true; R.add(slabs);
     // decorative seedlings along the ridges (instanced, two parts)
     const sprouts=[]; for(const j of dirtRows) for(let i=0;i<N;i++){ if(PLOTS.some(p=>p[0]===i&&p[1]===j)) continue; if(Math.random()<0.55) sprouts.push(tr(tileC(i)+rand(-0.3,0.3),0.2,tileC(j)+(Math.random()<0.5?-0.2:0.2),rand(0,6),rand(0.7,1.1))); }
@@ -1643,11 +1582,20 @@ class Arena {
     instanceParts([pm(CONE(0.06,0.22,4),PAL.sproutS,0,0.11,0,0,0,0.3), pm(CONE(0.05,0.18,4),PAL.sprout,0.06,0.09,0.02,0,0,-0.4)],tufts,R,false);
   }
   buildFence(){
-    const posts=[], rails=[];
-    for(let k=-8;k<=8;k++){ posts.push(tr(k,0,-8.15),tr(k,0,8.15)); if(k>-8&&k<8) posts.push(tr(-8.15,0,k),tr(8.15,0,k)); }
-    instanceParts([pm(BOX(0.16,0.75,0.16),PAL.wood,0,0.375,0), pm(CONE(0.12,0.14,4),PAL.woodS,0,0.82,0,0,Math.PI/4)],posts,this.root);
-    for(const y of [0.3,0.58]){ rails.push(tr(0,y,-8.15),tr(0,y,8.15),tr(-8.15,y,0,Math.PI/2),tr(8.15,y,0,Math.PI/2)); }
-    instanceParts([pm(BOX(16.3,0.09,0.07),PAL.woodS,0,0,0)],rails,this.root);
+    const posts=[], rails=[], pillars=[], lanterns=[];
+    const isPillar=k=>k===-8||k===0||k===8;
+    for(let k=-8;k<=8;k++){ for(const [x,z] of [[k,-8.15],[k,8.15]]) (isPillar(k)?pillars:posts).push(tr(x,0,z));
+      if(k>-8&&k<8) for(const [x,z] of [[-8.15,k],[8.15,k]]) (isPillar(k)?pillars:posts).push(tr(x,0,z)); }
+    instanceParts([pm(CYL(0.08,0.09,0.72,7),PAL.wood,0,0.36,0), pm(ICO(0.095,1),PAL.woodS,0,0.74,0)],posts,this.root);
+    for(const y of [0.3,0.56]){ rails.push(tr(0,y,-8.15),tr(0,y,8.15),tr(-8.15,y,0,Math.PI/2),tr(8.15,y,0,Math.PI/2)); }
+    instanceParts([pm(BOX(16.3,0.08,0.07),PAL.woodS,0,0,0)],rails,this.root);
+    // mossy stone pillars, each topped by a little lantern (warm glow day and night; a light pool at night)
+    instanceParts([pm(CYL(0.19,0.25,0.95,6),0x9C9484,0,0.475,0),
+      pm(ICO(0.2,1),PAL.hedgeT,0,0.98,0,0,0,0,1.15,0.45,1.15), pm(CYL(0.12,0.13,0.05,8),PAL.woodS,0,1.08,0), pm(CONE(0.15,0.13,8),PAL.woodS,0,1.38,0),
+      pm(CYL(0.018,0.018,0.26,4),PAL.woodS,0.1,1.21,0), pm(CYL(0.018,0.018,0.26,4),PAL.woodS,-0.1,1.21,0)],pillars,this.root);
+    const core=new THREE.InstancedMesh(ICO(0.1,1),toonMat({color:0xFFE29A,emissive:0xFFB84A,emissiveIntensity:0.9}),pillars.length);
+    pillars.forEach((t,i)=>{ _m4.multiplyMatrices(t,tr(0,1.22,0)); _m4.multiply(new THREE.Matrix4().makeScale(1,1.25,1)); core.setMatrixAt(i,_m4); }); this.root.add(core); this.lanternMat=core.material;
+    for(const t of pillars){ _v.setFromMatrixPosition(t); const p=lightPool(this.root,0xFFB84A,1.1,0.06,0.5); p.position.x=_v.x; p.position.z=_v.z; }
   }
   sunflowerParts(h=1.8){ return [pm(CYL(0.045,0.06,h,5),PAL.sproutS,0,h/2,0), pm(BOX(0.28,0.03,0.14),PAL.leaf,0.14,h*0.45,0,0,0,0.4),
     pm(BOX(0.28,0.03,0.14),PAL.leaf,-0.14,h*0.62,0,0,0,-0.4), pm(CYL(0.36,0.36,0.06,9),PAL.corn,0,h+0.05,0.06,1.25,0,0),
@@ -1665,9 +1613,18 @@ class Arena {
     const flowers=[], hedges=[];
     for(let k=-7;k<=7;k+=2){ flowers.push(tr(k+rand(-0.3,0.3),0,-9.1,0.7+rand(-0.3,0.3),rand(0.9,1.25)), tr(-9.1,0,k+rand(-0.3,0.3),0.8,rand(0.9,1.25))); }
     for(let k=-8;k<=8;k+=1.1){ hedges.push(tr(k,0,9.2,0,rand(0.8,1.1)), tr(9.2,0,k,0,rand(0.8,1.1))); }
-    for(let n=0;n<14;n++){ const a=rand(0,6.28), r=rand(11,16); flowers.push(tr(Math.cos(a)*r,0,Math.sin(a)*r,rand(0,6),rand(1,1.4))); }
+    for(let n=0;n<8;n++){ const a=rand(0,6.28), r=rand(11,16); flowers.push(tr(Math.cos(a)*r,0,Math.sin(a)*r,rand(0,6),rand(1,1.4))); }
     instanceParts(this.sunflowerParts(1.8),flowers,this.root);
-    instanceParts([pm(BOX(1.0,0.8,0.9),PAL.hedgeS,0,0.4,0), pm(ICO(0.32,0),PAL.hedge,-0.2,0.82,0), pm(ICO(0.3,0),PAL.hedgeT,0.25,0.78,0.1)],hedges,this.root);
+    instanceParts([pm(CYL(0.46,0.5,0.14,9),PAL.hedgeS,0,0.07,0), pm(ICO(0.45,1),PAL.hedge,0,0.42,0,0,0,0,1.1,0.85,1), pm(ICO(0.3,1),PAL.hedge,-0.25,0.55,0.1),
+      pm(ICO(0.28,1),PAL.hedgeT,0.12,0.75,0.05,0,0,0,1,0.8,1)],hedges,this.root);
+    // toadstools: little clusters of red-capped mushrooms with cream spots, in the grass outside the fence
+    const shrooms=[], spot=[];
+    const put=(x,z,s)=>{ shrooms.push(tr(x,0,z,rand(0,6),s)); };
+    for(let n=0;n<16;n++){ const a=n/16*Math.PI*2+rand(-0.15,0.15), r=rand(9.6,12.5), x=Math.cos(a)*r, z=Math.sin(a)*r;
+      put(x,z,rand(1.0,1.3)); put(x+rand(0.25,0.4),z+rand(-0.3,0.3),rand(0.55,0.75)); if(n%2) put(x-rand(0.2,0.35),z+rand(-0.3,0.3),rand(0.4,0.55)); }
+    const cap=G('shroomcap',()=>new THREE.SphereGeometry(1,10,5,0,Math.PI*2,0,Math.PI*0.5));
+    instanceParts([pm(CYL(0.06,0.08,0.22,7),0xF1E6CC,0,0.11,0), {geo:cap,color:0xD23C2E,m:tr(0,0.2,0).multiply(new THREE.Matrix4().makeScale(0.2,0.14,0.2))},
+      pm(ICO(0.032,0),0xF5EFDC,0.08,0.31,0.07), pm(ICO(0.028,0),0xF5EFDC,-0.06,0.33,-0.06)],shrooms,this.root);
   }
   buildPlots(){
     for(const [i,j,type] of PLOTS){
@@ -1706,8 +1663,13 @@ class Arena {
   }
   buildCentre(){
     const R=this.root;
-    M(CYL(1.0,1.1,0.12,10),PAL.pebbleS,0,0.06,0,R,false); M(CYL(0.8,0.8,0.14,10),PAL.pebble,0,0.07,0,R,false);
-    for(let k=0;k<6;k++){ const a=k/6*Math.PI*2; M(BOX(0.18,0.3,0.18),PAL.pebbleS,Math.cos(a)*1.0,0.15,Math.sin(a)*1.0,R); }
+    M(CYL(1.05,1.15,0.12,12),0x8C7F68,0,0.06,0,R,false); M(CYL(0.85,0.85,0.14,12),0xB9A988,0,0.07,0,R,false);
+    const runeMat=toonMat({color:PAL.mint,emissive:0x4FE0A0,emissiveIntensity:0.7}); this.runeMat=runeMat;
+    const inlay=M(G('inlay',()=>new THREE.TorusGeometry(0.62,0.025,4,32)),runeMat,0,0.145,0,R,false); inlay.rotation.x=Math.PI/2;
+    for(let k=0;k<6;k++){ const a=k/6*Math.PI*2+Math.PI/6, x=Math.cos(a)*1.08, z=Math.sin(a)*1.08, h=k%2?0.36:0.46;
+      const st=M(CYL(0.09,0.14,h,5),0x9C9484,x,h/2,z,R); st.rotation.y=-a;
+      M(ICO(0.1,1),PAL.hedgeT,x,h+0.01,z,R,false).scale.set(1.2,0.45,1.2);                            // moss cap
+      const rn=M(BOX(0.05,h*0.45,0.02),runeMat,x-Math.cos(a)*0.115,h*0.55,z-Math.sin(a)*0.115,R,false); rn.rotation.y=Math.PI/2-a; }
     this.seedLight=new THREE.PointLight(0x8FF5C0,4,5,1.5); this.seedLight.position.set(0,1.0,0); R.add(this.seedLight);
     this.cluster=new THREE.Group(); R.add(this.cluster);
     this.clusterMat=toonMat({color:PAL.seed,emissive:PAL.seedGlow,emissiveIntensity:0.8});
@@ -1770,7 +1732,7 @@ class Arena {
       else p.st[3].position.y=0;
     }
     this.cluster.children.forEach((m,k)=>{ const a=m.userData.a+time*0.9; m.position.set(Math.cos(a)*0.45,0.55+Math.sin(time*2.4+k)*0.1,Math.sin(a)*0.45); m.rotation.y=time*2; });
-    const nk=NIGHT.on?1.25:1; this.clusterMat.emissiveIntensity=(0.45+Math.sin(time*3)*0.12)*nk; this.seedLight.intensity=(2.6+Math.sin(time*3)*0.7)*nk; this.seedLight.distance=NIGHT.on?7:5;
+    const nk=NIGHT.on?1.25:1; this.runeMat.emissiveIntensity=(0.55+Math.sin(time*2)*0.2)*nk; this.lanternMat.emissiveIntensity=NIGHT.on?1.3:0.8; this.clusterMat.emissiveIntensity=(0.45+Math.sin(time*3)*0.12)*nk; this.seedLight.intensity=(2.6+Math.sin(time*3)*0.7)*nk; this.seedLight.distance=NIGHT.on?7:5;
     for(const b of this.bushes){
       if(!b.ripe){ b.t+=dt; const k=b.t/BERRY_REGROW; b.berries.visible=k>0.35; if(k>0.35) b.berries.scale.setScalar(0.4+0.5*(k-0.35)/0.65);
         if(b.t>=BERRY_REGROW){ b.ripe=true; b.pop=0.35; this.setBerryLook(b); } }
@@ -2924,7 +2886,7 @@ class Game {
   renderCosmetics(){
     const k=this.choice, cur=this.cosmetics[k]||'none', box=$('cos-chips'); box.innerHTML='';
     setText($('cos-who'),CHARS[k].name);
-    for(const id of cosmeticsFor(k)){ const b=document.createElement('button'); b.className='chip'+(id===cur?' sel':''); b.textContent=COSMETICS[id].name;
+    for(const id of cosmeticsFor(k)){ const b=document.createElement('button'); b.className='chip'+(id===cur?' sel':''); const cc=COSMETICS[id].cols||OUTFIT[k], sw=document.createElement('i'); sw.className='sw'; sw.style.background=`linear-gradient(135deg,#${cc[0].toString(16).padStart(6,'0')} 0 60%,#${cc[1].toString(16).padStart(6,'0')} 60%)`; b.append(sw,COSMETICS[id].name);
       if(COSMETICS[id].only) b.classList.add('special');
       b.addEventListener('click',e=>{ const kb=!e.detail; if(!kb) e.currentTarget.blur(); audio.init(); audio.play('click'); this.cosmetics[k]=id; this.saveCosmetics();
         const c=this.chars.find(q=>q.key===k); c.setCosmetic(id); this.renderCosmetics(); if(kb){ const sel=box.querySelector('.chip.sel'); if(sel) sel.focus(); } });
@@ -3045,7 +3007,7 @@ class Game {
     this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[];
       c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'normal':this.difficulty);
-      const opts=cosmeticsFor(c.key); c.setCosmetic(c.isPlayer?(this.cosmetics[c.key]||'none'):opts[randi(0,opts.length-1)]); }
+      c.setCosmetic(c.isPlayer?(this.cosmetics[c.key]||'none'):'none'); } // bots wear classic colours
     this.hud.setup(); this.hud.show(true); this.startRound();
   }
   startRound(){
@@ -3466,7 +3428,7 @@ class Online {
   pushRoom(){ if(this.role==='host'&&this.lobby){ this.send({t:'room',...this.lobby}); this.renderRoom(); } }
   maybeStart(){ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return; clearTimeout(this.startT);
     this.startT=setTimeout(()=>{ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return;
-      const cos={}; for(const k of CHAR_ORDER){ const o=cosmeticsFor(k); cos[k]=k===L.host.char?L.host.cos:k===L.guest.char?L.guest.cos:o[randi(0,o.length-1)]; }
+      const cos={}; for(const k of CHAR_ORDER){ cos[k]=k===L.host.char?L.host.cos:k===L.guest.char?L.guest.cos:'none'; }
       L.host.ready=L.guest.ready=false; const cfg={host:L.host.char,guest:L.guest.char,cos,fmt:L.fmt,mode:L.mode,diff:L.diff}; this.send({t:'start',cfg}); this.beginMatch(cfg); },700); }
   backToLobby(){ if(this.inMatch) return; this.game.resetScene(); if(!this.t){ this.openMenu(); return; } const me=this.me(); if(me) me.ready=false; this.pushRoom(); this.showRoom(); }
   // ---------- connection events ----------
