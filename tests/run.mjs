@@ -134,29 +134,6 @@ test('seeds: only spawn in the centre plaza; a hit drops none, a knockout drops 
   noErrors(errors); await ctx.close();
 });
 
-test('rabbit: a paid special shouts HUSS HUSS HUSS with its sound; a special without energy stays quiet; others never chant', async () => {
-  const { page, errors, ctx } = await open('?autoplay');
-  await page.evaluate(() => window.__game.startMatch());
-  await ticks(page, 60);
-  const r = await page.evaluate(() => {
-    const g = window.__game, A = g.chars, au = window.__audio, play = au.play, played = [];
-    au.play = function (n) { played.push(n); return play.apply(this, arguments); };
-    const huss = () => [...document.querySelectorAll('.fl.honk')].filter(e => e.style.display !== 'none' && e.textContent === 'HUSS HUSS HUSS').length;
-    const rab = A.find(c => c.key === 'rabbit'), other = A.find(c => c.key !== 'rabbit');
-    for (const c of [rab, other]) { c.spinT = 0; c.pending = null; }
-    const n = () => played.filter(x => x === 'huss').length;
-    rab.energy = 0; g.weapons.special(rab, null); const broke = huss(), brokeS = n();
-    other.energy = 100; g.weapons.special(other, null); const otherN = huss(), otherS = n();
-    rab.energy = 100; const ok = g.weapons.special(rab, null) !== false; const paid = huss(), paidS = n();
-    au.play = play;
-    return { broke, brokeS, otherN, otherS, ok, paid, paidS };
-  });
-  check(r.broke === 0 && r.brokeS === 0, 'no chant when the Rabbit cannot pay: ' + JSON.stringify(r));
-  check(r.otherN === 0 && r.otherS === 0, 'other critters should not chant: ' + JSON.stringify(r));
-  check(r.ok && r.paid === 1 && r.paidS === 1, 'a paid Rabbit special should show HUSS HUSS HUSS once: ' + JSON.stringify(r));
-  noErrors(errors); await ctx.close();
-});
-
 test('performance: draw calls stay low and nothing leaks during a long fight', async () => {
   const { page, errors, ctx } = await open('?autoplay');
   await page.evaluate(() => window.__game.startMatch());
@@ -186,6 +163,29 @@ test('tutorial: every step can be reached and finished', async () => {
   check(await page.evaluate(() => window.__game.tut.step.id) === 'done', 'tutorial should reach its last step');
   await page.click('#btn-tut-title');
   check(await visible(page, 'title'), 'tutorial exit should return to the title');
+  noErrors(errors); await ctx.close();
+});
+
+test('rabbit: a paid special shouts HUSS HUSS HUSS with its sound; a special without energy stays quiet; others never chant', async () => {
+  const { page, errors, ctx } = await open('?autoplay');
+  await page.evaluate(() => window.__game.startMatch());
+  await ticks(page, 60);
+  const r = await page.evaluate(() => {
+    const g = window.__game, A = g.chars, au = window.__audio, play = au.play, played = [];
+    au.play = function (n) { played.push(n); return play.apply(this, arguments); };
+    const huss = () => [...document.querySelectorAll('.fl.honk')].filter(e => e.style.display !== 'none' && e.textContent === 'HUSS HUSS HUSS').length;
+    const rab = A.find(c => c.key === 'rabbit'), other = A.find(c => c.key !== 'rabbit');
+    for (const c of [rab, other]) { c.spinT = 0; c.pending = null; }
+    const n = () => played.filter(x => x === 'huss').length;
+    rab.energy = 0; g.weapons.special(rab, null); const broke = huss(), brokeS = n();
+    other.energy = 100; g.weapons.special(other, null); const otherN = huss(), otherS = n();
+    rab.energy = 100; const ok = g.weapons.special(rab, null) !== false; const paid = huss(), paidS = n();
+    au.play = play;
+    return { broke, brokeS, otherN, otherS, ok, paid, paidS };
+  });
+  check(r.broke === 0 && r.brokeS === 0, 'no chant when the Rabbit cannot pay: ' + JSON.stringify(r));
+  check(r.otherN === 0 && r.otherS === 0, 'other critters should not chant: ' + JSON.stringify(r));
+  check(r.ok && r.paid === 1 && r.paidS === 1, 'a paid Rabbit special should show HUSS HUSS HUSS once: ' + JSON.stringify(r));
   noErrors(errors); await ctx.close();
 });
 
