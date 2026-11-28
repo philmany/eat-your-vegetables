@@ -122,6 +122,12 @@
       names, banners and the timer; Fredoka (--ui, --num, --body) for buttons, HUD labels and numbers, and reading text.
       html has font-synthesis-weight:none so the single-weight Lilita One is never fake-bolded. HUD numbers use tabular
       figures so the timer and scores do not jiggle.
+  34. Emotes (Nov 28): keys 1-4 (top row or number pad) or the smiley touch button (#t-emo, opens #emo-pick) show a
+      speech bubble beside the critter for EMOTE_SHOW (2 s): Happy, Mad, Sad, Dizzy (EMOTES, cel-shaded SVG faces).
+      EMOTE_CD (5 s) per critter. Game.tryEmote/emote/updateEmotes; the bubble is a .emo span inside each overbar.
+      The touch button sits left of Hedge and is hidden in the tutorial.
+      Online: emote is a wrapped effect ('em'), so host emotes reach the guest; a guest shows its own at once and
+      sends {t:'emo'}, and the host checks the cooldown before showing it. Bots don't emote.
 -->
 <html lang="en">
 <head>
@@ -327,6 +333,15 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .ob b{display:block;height:100%;width:100%}
 .ob .en b{background:#63C8F2}
 .ob.ko{display:none}
+/* Emote bubbles (keys 1-4, or the smiley button on phones): a cream speech bubble beside the critter's head, cel-shaded
+   in three hard bands with a navy outline and a hard drop shadow, a tail pointing back at the critter, a face and a word. */
+.ob .emo{position:absolute;left:calc(100% + 6px);bottom:4px;display:none;align-items:center;gap:5px;padding:4px 10px 4px 5px;border:3px solid var(--navy);border-radius:16px;
+  background:linear-gradient(180deg,#FFFAEA 0 38%,#F5EFDC 38% 74%,#E2D3AE 74% 100%);box-shadow:0 3px 0 var(--navy);transform-origin:0 100%;white-space:nowrap}
+.ob .emo.on{display:flex;animation:emoPop .28s cubic-bezier(.3,1.6,.5,1)}
+.ob .emo::before{content:"";position:absolute;left:-9px;bottom:6px;width:12px;height:12px;background:#E2D3AE;border-left:3px solid var(--navy);border-bottom:3px solid var(--navy);transform:skewY(-35deg) rotate(10deg);border-radius:0 0 0 3px}
+.ob .emo svg{width:30px;height:30px;display:block;flex:none}
+.ob .emo b{font-family:var(--display);font-weight:900;font-size:16px;letter-spacing:.6px;color:var(--navy);line-height:1;padding-top:2px}
+@keyframes emoPop{from{transform:scale(.3) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
 .ob .bty{display:none;align-self:center;font-family:var(--num);font-weight:800;font-size:11px;letter-spacing:0.5px;line-height:1;color:var(--navy);background:var(--corn);padding:2px 6px 1px;margin-bottom:1px;white-space:nowrap;box-shadow:0 0 8px #FFC93C}
 .ob.bounty .bty{display:block;animation:bty 1s infinite alternate}
 @keyframes bty{to{transform:scale(1.1)}}
@@ -567,6 +582,14 @@ body.touch .kb{display:none} body:not(.touch) .tc{display:none}
 #t-full::after{inset:6px;border-radius:9px}
 #t-full .ic{width:46%;height:46%} #t-full .ic .x{display:none} #t-full.is-full .ic .o{display:none} #t-full.is-full .ic .x{display:inline}
 html.standalone #t-full{display:none}
+#t-emo{right:calc(var(--sar) + 124px);bottom:calc(var(--sab) + 160px);width:52px;height:52px;--b1:#FFE08A;--b2:#F2B51E;--b3:#C8861A;filter:none}
+#t-emo::before{border-radius:11px} #t-emo::after{inset:6px;border-radius:9px} #t-emo .cd{inset:6px;border-radius:9px}
+#t-emo .ic{width:56%;height:56%;margin:0}
+#emo-pick{position:absolute;right:calc(var(--sar) + 184px * var(--bz,1));bottom:calc(var(--sab) + 158px * var(--bz,1));display:none;gap:6px;padding:5px;border:3px solid var(--navy);border-radius:16px;pointer-events:auto;
+  background:linear-gradient(180deg,#FFFAEA 0 38%,#F5EFDC 38% 74%,#E2D3AE 74% 100%);box-shadow:0 3px 0 var(--navy)}
+#emo-pick.on{display:flex}
+#emo-pick button{all:unset;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:12px;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+#emo-pick button:active{background:rgba(26,32,48,.15)} #emo-pick svg{width:36px;height:36px}
 /* make room for the pause button and keep HUD text clear of the thumbs */
 body.touch #hud-tr{right:calc(68px / var(--hz,1))}
 body.touch #tut{right:calc(68px / var(--tz,1));top:10px}
@@ -661,6 +684,8 @@ body.touch #mute{display:none}
   <div class="tbtn" id="t-atk" role="button" aria-label="Attack"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 2.5l-1 4.6L9.6 17l-2.6-2.6 9.9-9.9z"/><path d="M4.2 13.6l6.2 6.2-1.6 1.6-1.9-1.9-2.7 2.7-1.4-1.4 2.7-2.7-1.9-1.9z"/></svg><span class="lb">Attack</span></div>
   <div class="tbtn" id="t-pause" role="button" aria-label="Pause"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="4" width="5" height="16"/><rect x="14" y="4" width="5" height="16"/></svg></div>
   <div class="tbtn" id="t-full" role="button" aria-label="Full screen"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path class="o" d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"/><path class="x" d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"/></svg></div>
+  <div class="tbtn" id="t-emo" role="button" aria-label="Emote"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M8 14.5q4 4 8 0"/><path d="M9 9.5v.5M15 9.5v.5"/></svg><i class="cd"></i></div>
+  <div id="emo-pick" role="group" aria-label="Emotes"></div>
 </div>
 <div id="rotate"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><small>EAT YOUR VEGGIES! PLAYS IN LANDSCAPE</small></div>
 
@@ -730,6 +755,7 @@ body.touch #mute{display:none}
       <b>HEDGE</b><span>Above Attack: plant a hedge on the tile you face (20 Energy, max 3)</span>
       <b>TAP</b><span>Tap a ripe plot, a berry bush or a seed and you walk over and grab it</span>
       <b>II</b><span>Pause (top right)</span>
+      <b>EMOTE</b><span>Yellow smiley button left of Hedge: pick Happy, Mad, Sad or Dizzy (one every 5 s)</span>
       <b>LANDSCAPE</b><span>Hold your phone sideways to play</span>
     </div>
     <div class="controls-grid kb">
@@ -739,6 +765,7 @@ body.touch #mute{display:none}
       <b>RIGHT CLICK</b><span>Weapon special (costs Energy)</span>
       <b>E</b><span>Pick up a ripe vegetable (swaps your weapon) or nearby seeds</span>
       <b>Q</b><span>Plant a hedge on the tile you face (20 Energy, max 3)</span>
+      <b>1 2 3 4</b><span>Emote: Happy, Mad, Sad, Dizzy (top row or number pad, one every 5 s)</span>
       <b>SPACE</b><span>Dodge roll (brief invulnerability, 1.5 s cooldown)</span>
       <b>ESC</b><span>Pause</span>
       <b>M</b><span>Mute / unmute</span>
@@ -823,6 +850,16 @@ const MOTION_AMP = REDUCED_MOTION?0.4:1, FLAIR = !REDUCED_MOTION;
 // Damped spring used for lean, bank and wobble: it overshoots a little and settles, which reads as weight.
 function spring(o,key,target,k,d,dt){ const v=o[key+'V']+((target-o[key])*k-o[key+'V']*d)*dt; o[key+'V']=v; o[key]+=v*dt; }
 const FINAL_STRETCH = 30; // seconds left in a round when the music turns intense
+// Emotes: keys 1-4 (top row or number pad) or the smiley button on phones. A bubble shows for EMOTE_SHOW seconds, then
+// that critter can't emote again until EMOTE_CD seconds after it started. Faces are small cel-shaded SVGs (three bands, navy ink).
+const EMOTE_SHOW = 2, EMOTE_CD = 5;
+const EMOTES = (()=>{ const N='#1A2030', face=(base,shade,feat)=>`<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="${base}"/><path d="M3.4 17.5A12.7 12.7 0 0 0 28.6 17.5Q16 25 3.4 17.5Z" fill="${shade}"/><ellipse cx="10.5" cy="9" rx="4.2" ry="2.2" fill="#fff" opacity=".55" transform="rotate(-28 10.5 9)"/><g fill="none" stroke="${N}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${feat}</g><circle cx="16" cy="16" r="13" fill="none" stroke="${N}" stroke-width="2.6"/></svg>`;
+  return [
+    {name:'HAPPY', svg:face('#F2B51E','#C8861A',`<path d="M8.5 14q2.5-3.2 5 0M18.5 14q2.5-3.2 5 0"/><path d="M9.5 18.5q6.5 7.5 13 0Z" fill="${N}"/><circle cx="7.5" cy="18" r="1.6" fill="#F27A7A" stroke="none"/><circle cx="24.5" cy="18" r="1.6" fill="#F27A7A" stroke="none"/>`)},
+    {name:'MAD',   svg:face('#E0533F','#A42E20',`<path d="M8 10.5l5.5 3M24 10.5l-5.5 3"/><circle cx="11.5" cy="16" r="1.5" fill="${N}"/><circle cx="20.5" cy="16" r="1.5" fill="${N}"/><path d="M11 23.5q5-4 10 0"/>`)},
+    {name:'SAD',   svg:face('#63C8F2','#3A8FB8',`<path d="M8 13l5-2.5M24 13l-5-2.5"/><circle cx="11.5" cy="16" r="1.5" fill="${N}"/><circle cx="20.5" cy="16" r="1.5" fill="${N}"/><path d="M11.5 23.5q4.5-3.5 9 0"/><path d="M23 18.5q-2.2 3.2 0 4.6q2.2-1.4 0-4.6Z" fill="#E8F8FF" stroke-width="1.4"/>`)},
+    {name:'DIZZY', svg:face('#A9D65E','#6C9A3A',`<path d="M11.5 15.5a1 1 0 1 1 1-1a2.4 2.4 0 1 1-2.4-2.4M20.5 15.5a1 1 0 1 1 1-1a2.4 2.4 0 1 1-2.4-2.4"/><path d="M9.5 22q1.6-2 3.25 0t3.25 0t3.25 0t3.25 0"/>`)},
+  ]; })();
 const MAX_HP = 80, RESPAWN = 4, ROUND_TIME = 150, SEED_GOAL = 12, BUFF_TIME = 10, HEDGE_COST = 20;
 const BASE_SPEED = 4.4, CHAR_R = 0.32;
 // Comeback boost: kept small on purpose so skill still decides most matches.
@@ -1244,6 +1281,11 @@ const touchUI={
     btn('t-roll',{down:()=>{ TOUCH.dodge=true; }});
     btn('t-hedge',{down:()=>{ TOUCH.hedge=true; }});
     btn('t-pause',{up:ok=>{ if(ok&&window.__game){ audio.play('click'); window.__game.togglePause(); } }});
+    // emotes: the smiley button opens a row of four faces; tapping one shows it (and closes the row)
+    { const pick=$('emo-pick');
+      EMOTES.forEach((E,n)=>{ const b=document.createElement('button'); b.type='button'; b.innerHTML=E.svg; b.setAttribute('aria-label','Emote: '+E.name.toLowerCase());
+        b.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); if(window.__game) window.__game.tryEmote(n); pick.classList.remove('on'); }); pick.appendChild(b); });
+      btn('t-emo',{up:ok=>{ if(ok){ audio.play('click'); pick.classList.toggle('on'); } }}); }
     // ---- tap the garden itself: pick up a ripe plot, eat a berry bush, grab a seed ----
     canvas.addEventListener('pointerdown',e=>{ if(e.pointerType!=='touch') return; e.preventDefault(); audio.init(); TOUCH.tap={x:e.clientX,y:e.clientY}; });
     this.rest=rest;
@@ -1295,8 +1337,9 @@ const touchUI={
   goFull(){ if(!TOUCH.on||this.triedFull) return; this.triedFull=true; if(this.canFull()&&!this.isFull()) this.enterFull(); },
   update(g){ // once per frame: show/hide the controls and keep the special/hedge/roll buttons honest
     const show=TOUCH.on&&!g.screen&&(g.state==='playing'||g.state==='countdown'||g.state==='roundEnd')&&!$('hud').classList.contains('hidden');
-    if(show!==this.shown){ this.shown=show; this.el.classList.toggle('on',show); this.setLocked(show); if(!show){ this.rest&&this.rest(); TOUCH.atk=false; TOUCH.aimOn=false; tapRing.visible=false; } }
+    if(show!==this.shown){ this.shown=show; this.el.classList.toggle('on',show); this.setLocked(show); if(!show){ $('emo-pick').classList.remove('on'); this.rest&&this.rest(); TOUCH.atk=false; TOUCH.aimOn=false; tapRing.visible=false; } }
     if(!show||!g.player) return; const pl=g.player, W=pl.W, L=this.last;
+    const tut=!!g.tut; if(L.tut!==tut){ L.tut=tut; $('t-emo').style.display=tut?'none':''; if(tut) $('emo-pick').classList.remove('on'); } // no emotes in the tutorial (its banner sits there)
     const short={sword:'LUNGE',kunai:'SPREAD',flail:'SPIN',staff:'SLOW',shield:'BULWARK'}[pl.weapon]||'SPECIAL';
     if(L.sp!==short){ L.sp=short; $('t-sp-n').textContent=short; }
     const spMiss=clamp(1-pl.energy/W.spCost,0,1), hMiss=clamp(1-pl.energy/HEDGE_COST,0,1), roll=clamp((pl.dodgeCd||0)/1.5,0,1);
@@ -2763,8 +2806,8 @@ class HUD {
       bc.appendChild(d); this.sp.push({c,el:d,bar:d.querySelector('.hb b'),cd:d.querySelector('.cd'),sd:d.querySelector('.sd'),bf:d.querySelector('.bf'),last:{}}); }
     const ob=$('overbars'); ob.innerHTML=''; this.ob=[];
     for(const c of g.chars){ const d=document.createElement('div'); d.className='ob';
-      d.innerHTML='<span class="bty">★ BOUNTY</span><i class="hp"><b></b></i><i class="en"><b></b></i>'; ob.appendChild(d);
-      this.ob.push({c,el:d,hp:d.querySelector('.hp b'),en:d.querySelector('.en b'),last:{}}); }
+      d.innerHTML='<span class="bty">★ BOUNTY</span><i class="hp"><b></b></i><i class="en"><b></b></i><span class="emo" role="status"></span>'; ob.appendChild(d);
+      this.ob.push({c,el:d,hp:d.querySelector('.hp b'),en:d.querySelector('.en b'),emo:d.querySelector('.emo'),last:{}}); c.emoT=0; c.emoCd=0; c.emo=-1; }
     this.renderWins();
   }
   updateOverbars(){ // small health + energy bars over every critter's head
@@ -3052,6 +3095,7 @@ class Game {
         else this.togglePause(); return; }
       if(e.code==='KeyM'){ audio.init(); audio.setMuted(!audio.muted); $('mute').classList.toggle('hidden',!audio.muted); }
       if(e.code==='KeyF') $('fps').classList.toggle('hidden');
+      const em=/^(?:Digit|Numpad)([1-4])$/.exec(e.code); if(em&&!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName||'')) this.tryEmote(+em[1]-1);
     });
     addEventListener('keydown',()=>audio.init(),{once:true});
   }
@@ -3087,6 +3131,22 @@ class Game {
     if(this.view!==1){ this.view=1; this.applyNight(); } for(const c of this.chars) c.remote=false;
     this.weapons.clear(); this.seeds.reset(); this.arena.resetForRound(); this.fx.clearFloats(); this.cb={team:-1,bounty:-1,seedT:0}; this.placeTitleChars(); }
   get online(){ return !!(this.net&&this.net.inMatch); }
+  // ---------- emotes ----------
+  // The player asks for emote e (0 Happy, 1 Mad, 2 Sad, 3 Dizzy). Returns false while the 5 s cooldown runs or outside a match.
+  // Online: the host shows it (and it reaches the guest with the other effects); a guest shows it at once and tells the host.
+  tryEmote(e){ const pl=this.player;
+    if(!pl||!EMOTES[e]||this.tut||this.screen||this.paused||!['playing','countdown','roundEnd'].includes(this.state)||pl.emoCd>0) return false;
+    pl.emoCd=EMOTE_CD; const i=this.chars.indexOf(pl);
+    if(this.online&&this.net.role==='guest'){ NET.mode='local'; try{ this.emote(i,e); } finally { NET.mode='both'; } this.net.send({t:'emo',e}); }
+    else this.emote(i,e);
+    audio.play('click'); $('emo-pick').classList.remove('on'); return true; }
+  emote(i,e){ const c=this.chars[i], o=this.hud.ob&&this.hud.ob[i], E=EMOTES[e]; if(!c||!o||!E) return;
+    c.emo=e; c.emoT=EMOTE_SHOW; o.emo.innerHTML=E.svg+'<b>'+E.name+'</b>'; o.emo.setAttribute('aria-label',CHARS[c.key].name+': '+E.name.toLowerCase());
+    o.emo.classList.remove('on'); void o.emo.offsetWidth; o.emo.classList.add('on'); }
+  updateEmotes(dt){ const ob=this.hud.ob; if(!ob) return;
+    this.chars.forEach((c,i)=>{ if(c.emoCd>0) c.emoCd=Math.max(0,c.emoCd-dt);
+      if(c.emoT>0){ c.emoT-=dt; if(c.emoT<=0){ c.emoT=0; c.emo=-1; if(ob[i]) ob[i].emo.classList.remove('on'); } } });
+    if(TOUCH.on&&this.player){ const p=Math.round((this.player.emoCd||0)/EMOTE_CD*100), b=$('t-emo'); if(b._p!==p){ b._p=p; b.style.setProperty('--p',p); b.classList.toggle('off',p>0); } } }
   // Online Play: the host runs the real match; the guest (role 'guest') only draws snapshots, from the mirrored side.
   startOnline(cfg,role){
     this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0];
@@ -3265,7 +3325,7 @@ class Game {
     }
     renderer.render(scene,camera);
     if(this.screen==='select') this.renderPreview(dt);
-    if(this.state!=='title'&&this.state!=='results'&&this.player){ this.hud.update(dt); this.hud.updateOverbars(); }
+    if(this.state!=='title'&&this.state!=='results'&&this.player){ this.hud.update(dt); this.hud.updateOverbars(); this.updateEmotes(dt); }
     this.fx.updateFloats(dt);
   }
 }
@@ -3426,6 +3486,7 @@ class Online {
     W(g.hud,'showBanner','bn',([h,d=1.6])=>[h,d]);
     W(g.hud,'flashSeeds','fs',([t])=>[t]);
     W(g,'shake','sh',([a])=>[a]);
+    W(g,'emote','em',([i,e])=>[i,e]);
   }
   replay(ev){ const g=this.game, [k,...a]=ev; NET.mode='local';
     try{ if(k==='b') g.fx.burst(new V3(a[0],a[1],a[2]),a[3],a[4],a[5],a[6],a[7]);
@@ -3434,7 +3495,8 @@ class Online {
       else if(k==='sp'){ g.splash(String(a[0])); if(a[0]==='FIGHT!') setTimeout(()=>{ if(g.state!=='countdown') $('splash').classList.add('hidden'); },700); }
       else if(k==='bn') g.hud.showBanner(String(a[0]),a[1]);
       else if(k==='fs') g.hud.flashSeeds(a[0]);
-      else if(k==='sh') g.shake(a[0]); } catch(e){} finally { NET.mode='both'; } }
+      else if(k==='sh') g.shake(a[0]);
+      else if(k==='em'){ const c=g.chars[a[0]]; if(!(c&&c.isPlayer&&c.emoT>0&&c.emo===a[1])) g.emote(a[0],a[1]); } } catch(e){} finally { NET.mode='both'; } }
   // ---------- lobby UI ----------
   bindUI(){
     const click=(id,fn)=>$(id).addEventListener('click',e=>{ if(e.detail) e.currentTarget.blur(); audio.init(); audio.play('click'); fn(); });
@@ -3557,6 +3619,7 @@ class Online {
       if(m.t==='hi'){ if(m.v!==NET_PROTO){ this.send({t:'old'},from); return; } this.pushRoom(); }
       else if(m.t==='pick'&&this.guestChoices().includes(m.char)&&!this.inMatch){ G.char=m.char; G.cos=cosmeticsFor(m.char).includes(m.cos)?m.cos:'none'; G.ready=false; this.pushRoom(); }
       else if(m.t==='ready'&&!this.inMatch){ G.ready=!!m.on; this.pushRoom(); this.maybeStart(); }
+      else if(m.t==='emo'&&this.inMatch&&Number.isInteger(m.e)&&EMOTES[m.e]){ const g=this.game, i=g.chars.findIndex(x=>x.remote), c=g.chars[i]; if(c&&!(c.emoCd>0)){ c.emoCd=EMOTE_CD; g.emote(i,m.e); } }
       else if(m.t==='in'&&this.inMatch&&Array.isArray(m.i)){ const c=this.game.chars.find(x=>x.remote); if(c&&c.controller instanceof RemoteController) c.controller.push(m.i); }
       return; }
     // guest
