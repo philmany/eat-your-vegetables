@@ -238,6 +238,13 @@ test('online (two tabs): host, join, ready, play, and the guest leaving hands ov
   await H.page.waitForTimeout(5000);
   const st = await G.page.evaluate(() => window.__game.state);
   check(st === 'playing' || st === 'countdown', 'guest should be in the match, state ' + st);
+  // emotes cross over: the host's reaches the guest, the guest's reaches the host
+  check(await H.page.evaluate(() => window.__game.tryEmote(0)), 'host should be able to emote');
+  const hostIdx = await H.page.evaluate(() => window.__game.chars.indexOf(window.__game.player));
+  await G.page.waitForFunction(i => window.__game.hud.ob[i].emo.textContent === 'HAPPY', hostIdx, { timeout: 5000 });
+  check(await G.page.evaluate(() => window.__game.tryEmote(2)), 'guest should be able to emote');
+  const guestIdx = await G.page.evaluate(() => window.__game.chars.indexOf(window.__game.player));
+  await H.page.waitForFunction(i => window.__game.hud.ob[i].emo.textContent === 'SAD', guestIdx, { timeout: 5000 });
   // junk packets must not throw
   await H.page.evaluate(() => { const n = window.__game.net; n.onMsg(null, 'x'); n.onMsg({ t: 'in', i: 'nope' }, 'x'); n.onMsg({ t: 's' }, 'x'); });
   await G.page.evaluate(() => { const n = window.__game.net; n.onMsg({ t: 's', c: [1] }, 'host'); n.onMsg({ t: 'start', cfg: { host: 'nobody' } }, 'host'); n.onMsg({ t: 'room', v: 3, host: null }, 'host'); });
@@ -265,7 +272,7 @@ const PHONES = [[568, 320], [667, 375], [740, 300], [800, 360], [844, 330], [844
 const layoutProblems = page => page.evaluate(() => {
   const shown = e => { if (!e) return false; for (let x = e; x; x = x.parentElement) { const cs = getComputedStyle(x); if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return false; } const q = e.getBoundingClientRect(); return q.width > 0 && q.height > 0; };
   const rect = e => { if (e.id === 'banner') { const r = document.createRange(); r.selectNodeContents(e); return r.getBoundingClientRect(); } return e.getBoundingClientRect(); };
-  const ids = ['hud-tl', 'slabel', 'sc0', 'sc1', 'hud-tr', 'hud-bc', 'hint', 'banner', 'tut', 't-roll', 't-hedge', 't-sp', 't-atk', 't-pause', 't-full', 'stick'];
+  const ids = ['hud-tl', 'slabel', 'sc0', 'sc1', 'hud-tr', 'hud-bc', 'hint', 'banner', 'tut', 't-roll', 't-hedge', 't-sp', 't-atk', 't-pause', 't-full', 't-emo', 'stick'];
   const els = ids.map(id => document.getElementById(id)).concat([document.querySelector('#toasts>.toast:last-child')]).filter(e => shown(e) && (e.textContent.trim() || e.closest('#touch')));
   const name = e => e.id || 'toast', out = [], W = innerWidth, H = innerHeight;
   const boxes = els.map(e => [name(e), rect(e)]);
@@ -423,6 +430,34 @@ test('accessibility: no serious axe-core issues on the menus', async () => {
   }
   check(problems.length === 0, 'axe-core found:\n  ' + problems.join('\n  '));
   noErrors(errors); await ctx.close();
+});
+
+test('emotes: keys 1-4 show a bubble for 2 s, then a 5 s cooldown; the touch button works too', async () => {
+  const { page, errors, ctx } = await open();
+  await page.evaluate(() => window.__game.startMatch()); await ticks(page, 240);
+  // stop the page's own frame loop so only this test moves the emote clock
+  await page.evaluate(() => { window.requestAnimationFrame = () => 0; }); await page.waitForTimeout(100);
+  const bubble = () => page.evaluate(() => { const g = window.__game, i = g.chars.indexOf(g.player), el = g.hud.ob[i].emo;
+    return el.classList.contains('on') && getComputedStyle(el).display !== 'none' ? el.textContent : ''; });
+  const wait = s => page.evaluate(s => { const g = window.__game; for (let k = 0; k < Math.round(s * 20); k++) g.updateEmotes(0.05); }, s);
+  await page.keyboard.press('Digit1'); check(await bubble() === 'HAPPY', 'key 1 should show Happy, got ' + JSON.stringify(await bubble()));
+  await page.keyboard.press('Digit2'); check(await bubble() === 'HAPPY', 'a second emote right away should be blocked by the cooldown');
+  await wait(2.1); check(await bubble() === '', 'the bubble should be gone after 2 s');
+  await wait(2.7); check(!(await page.evaluate(() => window.__game.tryEmote(1))), 'still cooling down at 4.8 s');
+  await wait(0.3);
+  await page.keyboard.press('Numpad3'); check(await bubble() === 'SAD', 'number pad 3 should show Sad after the 5 s cooldown');
+  await wait(5.1); await page.keyboard.press('Digit4'); check(await bubble() === 'DIZZY', 'key 4 should show Dizzy');
+  // the bot critters never emote on their own
+  check(await page.evaluate(() => window.__game.chars.filter(c => !c.isPlayer).every(c => c.emo === -1)), 'bots should not emote');
+  noErrors(errors); await ctx.close();
+  // phone: the smiley button opens the faces, one tap emotes and closes the row
+  const t = await open('?touch', { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  await t.page.evaluate(() => window.__game.startMatch()); await ticks(t.page, 240); await t.page.waitForTimeout(100);
+  await t.page.locator('#t-emo').tap(); check(await t.page.locator('#emo-pick').isVisible(), 'the emote row should open');
+  await t.page.locator('#emo-pick button').nth(1).tap();
+  check(!(await t.page.locator('#emo-pick').isVisible()), 'the emote row should close after a pick');
+  check(await t.page.evaluate(() => { const g = window.__game; return g.hud.ob[g.chars.indexOf(g.player)].emo.textContent; }) === 'MAD', 'tapping the second face should show Mad');
+  noErrors(t.errors); await t.ctx.close();
 });
 
 test('screenshots of every screen (with --shots)', async () => {
