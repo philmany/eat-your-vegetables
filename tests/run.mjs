@@ -18,6 +18,8 @@ const ARGS = process.argv.slice(2);
 const SHOTS = ARGS.includes('--shots');
 const ONLY = (ARGS.find(a => a.startsWith('--only=')) || '').slice(7);
 const ORIGIN = 'http://game.test/';
+// Every cosmetic id, read from the game so the warm-up in the performance test stays in step when cosmetics are added.
+const COS_IDS = JSON.parse(fs.readFileSync(GAME, 'utf8').match(/const COS_ORDER=(\[[^\]]*\])/)[1].replace(/'/g, '"'));
 
 let browser;
 const live = new Set(); // every context a test opens is closed after the test, pass or fail
@@ -34,8 +36,12 @@ async function route(ctx) {
   });
 }
 // Open the game; returns {page, errors}. Any page error or console error fails the test at the end.
+// ctxOpts.seed (a number) swaps Math.random for a seeded generator in that page, so a test sees the same random rolls every run.
 async function open(query = '', ctxOpts = {}, ctx) {
-  if (!ctx) { ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, ...ctxOpts }); live.add(ctx); await route(ctx); }
+  const { seed, ...opts } = ctxOpts;
+  if (!ctx) { ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, ...opts }); live.add(ctx); await route(ctx); }
+  if (seed != null) await ctx.addInitScript(s => { Math.random = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }, seed);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
@@ -44,7 +50,9 @@ async function open(query = '', ctxOpts = {}, ctx) {
   // doesn't need (fonts, icons); on GitHub's runners the second tab of the online test sometimes never fired it within 30 s.
   // If that happens, the requests still open are printed so the cause shows up in the log instead of a bare timeout.
   const open_ = new Map(); page.on('request', r => open_.set(r, r.url())); for (const ev of ['requestfinished', 'requestfailed']) page.on(ev, r => open_.delete(r));
-  await page.goto(ORIGIN + query, { waitUntil: 'domcontentloaded' });
+  // Only wait for the navigation to commit: the readiness check below (60 s) is the real gate. Waiting for DOMContentLoaded
+  // with goto's 30 s cap was the step that timed out on GitHub's runners when a second tab loaded next to a busy first one.
+  await page.goto(ORIGIN + query, { waitUntil: 'commit', timeout: 60000 });
   await page.waitForFunction(() => window.__game && document.getElementById('loading').classList.contains('hidden'), null, { timeout: 60000 })
     .catch(e => { throw new Error('game never finished loading; requests still open: ' + ([...open_.values()].join(', ') || 'none') + '\n' + e.message); });
   page.waitForLoadState('load', { timeout: 15000 }).catch(() => { if (!page.isClosed()) console.log('      note: page load event still pending after 15 s; open requests: ' + ([...open_.values()].join(', ') || 'none')); });
@@ -56,6 +64,7 @@ const visible = (page, id) => page.evaluate(id => !document.getElementById(id).c
 function check(cond, msg) { if (!cond) throw new Error(msg); }
 function noErrors(errors) { check(errors.length === 0, 'browser errors:\n  ' + errors.join('\n  ')); }
 
+const GEO_SLACK = 12;
 const tests = [];
 const test = (name, fn) => tests.push({ name, fn });
 
@@ -135,19 +144,28 @@ test('seeds: only spawn in the centre plaza; a hit drops none, a knockout drops 
 });
 
 test('performance: draw calls stay low and nothing leaks during a long fight', async () => {
-  const { page, errors, ctx } = await open('?autoplay');
+  // Deterministic run: a seeded Math.random fixes the bots' random cosmetics, arena scatter and every fight roll, so the
+  // numbers are the same every run instead of depending on which cosmetics the bots happened to pick.
+  const { page, errors, ctx } = await open('?autoplay', { seed: 12345 });
   await page.evaluate(() => window.__game.startMatch());
-  await ticks(page, 60 * 20);
+  // Warm-up: the game builds and caches geometry the first time something is used (each cosmetic on each critter, each
+  // projectile and effect), then reuses it. Put every cosmetic on every critter and play a few rounds first, so the
+  // baseline below already holds the one-time geometry and any growth after it is a real leak.
+  await page.evaluate(ids => { const g = window.__game;
+    // setCosmetic skips ids a critter can't wear
+    for (const c of g.chars) { for (const id of ids) { c.setCosmetic(id); g.render(1 / 60); } c.setCosmetic('none'); } }, COS_IDS);
+  const round = async () => { await ticks(page, 60 * 15); await page.evaluate(() => { const g = window.__game; if (g.state === 'results') g.startMatch(); }); };
+  for (let k = 0; k < 5; k++) await round();
   const at = () => page.evaluate(() => { const g = window.__game; g.render(1 / 60); const i = window.__renderer.info;
     let objs = 0; g.arena.root.parent.traverse(() => objs++);
     return { calls: i.render.calls, geos: i.memory.geometries, objs, proj: g.weapons.proj.length }; });
   const a = await at();
-  for (let k = 0; k < 6; k++) { await ticks(page, 60 * 15); await page.evaluate(() => { const g = window.__game; if (g.state === 'results') g.startMatch(); }); }
+  for (let k = 0; k < 6; k++) await round();
   const b = await at();
   console.log('      draw calls', a.calls, '->', b.calls, '| geometries', a.geos, '->', b.geos, '| scene objects', a.objs, '->', b.objs);
   check(b.calls < 450, 'too many draw calls in a match: ' + b.calls);
   check(b.objs - a.objs < 150, 'scene objects keep growing: ' + a.objs + ' -> ' + b.objs);
-  check(b.geos - a.geos < 25, 'GPU geometries keep growing: ' + a.geos + ' -> ' + b.geos);
+  check(b.geos - a.geos < GEO_SLACK, 'GPU geometries keep growing: ' + a.geos + ' -> ' + b.geos);
   noErrors(errors); await ctx.close();
 });
 
