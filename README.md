@@ -4,6 +4,8 @@ A 2v2 garden brawl in the browser. Pick a vegetable-loving critter, team up with
 
 **Play it:** https://philmany.github.io/eat-your-vegetables/
 
+![Eat Your Veggies! gameplay: a 2v2 garden brawl with Seed Surge HUD](docs/screens/gameplay-preview.png)
+
 ## How to play
 
 Every 12 seeds triggers a **Seed Surge** (speed and attack-speed buff). Rounds are 2:30, best of 3. Berry bushes heal. Pick a mode on the title screen or in the online lobby:
