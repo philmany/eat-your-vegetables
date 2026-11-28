@@ -115,14 +115,17 @@
   32. Cosmetics choice restored (Nov 28): Philman wanted cosmetics to be picked again, so the critter half of note 31
       is reverted. buildCharacter and fantasyGear are back to the PR 20 fantasy critters (capes, pauldron, gems, circlet,
       hood, horned helm, wizard hat in P.extra.crown), and the add-on cosmetics are back (overalls, pants, straw hat, blue
-      hat, big red boots, sunglasses, skull helmet), one per critter, bots pick at random. A hat still hides P.extra.crown.
+      hat, big red boots, sunglasses, skull helmet), one per critter, bots pick at random.
       The outfit colours (setOutfit, OUTFIT) are gone; saved outfit colour picks fall back to NONE. The rest of note 31
       stays: weapon fittings (FG), arena, rounded menus and HUD.
-  33. Game font (Nov 28): Grandstander is replaced by two Google Fonts. Lilita One (--display) for the logo, headings,
+  33. Plain critters (Nov 28): Philman did not want the knight/rogue/berserker/wizard theme, so fantasyGear (capes,
+      pauldron, cowl, breastplate, mantle, gems, circlet, hood, horned helm, wizard hat; P.extra.crown) and the goose's
+      red scarf are removed. The critters are just the animals; the only thing worn is the cosmetic the player picks.
+  34. Game font (Nov 28): Grandstander is replaced by two Google Fonts. Lilita One (--display) for the logo, headings,
       names, banners and the timer; Fredoka (--ui, --num, --body) for buttons, HUD labels and numbers, and reading text.
       html has font-synthesis-weight:none so the single-weight Lilita One is never fake-bolded. HUD numbers use tabular
       figures so the timer and scores do not jiggle.
-  34. Emotes (Nov 28): keys 1-4 (top row or number pad) or the smiley touch button (#t-emo, opens #emo-pick) show a
+  35. Emotes (Nov 28): keys 1-4 (top row or number pad) or the smiley touch button (#t-emo, opens #emo-pick) show a
       speech bubble beside the critter for EMOTE_SHOW (2 s): Happy, Mad, Sad, Dizzy (EMOTES, cel-shaded SVG faces).
       EMOTE_CD (5 s) per critter. Game.tryEmote/emote/updateEmotes; the bubble is a .emo span inside each overbar.
       The touch button sits left of Hedge and is hidden in the tutorial.
@@ -1383,58 +1386,6 @@ function eyes(parent,y,z,sep,r=0.085,tilt=0,iris=PAL.navy){
     const b=M(CYL(r*0.6,r*0.6,0.02,10),0xF58FB0,s*(sep+r*0.55),y-r*1.35,z-0.025,parent,false); b.rotation.x=Math.PI/2; b.rotation.y=s*0.5; b.scale.set(1,1,0.6);
   }
 }
-// Fantasy gear: each critter is a little storybook adventurer (knight, rogue, berserker, hedge wizard), added on top of
-// the round body so the cosmetics still fit. Capes hang from the shoulders at the back; gems glow softly.
-function fantasyGear(P,key){
-  const B=P.B, gold=0xE9B949, goldS=0xB88426;
-  const crown=()=>{ const g=new THREE.Group(); P.head.add(g); P.extra.crown=g; return g; };
-  const gem=(col,x,y,z,parent=B,r=0.04)=>M(new THREE.OctahedronGeometry(r,0),col,x,y,z,parent,false,{emissive:col,emissiveIntensity:0.55});
-  const cape=(col,trim,w=0.44,h=0.46,y0=0.78)=>{ const g=new THREE.Group(); g.position.set(0,y0,-0.24); g.rotation.x=0.22; B.add(g);
-    M(BOX(w,h,0.035),col,0,-h/2,0,g); M(BOX(w*1.02,0.05,0.04),trim,0,-h+0.02,0,g,false);
-    for(const sx of [-1,1]) M(ICO(0.045,0),gold,sx*w*0.42,-0.01,0.03,g,false); return g; };
-  if(key==='rabbit'){ // Carrot Knight: short leaf-green cape, one round silver pauldron, a chest strap with a sun gem
-    cape(0x3E6B3A,gold,0.44,0.34,0.8);
-    const pd=M(ICO(0.13,1),0xC9CFDA,0.27,0.66,0,B); pd.scale.set(1,0.62,1); M(ICO(0.03,0),gold,0.33,0.7,0.06,B,false);
-    const st=M(BOX(0.05,0.5,0.03),0x7B4832,0.02,0.5,0.255,B,false); st.rotation.z=0.62;
-    gem(0xFFC93C,0,0.52,0.29);
-    const cr=crown(); // a little gold circlet with a sun gem, sitting between the ears
-    const ring=M(CYL(0.2,0.215,0.045,12),gold,0,0.21,0.02,cr); ring.rotation.x=-0.25;
-    for(let i=0;i<3;i++){ const a=(i-1)*0.5; const pk=M(CONE(0.03,0.08,4),gold,Math.sin(a)*0.2,0.27,Math.cos(a)*0.2+0.0,cr); pk.rotation.set(Math.cos(a)*0.3,0,-Math.sin(a)*0.3); }
-    gem(0xFFC93C,0,0.23,0.23,cr,0.04);
-  } else if(key==='raccoon'){ // Shadow Rogue: plum cowl round the neck, short ragged cape, a dagger-bright gem clasp
-    const cw=M(CYL(0.25,0.3,0.12,10),0x5B3A5E,0,0.76,0,B); cw.scale.set(1,1,0.92);
-    M(CYL(0.26,0.26,0.03,10),0x3E2640,0,0.82,0,B,false);
-    const c=cape(0x5B3A5E,0x3E2640,0.46,0.36,0.78);
-    for(const x of [-0.15,0,0.15]){ const t=M(CONE(0.07,0.12,4),0x5B3A5E,x,-0.41,0,c); t.rotation.x=Math.PI; }
-    gem(0x9FF5C8,0,0.72,0.27);
-    const cr=crown(); // a rogue's hood, pushed back behind the ears
-    const hd=M(G('hood',()=>new THREE.SphereGeometry(1,12,7,0,Math.PI*2,0,Math.PI*0.5)),0x5B3A5E,0,-0.04,-0.13,cr); hd.scale.set(0.3,0.3,0.24); hd.rotation.x=-1.9;
-    M(CONE(0.07,0.16,5),0x5B3A5E,0,-0.1,-0.36,cr).rotation.x=-2.4;
-  } else if(key==='goose'){ // Beet Berserker: bronze breastplate, a shaggy fur mantle, a war-paint stripe on the cheek
-    const bp=M(ICO(0.24,1),0xB8763E,0,0.42,0.12,B); bp.scale.set(1.0,0.85,0.7);
-    M(BOX(0.04,0.3,0.03),0x8A5424,0,0.45,0.3,B,false);
-    for(let i=0;i<9;i++){ const a=i/9*Math.PI*2; const t=M(CONE(0.06,0.1,4),0xD9C7A0,Math.sin(a)*0.2,0.66,Math.cos(a)*0.22-0.02,B); t.rotation.set(Math.cos(a)*1.3,0,-Math.sin(a)*1.3); }
-    gem(0xF2493B,0,0.5,0.3);
-    for(const sx of [-1,1]) M(BOX(0.03,0.08,0.02),0xF2493B,sx*0.15,-0.02,0.07,P.head,false).rotation.z=sx*0.3;
-    const cr=crown(); // a little bronze helm with two curled horns
-    const hm=M(G('helm',()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,0,Math.PI*0.5)),0xB8763E,0,0.04,-0.01,cr); hm.scale.set(0.17,0.13,0.2);
-    M(CYL(0.175,0.175,0.03,12),0x8A5424,0,0.045,-0.01,cr,false).scale.set(1,1,1.15);
-    for(const sx of [-1,1]){ const h1=M(CONE(0.045,0.12,6),0xEFE6D2,sx*0.18,0.1,0,cr); h1.rotation.z=-sx*1.0; const h2=M(CONE(0.025,0.08,5),0xEFE6D2,sx*0.24,0.19,0,cr); h2.rotation.z=-sx*0.2; }
-  } else if(key==='possum'){ // Hedge Wizard: midnight star mantle, a glowing mint crystal pendant
-    const mt=M(CYL(0.2,0.32,0.09,12),0x2E3A6B,0,0.74,0,B); mt.scale.set(1,1,0.95);
-    M(CYL(0.325,0.325,0.025,12),gold,0,0.695,0,B,false).scale.set(1,1,0.95);
-    for(let i=0;i<6;i++){ const a=i/6*Math.PI*2+0.3; M(ICO(0.02,0),gold,Math.sin(a)*0.27,0.74,Math.cos(a)*0.26,B,false); }
-    M(CYL(0.008,0.008,0.14,4),gold,0,0.6,0.29,B,false);
-    gem(0x9FF5C8,0,0.52,0.31,B,0.055);
-    const cr=crown(); // a floppy pointed wizard hat with gold stars, tipped to one side
-    const hb=new THREE.Group(); hb.position.set(0,0.2,-0.03); hb.rotation.set(-0.15,0,0.12); cr.add(hb);
-    M(CYL(0.3,0.31,0.025,14),0x2E3A6B,0,0,0,hb);
-    const h1=M(CONE(0.17,0.24,10),0x2E3A6B,0,0.13,0,hb);
-    const h2=M(CONE(0.08,0.17,8),0x2E3A6B,0.05,0.3,-0.06,hb); h2.rotation.set(-0.55,0,-0.5);
-    M(CYL(0.175,0.175,0.035,10),gold,0,0.03,0,hb,false);
-    for(const [x,y,z] of [[0.08,0.11,0.12],[-0.07,0.15,0.1],[0.01,0.21,0.07]]) M(new THREE.OctahedronGeometry(0.025,0),gold,x,y,z,hb,false,{emissive:gold,emissiveIntensity:0.4});
-  }
-}
 // A lumpy potato: a squashed low-poly blob, a couple of bumps and dark "eyes". Used in hand, in flight and in plots.
 function potatoModel(g,s=1){
   M(ICO(0.13*s,1),PAL.potato,0,0,0,g).scale.set(1,0.8,1.3);
@@ -1537,8 +1488,6 @@ function buildCharacter(key){
     M(ICO(0.24,1),belly,0,0.42,0.14,B).scale.set(1,0.9,0.8);
     const tl=M(CONE(0.14,0.28,5),dk,0,0.56,-0.4,B); tl.rotation.x=-1.9;
     const neck=M(CYL(0.075,0.1,0.5,8),dk,0,0.86,0.14,B); neck.rotation.x=0.18;
-    M(CYL(0.13,0.13,0.09,8),PAL.tomato,0,0.68,0.1,B);
-    const sc=M(BOX(0.09,0.22,0.03),PAL.tomato,0.06,0.6,-0.04,B); sc.rotation.z=0.2;
     head.position.set(0,1.14,0.2);
     M(ICO(0.17,1),dk,0,0,0,head).scale.set(0.9,0.9,1.2);
     M(BOX(0.34,0.1,0.12),PAL.white,0,-0.04,-0.01,head,false);
@@ -1571,7 +1520,6 @@ function buildCharacter(key){
     limb(armL,grey,pink); limb(armR,grey,pink);
     M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legL); M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legR);
   }
-  fantasyGear(P,key);
   addOutlines(root);
   // fold each rigid body part into a few meshes (parts that animate on their own, like the goose's beak, stay separate)
   const keep=new Set(Object.values(P.extra)), groups=[]; root.traverse(o=>{ if(o.isGroup) groups.push(o); });
@@ -1595,7 +1543,6 @@ const COS_COL = { denim:0x4D6A94, denimS:0x37506F, denimL:0x7C95B8, brass:0xE0A9
 function addCosmetic(P,key,id){
   const out=[], f=COS_FIT[key], C=COS_COL;
   if(!id||id==='none'||!COSMETICS[id]) return out;
-  if((id==='hat'||id==='bluehat')&&P.extra.crown) P.extra.crown.visible=false; // a hat replaces the fantasy headgear
   const grp=parent=>{ const g=new THREE.Group(); parent.add(g); out.push([parent,g]); return g; };
   // the lower half of a slightly larger body shell: shorts/trouser seat that hugs the round body
   const seat=(g,col,from)=>{ const geo=G('seat'+from,()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,Math.PI*from,Math.PI*(1-from)));
@@ -1663,7 +1610,7 @@ function addCosmetic(P,key,id){
   for(const [,o] of out) addOutlines(o,0.02,0.07);
   return out;
 }
-function removeCosmetic(P,list){ for(const [p,o] of list) p.remove(o); for(const e of P.ears) e.visible=true; if(P.extra.crown) P.extra.crown.visible=true; }
+function removeCosmetic(P,list){ for(const [p,o] of list) p.remove(o); for(const e of P.ears) e.visible=true; }
 const HEDGE_TPL={};
 // Hedges are round storybook topiary: a soft leafy mound (a few overlapping smooth balls on a low dark base) instead of a cube.
 // Player hedges are smaller, sit in a little wooden planter and carry a couple of red berries so you can tell them apart.
