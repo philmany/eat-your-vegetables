@@ -20,6 +20,9 @@ const arg = (k, d) => { const a = ARGS.find(x => x.startsWith('--' + k + '=')); 
 const N = +arg('n', 40), PAR = +arg('par', 4);
 const PLAYERS = arg('players', 'competent,novice,rookie').split(',');
 const DIFFS = arg('diffs', 'easy,normal,hard').split(',');
+// Fixed player profiles, so changing the game's own bot tables never changes "you" (copied from the pre-PR-27 Normal and Easy bots).
+const COMPETENT = { react: 0.3, aim: 0.16, aggr: 0.62, atkDelay: 0.2, dodge: 0.35, special: 0.45, lead: 0.5, hedge: 0.5, think: 0.3, greed: 1, focus: 0.5 };
+const NOVICE = { react: 0.7, aim: 0.5, aggr: 0.3, atkDelay: 0.8, dodge: 0.06, special: 0.12, lead: 0, hedge: 0.15, think: 0.6, greed: 0, focus: 0 };
 const ROOKIE = { label: 'Rookie', react: 1.0, aim: 0.7, aggr: 0.35, atkDelay: 0.9, dodge: 0.03, special: 0.08, lead: 0, hedge: 0.05, think: 0.9, greed: 0, focus: 0 };
 const exe = fs.existsSync('/opt/pw-browsers/chromium') ? { executablePath: '/opt/pw-browsers/chromium' } : {};
 
@@ -35,12 +38,12 @@ async function route(ctx) {
 }
 
 // One match inside the page. Returns {win, rounds:[us,them], ko:[us,them], dmgDealt, dmgTaken}.
-function playMatch({ diff, player, key, mode, ROOKIE }) {
+function playMatch({ diff, player, key, mode, PROFILE }) {
   const g = window.__game, CH = ['rabbit', 'raccoon', 'goose', 'possum'];
   g.difficulty = diff; g.choice = key; g.modeSP = mode; g.startMatch();
   const me = g.player, ally = g.chars.find(c => c !== me && c.team === me.team).controller;
-  me.controller = new ally.constructor(g, me, player === 'competent' ? 'normal' : 'easy'); // the bot brain as "you"
-  if (player === 'rookie') me.controller.p = ROOKIE;
+  me.controller = new ally.constructor(g, me, 'normal'); me.controller.p = PROFILE; // the bot brain as "you"
+  me.maxHp = 80; me.atkMul = 1; me.hp = 80;
   const ko = [0, 0], dmg = [0, 0];
   let t = 0;
   while (g.state !== 'results' && t < 60 * 60 * 20) {
@@ -54,7 +57,7 @@ function playMatch({ diff, player, key, mode, ROOKIE }) {
 
 const jobs = [];
 for (const player of PLAYERS) for (const diff of DIFFS) for (let i = 0; i < N; i++)
-  jobs.push({ ROOKIE, player, diff, key: ['rabbit', 'raccoon', 'goose', 'possum'][i % 4], mode: i % 8 < 4 ? 'seeds' : 'tdm' });
+  jobs.push({ PROFILE: { competent: COMPETENT, novice: NOVICE, rookie: ROOKIE }[player], player, diff, key: ['rabbit', 'raccoon', 'goose', 'possum'][i % 4], mode: i % 8 < 4 ? 'seeds' : 'tdm' });
 
 const browser = await chromium.launch({ ...exe, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const results = [];

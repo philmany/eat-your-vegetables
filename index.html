@@ -860,11 +860,13 @@ const CHAR_ORDER = ['rabbit','raccoon','goose','possum'];
 // Game modes. Seed Surge: most surges wins a round. Team Deathmatch: most knockouts wins (tie: more surges, else a draw).
 const MODES={ seeds:{name:'Seed Surge'}, tdm:{name:'Team Deathmatch'} };
 // hp and atk scale the enemy bots' max health and every hit they land; your own team always plays at full strength.
+// Your bot teammate (and every bot in online versus) uses ALLY_AI, so softening Normal foes never weakens your side.
 const DIFF = {
   easy:  { label:'Easy',   react:0.85, aim:0.6,  aggr:0.3,  atkDelay:1.0,  dodge:0.04, special:0.08, lead:0,   hedge:0.1,  think:0.75, greed:0,   focus:0,   hp:0.8, atk:0.75 },
   normal:{ label:'Normal', react:0.36, aim:0.2,  aggr:0.62, atkDelay:0.2,  dodge:0.35, special:0.45, lead:0.5, hedge:0.5,  think:0.3,  greed:1,   focus:0.5, hp:1,   atk:1 },
   hard:  { label:'Hard',   react:0.12, aim:0.04, aggr:0.8,  atkDelay:0.0,  dodge:0.7,  special:0.9,  lead:1,   hedge:0.85, think:0.14, greed:3,   focus:1.5, hp:1,   atk:1 },
 };
+const ALLY_AI = { label:'Ally', react:0.3, aim:0.16, aggr:0.62, atkDelay:0.2, dodge:0.35, special:0.45, lead:0.5, hedge:0.5, think:0.3, greed:1, focus:0.5, hp:1, atk:1 };
 // Row layout along Z (index j = 0..15). G grass, D raised tilled dirt, S stone path, P stone plaza.
 const ROWS = ['G','D','D','S','D','D','G','P','P','G','D','D','S','D','D','G'];
 const STATIC_COVER = [ // [i, j, type]  point-symmetric about the centre
@@ -2455,7 +2457,7 @@ class Player {
 const AUTO_AIM_R=8.5, _tp=new V3();
 // Simple, readable state machine: seek_seeds, seek_veg, attack, retreat, place_hedge, guard (Pumpkin Shield tank).
 class AIController {
-  constructor(game,c,diff){ this.game=game; this.c=c; this.p=DIFF[diff]; this.diff=diff; this.reset(); }
+  constructor(game,c,diff){ this.game=game; this.c=c; this.p=DIFF[diff]||ALLY_AI; this.diff=diff; this.reset(); }
   reset(){ this.state='seek_seeds'; this.think=rand(0,0.3); this.path=null; this.pathT=0; this.pathKey=-1; this.pi=0; this.target=null; this.goal=null;
     this.atkWait=0; this.hedgeCd=3; this.dodgeAt=0; this.threatCd=0; this.aimOff=0; this.strafe=Math.random()<0.5?1:-1; this.vegWant=Math.random()<0.5; this.vegT=6;
     this.stuckT=0; this.lastPos=new V3(); this.jitter=0; }
@@ -3008,7 +3010,7 @@ class Game {
   startTutorial(){ // learn-by-doing sandbox: you play the Rabbit, everyone else is a training partner
     this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0]; this.roundTime=ROUND_TIME; this.mode='seeds';
     this.player=this.chars.find(c=>c.key==='rabbit'); this.achOn=false; this.ach.startMatch();
-    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.setDifficulty('normal'); c.controller=c.isPlayer?new Player(this,c):new TutDummy(this,c); }
+    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.setDifficulty('ally'); c.controller=c.isPlayer?new Player(this,c):new TutDummy(this,c); }
     this.weapons.clear(); this.seeds.reset(); this.seeds.spawnT=1e9; this.arena.resetForRound(); this.fx.clearFloats(); this.cb={team:-1,bounty:-1,seedT:0};
     const idx=[0,0]; for(const c of this.chars){ c.resetState(); const s=SPAWNS[c.team][idx[c.team]++]; c.spawnAt(s[0],s[1]); }
     this.tut=this.tutorial; this.hud.setup(); this.hud.show(true); $('hud').classList.add('tutorial');
@@ -3033,11 +3035,11 @@ class Game {
   startOnline(cfg,role){
     this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.bonus=[0,0];
     this.player=this.chars.find(c=>c.key===(role==='host'?cfg.host:cfg.guest)); this.mode=MODES[cfg.mode]?cfg.mode:'seeds';
-    const coop=cfg.fmt==='coop', hostTeam=CHARS[cfg.host].team, foeDiff=coop&&DIFF[cfg.diff]?cfg.diff:'normal';
+    const coop=cfg.fmt==='coop', hostTeam=CHARS[cfg.host].team, foeDiff=coop&&DIFF[cfg.diff]?cfg.diff:'ally';
     // the guest looks from the opposite corner only when on the other team, so everyone's base sits in the same spot on screen
     this.view=role==='guest'&&CHARS[cfg.guest].team!==hostTeam?-1:1; this.applyNight(); this.achOn=false; this.ach.startMatch();
-    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.remote=role==='host'&&c.key===cfg.guest; c.hedges=[]; c.setCosmetic(cfg.cos[c.key]||'none'); c.setDifficulty(c.team===hostTeam?'normal':foeDiff);
-      c.controller=role!=='host'?null:c.isPlayer?new Player(this,c):c.remote?new RemoteController(this,c):new AIController(this,c,c.team===hostTeam?'normal':foeDiff); }
+    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.remote=role==='host'&&c.key===cfg.guest; c.hedges=[]; c.setCosmetic(cfg.cos[c.key]||'none'); c.setDifficulty(c.team===hostTeam?'ally':foeDiff);
+      c.controller=role!=='host'?null:c.isPlayer?new Player(this,c):c.remote?new RemoteController(this,c):new AIController(this,c,c.team===hostTeam?'ally':foeDiff); }
     this.hud.setup(); this.hud.show(true); $('net-ping').classList.remove('hidden'); this.startRound();
   }
   // Run feedback meant for one human only: shown here if c is this browser's player, sent to the guest if c is theirs.
@@ -3046,8 +3048,8 @@ class Game {
     this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.mode=this.modeSP;
     this.player=this.chars.find(c=>c.key===this.choice);
     this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
-    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.setDifficulty(c.team===this.player.team?'normal':this.difficulty);
-      c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'normal':this.difficulty);
+    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.setDifficulty(c.team===this.player.team?'ally':this.difficulty);
+      c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'ally':this.difficulty);
       const opts=cosmeticsFor(c.key); c.setCosmetic(c.isPlayer?(this.cosmetics[c.key]||'none'):opts[randi(0,opts.length-1)]); }
     this.hud.setup(); this.hud.show(true); this.startRound();
   }
@@ -3481,7 +3483,7 @@ class Online {
     if(this.role==='guest'||id==='*'){ const wasHost=this.role==='host'; this.t.close(); this.t=null; this.leave();
       this.game.resetScene(); this.openMenu(wasHost?'Lost the connection to the game server.':'The host left the game.'); return; }
     const L=this.lobby; if(!L||!L.guest||L.guest.id!==id) return; this.heard.delete(id); L.guest=null; L.host.ready=false;
-    if(this.inMatch){ const g=this.game, c=g.chars.find(x=>x.remote); this.endMatch(); if(c){ c.remote=false; c.controller=new AIController(g,c,'normal'); }
+    if(this.inMatch){ const g=this.game, c=g.chars.find(x=>x.remote); this.endMatch(); if(c){ c.remote=false; c.controller=new AIController(g,c,'ally'); }
       $('net-ping').classList.add('hidden'); this.toast('YOUR FRIEND LEFT','A bot took over their critter. Finish the match or quit from the pause menu.'); }
     else this.toast('YOUR FRIEND LEFT','The room is still open. Share the code again to play.');
     if(this.game.screen==='online') this.renderRoom(); }
