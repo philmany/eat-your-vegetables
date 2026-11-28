@@ -586,6 +586,7 @@ body.touch .kb{display:none} body:not(.touch) .tc{display:none}
 #t-full .ic{width:46%;height:46%} #t-full .ic .x{display:none} #t-full.is-full .ic .o{display:none} #t-full.is-full .ic .x{display:inline}
 html.standalone #t-full{display:none}
 #t-emo{right:calc(var(--sar) + 124px);bottom:calc(var(--sab) + 160px);width:52px;height:52px;--b1:#FFE08A;--b2:#F2B51E;--b3:#C8861A;filter:none}
+body.in-tut #t-emo{display:none} /* no emotes in the tutorial (its banner sits there) */
 #t-emo::before{border-radius:11px} #t-emo::after{inset:6px;border-radius:9px} #t-emo .cd{inset:6px;border-radius:9px}
 #t-emo .ic{width:56%;height:56%;margin:0}
 #emo-pick{position:absolute;right:calc(var(--sar) + 184px * var(--bz,1));bottom:calc(var(--sab) + 158px * var(--bz,1));display:none;gap:6px;padding:5px;border:3px solid var(--navy);border-radius:16px;pointer-events:auto;
@@ -1342,7 +1343,6 @@ const touchUI={
     const show=TOUCH.on&&!g.screen&&(g.state==='playing'||g.state==='countdown'||g.state==='roundEnd')&&!$('hud').classList.contains('hidden');
     if(show!==this.shown){ this.shown=show; this.el.classList.toggle('on',show); this.setLocked(show); if(!show){ $('emo-pick').classList.remove('on'); this.rest&&this.rest(); TOUCH.atk=false; TOUCH.aimOn=false; tapRing.visible=false; } }
     if(!show||!g.player) return; const pl=g.player, W=pl.W, L=this.last;
-    const tut=!!g.tut; if(L.tut!==tut){ L.tut=tut; $('t-emo').style.display=tut?'none':''; if(tut) $('emo-pick').classList.remove('on'); } // no emotes in the tutorial (its banner sits there)
     const short={sword:'LUNGE',kunai:'SPREAD',flail:'SPIN',staff:'SLOW',shield:'BULWARK'}[pl.weapon]||'SPECIAL';
     if(L.sp!==short){ L.sp=short; $('t-sp-n').textContent=short; }
     const spMiss=clamp(1-pl.energy/W.spCost,0,1), hMiss=clamp(1-pl.energy/HEDGE_COST,0,1), roll=clamp((pl.dodgeCd||0)/1.5,0,1);
@@ -3060,9 +3060,9 @@ class Game {
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.controller=c.isPlayer?new Player(this,c):new TutDummy(this,c); }
     this.weapons.clear(); this.seeds.reset(); this.seeds.spawnT=1e9; this.arena.resetForRound(); this.fx.clearFloats(); this.cb={team:-1,bounty:-1,seedT:0};
     const idx=[0,0]; for(const c of this.chars){ c.resetState(); const s=SPAWNS[c.team][idx[c.team]++]; c.spawnAt(s[0],s[1]); }
-    this.tut=this.tutorial; this.hud.setup(); this.hud.show(true); $('hud').classList.add('tutorial');
+    this.tut=this.tutorial; this.hud.setup(); this.hud.show(true); $('hud').classList.add('tutorial'); document.body.classList.add('in-tut'); $('emo-pick').classList.remove('on');
     this.state='playing'; this.camTarget.copy(this.player.pos); setView(11.5); this.tut.begin(); }
-  endTutorial(){ if(this.tut){ this.tut.hide(); this.tut=null; } $('hud').classList.remove('tutorial'); }
+  endTutorial(){ if(this.tut){ this.tut.hide(); this.tut=null; } $('hud').classList.remove('tutorial'); document.body.classList.remove('in-tut'); }
   openAch(from){ this.achBack=from; this.ach.render(); this.showScreen('achievements'); }
   beginMatch(){ // onboarding tips before the first fight (skippable, remembered)
     let off=this.autoplay; try{ off=off||localStorage.getItem('eyv-tips-off')==='1'; }catch(e){}
