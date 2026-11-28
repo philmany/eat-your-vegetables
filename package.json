@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node tests/run.mjs",
-    "test:shots": "node tests/run.mjs --shots"
+    "test:shots": "node tests/run.mjs --shots",
+    "sim": "node tests/balance-sim.mjs"
   },
   "devDependencies": {
     "axe-core": "4.10.2",

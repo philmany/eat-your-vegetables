@@ -134,6 +134,25 @@ test('seeds: only spawn in the centre plaza; a hit drops none, a knockout drops 
   noErrors(errors); await ctx.close();
 });
 
+test('difficulty: Easy foes have 20% less health and hit 25% softer; your team and Normal foes are full strength', async () => {
+  const { page, errors, ctx } = await open('?autoplay');
+  const r = await page.evaluate(() => {
+    const g = window.__game, out = {};
+    for (const d of ['easy', 'normal']) {
+      g.difficulty = d; g.choice = 'rabbit'; g.startMatch(); g.state = 'playing';
+      const me = g.player, foe = g.chars.find(c => c.team === 1), dir = { x: 1, y: 0, z: 0 };
+      foe.invuln = 0; me.invuln = 0; me.hp = me.maxHp; foe.hp = foe.maxHp; foe.weapon = 'kunai'; me.weapon = 'kunai';
+      g.damage(me, 20, foe, dir, 0, false); g.damage(foe, 20, me, dir, 0, false);
+      out[d] = { meMax: me.maxHp, foeMax: foe.maxHp, foeSpawnHp: g.chars.find(c => c.team === 1 && c !== foe).hp, took: me.maxHp - me.hp, dealt: foe.maxHp - foe.hp };
+    }
+    return out;
+  });
+  check(r.easy.meMax === 80 && r.easy.foeMax === 64 && r.easy.foeSpawnHp === 64, 'Easy foes should have 64 max HP, you 80: ' + JSON.stringify(r.easy));
+  check(r.easy.took === 15 && r.easy.dealt === 20, 'an Easy foe\'s 20 damage hit should land as 15, yours as 20: ' + JSON.stringify(r.easy));
+  check(r.normal.foeMax === 80 && r.normal.took === 20, 'Normal foes should be unchanged: ' + JSON.stringify(r.normal));
+  noErrors(errors); await ctx.close();
+});
+
 test('performance: draw calls stay low and nothing leaks during a long fight', async () => {
   const { page, errors, ctx } = await open('?autoplay');
   await page.evaluate(() => window.__game.startMatch());
