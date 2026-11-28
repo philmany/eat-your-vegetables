@@ -3007,9 +3007,8 @@ class Game {
     this.endTutorial(); this.showScreen(null); this.paused=false; this.wins=[0,0]; this.round=1; this.teamKO=[0,0]; this.mode=this.modeSP;
     this.player=this.chars.find(c=>c.key===this.choice);
     this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
-    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[];
-      const d=c.team===this.player.team?'normal':this.difficulty; c.setDifficulty(d);
-      c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,d);
+    for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[]; c.setDifficulty(c.team===this.player.team?'normal':this.difficulty);
+      c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'normal':this.difficulty);
       c.setCosmetic(c.isPlayer?(this.cosmetics[c.key]||'none'):'none'); } // bots wear classic colours
     this.hud.setup(); this.hud.show(true); this.startRound();
   }
