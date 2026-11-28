@@ -234,6 +234,11 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 @media (prefers-reduced-motion:reduce){ #title h1 i{animation:none!important;transform:none;opacity:.9} #title h1 span::after{animation:none!important} }
 /* music on/off, bottom-right of the title screen */
 #btn-music{position:absolute;right:16px;bottom:16px;min-width:0;font-size:15px;letter-spacing:1.5px;padding:10px 18px}
+/* credit link, bottom-left of the title screen (mirrors the music button) */
+#title .credit{position:absolute;left:16px;bottom:22px;font-family:var(--ui);font-weight:700;font-size:14px;letter-spacing:1px;
+  color:var(--white);text-decoration:none;text-shadow:0 2px 0 rgba(14,18,32,.85),0 0 6px rgba(14,18,32,.6);padding:6px 8px;border-radius:8px;-webkit-tap-highlight-color:transparent}
+#title .credit:hover,#title .credit:focus-visible{color:var(--corn);text-decoration:underline;text-underline-offset:3px}
+#title .credit:focus-visible{outline:3px solid var(--corn);outline-offset:2px}
 /* the logo and its tagline travel together as one block */
 #title .brand{display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.6vh,14px);margin-bottom:clamp(2px,1vh,10px)}
 /* tagline: quiet cream small caps between two short leafy rules, so it supports the logo instead of competing with it */
@@ -703,7 +708,7 @@ body.touch #mute{display:none}
   <button class="btn green" id="btn-diff">Difficulty: Easy</button>
   <button class="btn green" id="btn-mode">Mode: Seed Surge</button></div>
   <div class="row"><button class="btn ghost small" id="btn-controls">Controls</button><button class="btn ghost small" id="btn-ach">Achievements</button><button class="btn ghost small" id="btn-settings">Settings</button></div>
-</div><button class="btn ghost" id="btn-music" role="switch" aria-checked="true" aria-label="Music">&#9835; Music: On</button></div>
+</div><button class="btn ghost" id="btn-music" role="switch" aria-checked="true" aria-label="Music">&#9835; Music: On</button><a class="credit" id="lnk-credit" href="https://philmanyeung.com" target="_blank" rel="noopener noreferrer">&copy; Philman Yeung</a></div>
 <div id="online" role="region" aria-label="Online Play" class="screen dim hidden">
   <div class="panel">
     <h2>ONLINE PLAY</h2>
@@ -1098,6 +1103,8 @@ class Audio {
       case 'hedgehit': this.noise(0.12,'bandpass',1800,700,0.3,1); break;
       case 'dodge': this.noise(0.22,'bandpass',300,2600,0.3,1.2); break;
       case 'honk': this.honk(0); this.honk(0.16); break;
+      case 'huss': for(let i=0;i<3;i++){ const d=i*0.17; // the Rabbit's battle chant: three breathy "huss" bursts, a soft "hu" then the "ss"
+        this.tone(230-i*12,0.07,'triangle',0.06,190,d); this.noise(0.08,'bandpass',1500,1100,0.16,1.4,d); this.noise(0.11,'highpass',4200,5600,0.11,0.9,d+0.05); } break;
       case 'hiss': this.noise(0.5,'highpass',3800,6500,0.32,0.8); this.noise(0.45,'bandpass',2600,3400,0.18,2,0.03); break;
       case 'ko': this.tone(440,0.5,'square',0.15,110); this.noise(0.3,'lowpass',1200,200,0.3); break;
       case 'pickup': this.tone(520,0.08,'square',0.12,780); this.tone(780,0.12,'square',0.1,1040,0.07); break;
@@ -1122,7 +1129,7 @@ class Audio {
   uiVoice(b){ const id=b.id||b.textContent||''; let h=0; for(let i=0;i<id.length;i++) h=(h*31+id.charCodeAt(i))>>>0;
     const pent=[0,2,4,7,9,12,14,16]; const f=523.25*Math.pow(2,pent[h%pent.length]/12);
     const back=/back|quit|leave|title|skip|exit/i.test(id);
-    const kind=b.classList.contains('off')?'off':b.matches('.setrow .btn')?'toggleoff':back?'back':b.classList.contains('green')?'green':b.classList.contains('ghost')?'ghost':'pop';
+    const kind=b.classList.contains('off')?'off':b.matches('.setrow .btn')?'toggleoff':back?'back':b.classList.contains('green')?'green':b.matches('.ghost,.credit')?'ghost':'pop';
     return {f,kind,h}; }
   uiHover(b){ if(!this.ctx||this.ctx.state!=='running') return; const now=performance.now();
     if(this.last.uih&&now-this.last.uih<45) return; this.last.uih=now;
@@ -1209,10 +1216,10 @@ const audio=new Audio();
 // Menu button hover/press sounds, wired once for every .btn (including ones added later). Hover only for a real mouse,
 // so a tap on a phone doesn't play both. Press runs in the capture phase, before each button's own handler.
 { let hov=null;
-  document.addEventListener('pointerover',e=>{ const b=e.target.closest&&e.target.closest('.btn'); if(b===hov) return; hov=b;
+  document.addEventListener('pointerover',e=>{ const b=e.target.closest&&e.target.closest('.btn,.credit'); if(b===hov) return; hov=b;
     if(b&&e.pointerType==='mouse'&&!b.disabled) audio.uiHover(b); });
-  document.addEventListener('focusin',e=>{ const b=e.target.closest&&e.target.closest('.btn'); if(b&&b.matches(':focus-visible')) audio.uiHover(b); });
-  document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.btn'); if(!b||b.disabled) return; audio.init(); audio.uiPress(b); },true); }
+  document.addEventListener('focusin',e=>{ const b=e.target.closest&&e.target.closest('.btn,.credit'); if(b&&b.matches(':focus-visible')) audio.uiHover(b); });
+  document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('.btn,.credit'); if(!b||b.disabled) return; audio.init(); audio.uiPress(b); },true); }
 
 /* =====================================================================
    SECTION 5 — INPUT (keyboard, mouse, optional gamepad)
@@ -2347,6 +2354,7 @@ class Weapon {
     const W=c.W, g=this.game;
     if(c.energy<W.spCost || c.spinT>0 || c.pending){ g.personal(c,()=>{ audio.play('deny'); g.fx.float('NEED ENERGY',new V3(c.pos.x,1.8,c.pos.z),'info',0.6); }); return false; }
     c.energy-=W.spCost; audio.play('special'); c.atkKind=c.weapon; c.atkAnim=c.atkDur=0.3;
+    if(c.key==='rabbit'){ audio.play('huss'); g.fx.float('HUSS HUSS HUSS',new V3(c.pos.x,2.2,c.pos.z),'honk',1.1); } // the Rabbit chants on every special it pays for
     if(c.weapon==='sword'){ c.lungeT=0.22; c.lungeHit=new Set(); c.invuln=Math.max(c.invuln,0.15); audio.play('swing'); }
     else if(c.weapon==='kunai'){ for(const o of [-0.26,0,0.26]) this.fire(c,c.facing+o,'kunai'); audio.play('throw'); }
     else if(c.weapon==='flail'){ c.spinT=1.5; c.spinTick=0; }
@@ -3687,7 +3695,7 @@ class Online {
    SECTION 15 — BOOT & MAIN LOOP (fixed timestep separated from rendering)
    ===================================================================== */
 resize();
-const game=new Game(); window.__game=game; window.__renderer=renderer; window.__cam=camera;
+const game=new Game(); window.__game=game; window.__audio=audio; window.__renderer=renderer; window.__cam=camera;
 touchUI.init(); touchUI.initLock(); fitUI();
 // menus whose contents change (Online Play lobby, results) are re-fitted a few times a second while open
 setInterval(()=>{ if(game.screen) fitUI(); },400);

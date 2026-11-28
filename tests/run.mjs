@@ -204,6 +204,29 @@ test('tutorial: every step can be reached and finished', async () => {
   noErrors(errors); await ctx.close();
 });
 
+test('rabbit: a paid special shouts HUSS HUSS HUSS with its sound; a special without energy stays quiet; others never chant', async () => {
+  const { page, errors, ctx } = await open('?autoplay');
+  await page.evaluate(() => window.__game.startMatch());
+  await ticks(page, 60);
+  const r = await page.evaluate(() => {
+    const g = window.__game, A = g.chars, au = window.__audio, play = au.play, played = [];
+    au.play = function (n) { played.push(n); return play.apply(this, arguments); };
+    const huss = () => [...document.querySelectorAll('.fl.honk')].filter(e => e.style.display !== 'none' && e.textContent === 'HUSS HUSS HUSS').length;
+    const rab = A.find(c => c.key === 'rabbit'), other = A.find(c => c.key !== 'rabbit');
+    for (const c of [rab, other]) { c.spinT = 0; c.pending = null; }
+    const n = () => played.filter(x => x === 'huss').length;
+    rab.energy = 0; g.weapons.special(rab, null); const broke = huss(), brokeS = n();
+    other.energy = 100; g.weapons.special(other, null); const otherN = huss(), otherS = n();
+    rab.energy = 100; const ok = g.weapons.special(rab, null) !== false; const paid = huss(), paidS = n();
+    au.play = play;
+    return { broke, brokeS, otherN, otherS, ok, paid, paidS };
+  });
+  check(r.broke === 0 && r.brokeS === 0, 'no chant when the Rabbit cannot pay: ' + JSON.stringify(r));
+  check(r.otherN === 0 && r.otherS === 0, 'other critters should not chant: ' + JSON.stringify(r));
+  check(r.ok && r.paid === 1 && r.paidS === 1, 'a paid Rabbit special should show HUSS HUSS HUSS once: ' + JSON.stringify(r));
+  noErrors(errors); await ctx.close();
+});
+
 test('pause menu, Escape, and auto-pause when the tab is hidden', async () => {
   const { page, errors, ctx } = await open();
   await page.evaluate(() => { window.__game.startMatch(); });
@@ -285,7 +308,7 @@ const layoutProblems = page => page.evaluate(() => {
 });
 const menuProblems = page => page.evaluate(() => {
   const scr = [...document.querySelectorAll('.screen')].find(s => !s.classList.contains('hidden')); if (!scr) return [];
-  const bs = [...scr.querySelectorAll('button')].filter(b => b.offsetParent && getComputedStyle(b).visibility !== 'hidden').map(b => [b.id || b.textContent.trim(), b.getBoundingClientRect()]).filter(([, q]) => q.width);
+  const bs = [...scr.querySelectorAll('button, a.credit')].filter(b => b.offsetParent && getComputedStyle(b).visibility !== 'hidden').map(b => [b.id || b.textContent.trim(), b.getBoundingClientRect()]).filter(([, q]) => q.width);
   const out = [], W = innerWidth, H = innerHeight, sx = scr.scrollHeight > scr.clientHeight + 2;
   for (const [n, q] of bs) if (!sx && (q.left < -1 || q.top < -1 || q.right > W + 1 || q.bottom > H + 1)) out.push(`${scr.id}: ${n} leaves the screen`);
   for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) { const [a, p] = bs[i], [b, q] = bs[j];
