@@ -118,6 +118,10 @@
       hat, big red boots, sunglasses, skull helmet), one per critter, bots pick at random. A hat still hides P.extra.crown.
       The outfit colours (setOutfit, OUTFIT) are gone; saved outfit colour picks fall back to NONE. The rest of note 31
       stays: weapon fittings (FG), arena, rounded menus and HUD.
+  33. Game font (Nov 28): Grandstander is replaced by two Google Fonts. Lilita One (--display) for the logo, headings,
+      names, banners and the timer; Fredoka (--ui, --num, --body) for buttons, HUD labels and numbers, and reading text.
+      html has font-synthesis-weight:none so the single-weight Lilita One is never fake-bolded. HUD numbers use tabular
+      figures so the timer and scores do not jiggle.
 -->
 <html lang="en">
 <head>
@@ -134,16 +138,21 @@
 <title>Eat Your Veggies!</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Grandstander:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&display=swap" rel="stylesheet">
 <style>
 :root{
   --navy:#1A2030; --white:#F5EFDC; --green:#6CC24A; --green-s:#3A7A2E; --orange:#F28A2A; --orange-s:#A84E14;
   --corn:#F2B51E; --corn-s:#C8861A; --tomato:#D9412F; --beet:#AD1550; --mint:#9FF5C8; --forest:#1F3226;
-  /* One whimsical storybook family everywhere (Grandstander, a rounded hand-lettered face drawn for easy reading), told apart by
-     weight: 900 for headings and the logo, 800 for numbers and labels, 700 for buttons, 600 for longer reading text. */
-  --font:"Grandstander","Trebuchet MS","Comic Sans MS",system-ui,sans-serif;
-  --display:var(--font); --ui:var(--font); --num:var(--font); --body:var(--font);
+  /* Two game fonts. Lilita One (one chunky rounded weight, the classic arcade-sticker headline face) for the logo, headings,
+     names and banners. Fredoka (rounded, open shapes, tall lowercase) for buttons, HUD numbers and reading text, which stays
+     clear at 11-14 px on phones. Headings still say font-weight:900; with weight synthesis off, Lilita One draws its own single
+     weight instead of a smeared fake bold, and Fredoka's 800 settles on its 700. Fallbacks are rounded system faces. */
+  --display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --font:"Fredoka","Nunito","Varela Round","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --ui:var(--font); --num:var(--font); --body:var(--font);
 }
+html{font-synthesis-weight:none}
+#en-num,.sc .num,.sp .cd,#pl-hedges,#ach-sum{font-variant-numeric:tabular-nums}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:#1F3226;font-family:var(--ui);font-weight:700;color:var(--white);user-select:none;-webkit-user-select:none}
 canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
@@ -191,7 +200,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
 #title .menu-card>.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:calc(var(--colw) + 150px);max-width:100%;margin-top:4px}
 #title .menu-card>.row .btn{min-width:0;padding:9px 8px 8px;font-size:15px;letter-spacing:1px}
 @media (max-height:820px){ .menu-card{gap:12px} .menu-card .btngrp{gap:10px} .menu-card .btngrp.sub{gap:7px} }
-/* Storybook logo: rounded Grandstander letters with a cel-shaded face (three hard light bands), a thick navy ink outline,
+/* Storybook logo: chunky Lilita One letters with a cel-shaded face (three hard light bands), a thick navy ink outline,
    a hard drop shadow, a slow magic glint that sweeps across the letters, and a few twinkling sparkles around them.
    The letters sit on a gentle wave (each word tilted a little differently) so the logo feels hand-lettered. */
 #title h1{position:relative;margin:0;text-align:center;line-height:.86;transform:rotate(-2.5deg);font-family:var(--display);font-weight:900;
@@ -286,7 +295,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .sc.flash{animation:flash .18s 6 alternate}
 @keyframes flash{to{background:var(--mint)}}
 #hud-tr{position:absolute;right:22px;top:10px;text-align:right}
-#timer{font-family:var(--num);font-weight:800;font-size:59px;line-height:.85;color:#fff;text-shadow:0 4px 0 var(--navy),0 8px 14px rgba(0,0,0,.4)}
+#timer{font-family:var(--display);font-weight:900;font-variant-numeric:tabular-nums;font-size:59px;line-height:.85;color:#fff;text-shadow:0 4px 0 var(--navy),0 8px 14px rgba(0,0,0,.4)}
 #timer.urgent{color:var(--tomato);animation:pulse .5s infinite alternate}
 @keyframes pulse{to{transform:scale(1.12)}}
 #round-label{font-family:var(--display);font-weight:900;font-size:19px;letter-spacing:1.8px;text-shadow:0 3px 0 var(--navy)}
