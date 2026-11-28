@@ -112,6 +112,15 @@
       pools at night), warm sandstone plaza, a rune circle of standing stones round the seed dais, toadstool clusters
       outside the fence. Menus and HUD: rounded navy panels with a thin gold trim and a hard cel drop shadow (no more
       cut corners), rounded sticker buttons, banners tilted instead of slanted.
+  32. Cosmetics choice restored (Nov 28): Philman wanted cosmetics to be picked again, so the critter half of note 31
+      is reverted. buildCharacter and fantasyGear are back to the PR 20 fantasy critters (capes, pauldron, gems, circlet,
+      hood, horned helm, wizard hat in P.extra.crown), and the add-on cosmetics are back (overalls, pants, straw hat, blue
+      hat, big red boots, sunglasses, skull helmet), one per critter, bots pick at random.
+      The outfit colours (setOutfit, OUTFIT) are gone; saved outfit colour picks fall back to NONE. The rest of note 31
+      stays: weapon fittings (FG), arena, rounded menus and HUD.
+  33. Plain critters (Nov 28): Philman did not want the knight/rogue/berserker/wizard theme, so fantasyGear (capes,
+      pauldron, cowl, breastplate, mantle, gems, circlet, hood, horned helm, wizard hat; P.extra.crown) and the goose's
+      red scarf are removed. The critters are just the animals; the only thing worn is the cosmetic the player picks.
 -->
 <html lang="en">
 <head>
@@ -404,6 +413,7 @@ table.stats img{width:34px;height:34px;border-radius:50%;vertical-align:middle;m
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{font-family:var(--num);font-weight:800;font-size:15px;letter-spacing:0.7px;line-height:1;padding:7px 12px 5px;border:0;border-radius:999px;cursor:pointer;color:var(--white);background:#2A3757;box-shadow:inset 0 -4px 0 #11182A}
 .chip:hover{background:#34446A}
+.chip.special{color:#EFE6D2}
 .chip .sw{display:inline-block;width:14px;height:14px;border-radius:50%;margin:-3px 7px 0 0;vertical-align:middle;box-shadow:0 0 0 2px var(--navy),0 0 0 3px rgba(245,239,220,.5)}
 .chip.sel{background:var(--corn);color:var(--navy);box-shadow:inset 0 -4px 0 var(--corn-s,#C8861A)}
 #nightvig{position:fixed;inset:0;pointer-events:none;display:none;background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,0) 45%,rgba(3,8,26,.6) 100%)}
@@ -736,7 +746,7 @@ body.touch #mute{display:none}
 <div id="select" role="region" aria-label="Pick your warrior" class="screen dim hidden">
   <h2>PICK YOUR WARRIOR</h2>
   <div class="cards" id="cards"></div>
-  <div class="cosrow"><canvas id="cos-prev"></canvas><div class="cosbox"><div class="coslbl">OUTFIT COLOURS FOR <span id="cos-who">RABBIT</span><small>JUST FOR LOOKS</small></div><div class="chips" id="cos-chips"></div></div></div>
+  <div class="cosrow"><canvas id="cos-prev"></canvas><div class="cosbox"><div class="coslbl">COSMETIC FOR <span id="cos-who">RABBIT</span><small>ONE ITEM · JUST FOR LOOKS</small></div><div class="chips" id="cos-chips"></div></div></div>
   <div class="row"><button class="btn ghost" id="btn-select-back">Back</button><button class="btn" id="btn-fight">Fight!</button></div>
 </div>
 <div id="tips" role="region" aria-label="Before you brawl" class="screen dim hidden">
@@ -833,14 +843,12 @@ const SHIELD_FRONT=0.4, SHIELD_BACK=0.8, BULWARK_TIME=3, BULWARK_MUL=0.25, BULWA
 // Berry bushes: walk into a ripe bush while hurt to eat. 20 HP = 2 full hearts, four times a seed.
 const BERRY_HEAL=20, BERRY_REGROW=20, BERRY_R=1.1;
 const BERRY_BUSHES=[[3,6],[12,9],[13,0],[2,15]]; // [i, j] tiles, point-symmetric about the centre
-// Cosmetics: outfit colours, one per character, purely visual. Each swaps the cloth and trim colours of the critter's
-// own outfit (tunic, cloak, kilt or robe, plus the matching headpiece where it is cloth). NONE = the critter's classic colours.
+// Cosmetics: one per character, purely visual. 'only' limits an item to one critter.
 const COSMETICS = {
-  none:{ name:'CLASSIC' }, moss:{ name:'MOSS', cols:[0x55803A,0xE9DDB8] }, ember:{ name:'EMBER', cols:[0xB8402A,0xF2B51E] },
-  frost:{ name:'FROST', cols:[0x4A7FB0,0xE8F0F6] }, royal:{ name:'ROYAL', cols:[0x6E3F96,0xF2B51E] },
-  harvest:{ name:'HARVEST', cols:[0xD08A22,0x6B4228] }, midnight:{ name:'MIDNIGHT', cols:[0x262B40,0x9FF5C8] },
+  none:{ name:'NONE' }, overalls:{ name:'OVERALLS' }, pants:{ name:'PANTS' }, hat:{ name:'STRAW HAT' },
+  boots:{ name:'BIG RED BOOTS' }, shades:{ name:'BIG SUNGLASSES' }, bluehat:{ name:'BLUE HAT' }, skull:{ name:'SKULL HELMET', only:'raccoon' },
 };
-const COS_ORDER=['none','moss','ember','frost','royal','harvest','midnight'];
+const COS_ORDER=['none','overalls','pants','hat','bluehat','boots','shades','skull'];
 const cosmeticsFor=k=>COS_ORDER.filter(id=>!COSMETICS[id].only||COSMETICS[id].only===k);
 const CHARS = {
   rabbit:{ name:'RABBIT', team:0, weapon:'sword', blurb:'Knighted by the Radish Council. Takes it far too seriously.', fur:0xEDE3D3 },
@@ -1377,16 +1385,8 @@ function buildWeapon(key){
   }
   return addOutlines(g,0.014,0.1);
 }
-// ---- Critter look (Nov 22 overhaul): one storybook fantasy style for all four ----
-// Every critter is built from the same small kit, so the four read as one set:
-//   a big round head with the shared storybook eyes and blush, a short round body wearing ONE outfit (a tunic, cloak,
-//   kilt or robe), a leather belt with a gold buckle, stubby arms with mitten paws, round leather boots, and ONE
-//   signature headpiece that names the class at a glance (knight helm, rogue hood, horned helm, wizard hat).
-// Nothing else is strapped on: no capes, pauldrons, straps, pendants or floating gems. The outfit's two colours are
-// the critter's own materials (P.cloth, P.trim), so an outfit colour swaps materials and never adds parts.
+// Gold, leather and steel fittings for the weapons (storybook look, Nov 22).
 const FG={ gold:0xE9B949, goldS:0xB88426, leather:0x6B4228, leatherS:0x4B2B1E, steel:0xBAC2CE, steelS:0x8A94A6, bronze:0xB8763E, bone:0xEFE6D2 };
-const OUTFIT={ rabbit:[0x3E6B3A,0xE9B949], raccoon:[0x5B3A5E,0xD9C7A0], goose:[0xA8323E,0xE9B949], possum:[0x2E3A6B,0xE9B949] };
-const outfitMat=(col,slot)=>mat(col,{name:slot}); // a name keeps outfit materials apart from same-coloured props
 function buildCharacter(key){
   const d=CHARS[key], fur=d.fur;
   const root=new THREE.Group(), rig=new THREE.Group(); rig.position.y=0.5; root.add(rig);
@@ -1395,112 +1395,78 @@ function buildCharacter(key){
   const armL=new THREE.Group(), armR=new THREE.Group(); armL.position.set(0.28,0.58,0.02); armR.position.set(-0.28,0.58,0.02); B.add(armL,armR);
   const handL=new THREE.Group(), handR=new THREE.Group(); handL.position.y=-0.26; handR.position.y=-0.26; armL.add(handL); armR.add(handR);
   const head=new THREE.Group(); B.add(head);
-  const cloth=outfitMat(OUTFIT[key][0],'cloth'), trim=outfitMat(OUTFIT[key][1],'trim');
-  const P={key,root,rig,B,legL,legR,armL,armR,handL,handR,head,ears:[],tail:null,extra:{},cloth,trim};
-  // --- the shared kit ---
-  const ball=(r,col,x,y,z,parent,sx=1,sy=1,sz=1,cast=true)=>{ const m=M(ICO(r,2),col,x,y,z,parent,cast); m.scale.set(sx,sy,sz); return m; };
-  const shell=(id,from,to)=>G('shell'+id,()=>new THREE.SphereGeometry(1,16,8,0,Math.PI*2,from,to));
-  const body=(r,col,y,sx,sy,sz,z=0)=>ball(r,col,0,y,z,B,sx,sy,sz);
-  const skirt=(rt,rb,h,y,z=0)=>{ M(CYL(rt,rb,h,14),cloth,0,y,z,B); M(CYL(rb+0.012,rb+0.012,0.045,14),trim,0,y-h/2+0.02,z,B,false); };
-  const belt=(y,rx,rz,z=0)=>{ const b=M(CYL(1,1,0.065,16),FG.leather,0,y,z,B); b.scale.set(rx,1,rz);
-    M(BOX(0.1,0.085,0.035),FG.gold,0,y,z+rz+0.006,B,false); M(BOX(0.05,0.04,0.04),FG.leather,0,y,z+rz+0.012,B,false); };
-  const sleeves=(paw,flare=0)=>{ for(const a of [armL,armR]){ M(CYL(0.065,0.075+flare,0.2,8),cloth,0,-0.1,0,a); ball(0.078,paw,0,-0.255,0,a); } };
-  const boots=()=>{ for(const l of [legL,legR]){ M(CYL(0.062,0.058,0.12,8),FG.leather,0,-0.08,0,l); ball(0.088,FG.leather,0,-0.148,0.045,l,1,0.62,1.4); } };
-  const star=(x,y,z,s,parent,col=FG.gold)=>{ const m=M(new THREE.OctahedronGeometry(s,0),col,x,y,z,parent,false); m.scale.z=0.45; return m; };
-  if(key==='rabbit'){ // CARROT KNIGHT: green tunic with a carrot crest, round steel helm with a gold ridge (ears through the top)
-    body(0.3,cloth,0.47,1,1.02,0.92);
-    skirt(0.27,0.31,0.14,0.25);
-    belt(0.4,0.3,0.276);
-    const cr=M(CONE(0.045,0.13,6),PAL.carrot,0,0.56,0.272,B,false); cr.rotation.x=Math.PI; // crest: a carrot, point down
-    for(const s of [-1,1]) M(BOX(0.025,0.06,0.015),PAL.leaf,s*0.02,0.645,0.262,B,false).rotation.z=s*0.4;
-    ball(0.1,PAL.white,0,0.36,-0.29,B);                                                      // tail puff
-    head.position.set(0,0.99,0.02);
-    ball(0.32,fur,0,0,0,head);
-    ball(0.12,PAL.white,0,-0.1,0.24,head,1.25,0.8,0.8);
-    M(BOX(0.075,0.05,0.05),0xF58FB0,0,-0.05,0.33,head,false);
-    eyes(head,0.02,0.29,0.125,0.095,0,0x3E7A4A);
-    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.11,0.24,-0.03); e.rotation.z=-s*0.15; head.add(e);
-      M(BOX(0.11,0.46,0.07),fur,0,0.22,0,e); M(BOX(0.06,0.34,0.02),0xF7A8B8,0,0.22,0.04,e,false); P.ears.push(e); }
-    const hm=new THREE.Group(); hm.position.set(0,0.0,-0.01); hm.rotation.x=-0.28; head.add(hm);
-    M(shell('helm',0,Math.PI*0.36),FG.steel,0,0,0,hm).scale.setScalar(0.345);
-    const rim=M(CYL(0.315,0.315,0.04,18),FG.steelS,0,0.155,0,hm); rim.scale.set(1,1,1);
-    const rg=M(G('ridge',()=>new THREE.TorusGeometry(0.345,0.022,5,16,Math.PI*0.78)),FG.gold,0,0,0,hm,false); rg.rotation.set(0,Math.PI/2,Math.PI*0.11);
-    sleeves(fur); boots();
-  } else if(key==='raccoon'){ // SHADOW ROGUE: plum hooded cloak (ears poke through), striped tail out the back
-    const dk=0x3A3F52, lt=0xE6E3EC;
-    body(0.31,cloth,0.47,1.05,1,0.95);
-    skirt(0.29,0.34,0.18,0.24);
-    belt(0.41,0.315,0.3);
-    M(BOX(0.12,0.09,0.06),FG.leather,0.2,0.36,0.2,B).rotation.y=0.6;                          // a little coin pouch
+  const P={root,rig,B,legL,legR,armL,armR,handL,handR,head,ears:[],tail:null,extra:{}};
+  const limb=(arm,col,mitt)=>{ M(BOX(0.1,0.24,0.1),col,0,-0.12,0,arm); M(ICO(0.075,0),mitt,0,-0.26,0,arm); };
+  if(key==='rabbit'){
+    M(ICO(0.3,1),fur,0,0.48,0,B).scale.set(1,1.05,0.9);
+    M(ICO(0.2,1),PAL.white,0,0.44,0.13,B).scale.set(1,1,0.7);
     head.position.set(0,0.98,0.02);
-    ball(0.31,fur,0,0,0,head,1.1,0.95,1);
-    const sn=M(CONE(0.12,0.22,8),lt,0,-0.09,0.31,head); sn.rotation.x=Math.PI/2;
-    ball(0.038,dk,0,-0.09,0.425,head);
-    M(BOX(0.48,0.13,0.08),dk,0,0.02,0.25,head,false);
-    for(const s of [-1,1]){ const t=M(BOX(0.12,0.08,0.06),dk,s*0.28,-0.02,0.19,head,false); t.rotation.z=s*0.5; }
-    eyes(head,0.025,0.3,0.125,0.085,0,0x8A5A34);
-    const hood=M(G('hood2',()=>new THREE.SphereGeometry(1,16,9,Math.PI/2+0.95,Math.PI*2-1.9,0,Math.PI*0.7)),cloth,0,0.0,-0.02,head);
-    hood.scale.set(0.365,0.335,0.35);
-    const tip=M(CONE(0.09,0.2,8),cloth,0,0.17,-0.33,head); tip.rotation.x=-2.2;
-    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.2,0.24,-0.02); head.add(e);
-      M(CONE(0.085,0.16,5),fur,0,0.06,0,e); M(CONE(0.05,0.1,5),dk,0,0.05,0.03,e,false); P.ears.push(e); }
-    const tail=new THREE.Group(); tail.position.set(0,0.32,-0.28); tail.rotation.x=-0.9; B.add(tail);
-    for(let i=0;i<5;i++){ const r=0.11-i*0.012; M(CYL(r,r,0.13,10),i%2?dk:fur,0,-0.07-i*0.13,0,tail); }
-    ball(0.06,dk,0,-0.72,0,tail);
+    M(ICO(0.3,1),fur,0,0,0,head);
+    M(ICO(0.12,1),PAL.white,0,-0.08,0.22,head).scale.set(1.2,0.8,0.8);
+    M(BOX(0.07,0.05,0.05),0xF58FB0,0,-0.03,0.31,head,false);
+    eyes(head,0.05,0.265,0.12,0.085,0,0x3E7A4A);
+    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.11,0.22,-0.03); e.rotation.z=-s*0.15; head.add(e);
+      M(BOX(0.11,0.48,0.07),fur,0,0.22,0,e); M(BOX(0.06,0.36,0.02),0xF7A8B8,0,0.22,0.04,e,false); P.ears.push(e); }
+    M(ICO(0.1,0),PAL.white,0,0.36,-0.3,B);
+    limb(armL,fur,fur); limb(armR,fur,fur);
+    M(BOX(0.16,0.09,0.3),fur,0,-0.15,0.05,legL); M(BOX(0.16,0.09,0.3),fur,0,-0.15,0.05,legR);
+  } else if(key==='raccoon'){
+    const dk=0x3A3F52, lt=0xE6E3EC;
+    M(ICO(0.31,1),fur,0,0.48,0,B).scale.set(1.05,1,0.95);
+    M(ICO(0.2,1),lt,0,0.44,0.14,B).scale.set(1,1,0.7);
+    head.position.set(0,0.97,0.02);
+    M(ICO(0.29,1),fur,0,0,0,head).scale.set(1.12,0.95,1);
+    const sn=M(CONE(0.12,0.22,6),lt,0,-0.08,0.3,head); sn.rotation.x=Math.PI/2;
+    M(ICO(0.05,0),dk,0,-0.08,0.42,head,false);
+    M(BOX(0.46,0.13,0.08),dk,0,0.04,0.235,head,false);
+    for(const s of [-1,1]){ const t=M(BOX(0.12,0.08,0.06),dk,s*0.27,0.0,0.18,head,false); t.rotation.z=s*0.5; }
+    M(BOX(0.07,0.14,0.05),lt,0,0.17,0.24,head,false);
+    eyes(head,0.045,0.28,0.12,0.075,0,0x8A5A34);
+    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.19,0.22,-0.02); head.add(e);
+      M(CONE(0.09,0.16,4),fur,0,0.06,0,e); M(CONE(0.05,0.1,4),dk,0,0.05,0.03,e,false); P.ears.push(e); }
+    const tail=new THREE.Group(); tail.position.set(0,0.32,-0.26); tail.rotation.x=-0.9; B.add(tail);
+    for(let i=0;i<5;i++){ const r=0.11-i*0.012; M(CYL(r,r,0.13,8),i%2?dk:fur,0,-0.07-i*0.13,0,tail); }
+    M(ICO(0.06,0),dk,0,-0.72,0,tail);
     P.tail=tail;
-    sleeves(dk); boots();
-  } else if(key==='goose'){ // BEET BERSERKER: beet-red kilt, a shaggy fur collar, a little bronze helm with curled horns
+    limb(armL,fur,dk); limb(armR,fur,dk);
+    M(BOX(0.15,0.09,0.24),dk,0,-0.15,0.04,legL); M(BOX(0.15,0.09,0.24),dk,0,-0.15,0.04,legR);
+  } else if(key==='goose'){
     const dk=0x2B3142, wing=0x7E6650, belly=0xE8DCC6;
-    body(0.33,fur,0.46,1,0.85,1.2,-0.02);
-    ball(0.24,belly,0,0.44,0.15,B,1,0.9,0.8);
-    const tl=M(CONE(0.14,0.28,6),dk,0,0.56,-0.42,B); tl.rotation.x=-1.9;
-    skirt(0.34,0.41,0.2,0.25,-0.02);
-    belt(0.37,0.345,0.4,-0.02);
-    const neck=M(CYL(0.075,0.1,0.5,10),dk,0,0.86,0.14,B); neck.rotation.x=0.18;
-    const col=M(G('collar',()=>new THREE.TorusGeometry(0.15,0.075,7,14)),0xD9C7A0,0,0.69,0.1,B); col.rotation.x=Math.PI/2-0.15;
-    for(let i=0;i<7;i++){ const a=i/7*Math.PI*2; const t=M(CONE(0.04,0.08,4),0xC4B08A,Math.sin(a)*0.2,0.66,0.1+Math.cos(a)*0.2,B,false); t.rotation.set(Math.cos(a)*2.2,0,-Math.sin(a)*2.2); }
+    M(ICO(0.33,1),fur,0,0.46,-0.02,B).scale.set(1,0.85,1.2);
+    M(ICO(0.24,1),belly,0,0.42,0.14,B).scale.set(1,0.9,0.8);
+    const tl=M(CONE(0.14,0.28,5),dk,0,0.56,-0.4,B); tl.rotation.x=-1.9;
+    const neck=M(CYL(0.075,0.1,0.5,8),dk,0,0.86,0.14,B); neck.rotation.x=0.18;
     head.position.set(0,1.14,0.2);
-    ball(0.17,dk,0,0,0,head,0.95,0.92,1.2);
+    M(ICO(0.17,1),dk,0,0,0,head).scale.set(0.9,0.9,1.2);
     M(BOX(0.34,0.1,0.12),PAL.white,0,-0.04,-0.01,head,false);
-    M(BOX(0.11,0.06,0.17),0x4A4D5C,0,0.0,0.2,head); P.extra.beakLow=M(BOX(0.1,0.035,0.14),0x4A4D5C,0,-0.05,0.18,head);
-    for(const s of [-1,1]){ M(CYL(0.055,0.055,0.03,10),PAL.white,s*0.12,0.05,0.09,head,false).rotation.z=Math.PI/2;
-      M(CYL(0.03,0.03,0.035,8),PAL.navy,s*0.13,0.055,0.1,head,false).rotation.z=Math.PI/2;
-      M(CYL(0.012,0.012,0.02,6),PAL.white,s*0.148,0.072,0.11,head,false).rotation.z=Math.PI/2; }
-    const hm=M(shell('ghelm',0,Math.PI*0.5),FG.bronze,0,0.035,-0.01,head); hm.scale.set(0.178,0.17,0.215);
-    const gr=M(G('gridge',()=>new THREE.TorusGeometry(1,0.12,5,14,Math.PI)),trim,0,0.035,-0.01,head,false); gr.rotation.y=Math.PI/2; gr.scale.set(0.215,0.172,0.18);
-    M(CYL(0.18,0.18,0.03,14),0x8A5424,0,0.04,-0.01,head,false).scale.set(1,1,1.17);
-    for(const s of [-1,1]){ const h1=M(CONE(0.045,0.13,7),FG.bone,s*0.19,0.1,0,head); h1.rotation.z=-s*1.0;
-      const h2=M(CONE(0.026,0.09,6),FG.bone,s*0.25,0.2,0,head); h2.rotation.z=-s*0.2; }
-    for(const a of [armL,armR]){ const w=ball(0.2,wing,0,-0.12,-0.05,a,0.32,0.85,1); w.rotation.x=0.25;  }
-    boots();
+    const beak=M(BOX(0.11,0.06,0.17),0x4A4D5C,0,0.0,0.2,head); P.extra.beakLow=M(BOX(0.1,0.035,0.14),0x4A4D5C,0,-0.05,0.18,head);
+    for(const s of [-1,1]){ M(CYL(0.05,0.05,0.03,8),PAL.white,s*0.12,0.05,0.09,head,false).rotation.z=Math.PI/2;
+      M(CYL(0.025,0.025,0.035,6),PAL.navy,s*0.13,0.055,0.1,head,false).rotation.z=Math.PI/2;
+      M(CYL(0.011,0.011,0.02,6),PAL.white,s*0.148,0.07,0.11,head,false).rotation.z=Math.PI/2; }
+    for(const [arm,s] of [[armL,1],[armR,-1]]){ const w=M(BOX(0.08,0.3,0.34),wing,0,-0.12,-0.06,arm); w.rotation.x=0.2; M(ICO(0.07,0),wing,0,-0.26,0,arm); }
+    for(const leg of [legL,legR]){ M(CYL(0.035,0.035,0.16,5),dk,0,-0.08,0,leg); M(BOX(0.18,0.04,0.22),dk,0,-0.17,0.05,leg); }
     P.extra.neck=neck;
-  } else if(key==='possum'){ // HEDGE WIZARD: long star robe and a floppy wizard hat in the same cloth, gold trim
+  } else if(key==='possum'){
     const face=0xF4F1F6, dk=0x3A3F52, pink=0xF58FB0, grey=0x8E889C;
-    body(0.3,cloth,0.47,1,0.95,1.02);
-    skirt(0.27,0.34,0.22,0.24);
-    belt(0.42,0.296,0.3);
-    star(0.12,0.56,0.262,0.035,B); star(-0.15,0.27,0.305,0.03,B); star(0.1,0.22,0.315,0.025,B);
-    head.position.set(0,0.97,0.04);
-    ball(0.28,face,0,0,0,head,0.98,0.9,1.1);
-    const sn=M(CONE(0.11,0.3,8),face,0,-0.07,0.31,head); sn.rotation.x=Math.PI/2;
-    ball(0.05,pink,0,-0.07,0.47,head);
-    const mouth=M(BOX(0.12,0.05,0.1),0x5A1E32,0,-0.14,0.37,head,false); mouth.visible=false; P.extra.mouth=mouth; // shown while hissing
+    M(ICO(0.3,1),fur,0,0.47,0,B).scale.set(1,0.95,1.05);
+    for(let i=0;i<6;i++){ const t=M(CONE(0.05,0.16,4),grey,rand(-0.18,0.18),rand(0.55,0.75),rand(-0.25,-0.05),B); t.rotation.set(rand(-1.2,-0.4),0,rand(-0.6,0.6)); }
+    head.position.set(0,0.96,0.04);
+    M(ICO(0.26,1),face,0,0,0,head).scale.set(0.98,0.9,1.12);
+    const sn=M(CONE(0.11,0.3,6),face,0,-0.06,0.3,head); sn.rotation.x=Math.PI/2;
+    M(ICO(0.05,0),pink,0,-0.06,0.46,head,false);
+    const mouth=M(BOX(0.12,0.05,0.1),0x5A1E32,0,-0.13,0.36,head,false); mouth.visible=false; P.extra.mouth=mouth; // shown while hissing
     for(const s of [-1,1]) M(CONE(0.015,0.05,4),PAL.white,s*0.04,-0.11,0.4,mouth,false).rotation.x=Math.PI;
-    eyes(head,0.04,0.265,0.115,0.088,0,0x3A5BA8);
-    for(const s of [-1,1]){ const lid=M(BOX(0.19,0.06,0.04),grey,s*0.115,0.1,0.275,head,false); lid.rotation.z=-s*0.2; }
-    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.22,0.1,-0.04); head.add(e);
-      const ear=M(CYL(0.08,0.08,0.03,10),dk,0,0.04,0,e); ear.rotation.set(Math.PI/2,0,s*0.5); P.ears.push(e); }
-    const hb=new THREE.Group(); hb.position.set(0,0.19,-0.03); hb.rotation.set(-0.15,0,0.12); head.add(hb);
-    M(CYL(0.31,0.32,0.03,16),cloth,0,0,0,hb);
-    M(CONE(0.18,0.26,12),cloth,0,0.14,0,hb);
-    const h2=M(CONE(0.085,0.19,10),cloth,0.05,0.32,-0.07,hb); h2.rotation.set(-0.6,0,-0.55);
-    M(CYL(0.185,0.185,0.04,14),trim,0,0.035,0,hb,false);
-    star(0.08,0.13,0.13,0.03,hb); star(-0.07,0.18,0.1,0.022,hb);
-    const tail=new THREE.Group(); tail.position.set(0,0.3,-0.3); B.add(tail);
+    eyes(head,0.06,0.255,0.11,0.08,0,0x3A5BA8);
+    for(const s of [-1,1]){ const lid=M(BOX(0.18,0.06,0.04),grey,s*0.11,0.11,0.265,head,false); lid.rotation.z=-s*0.2; }
+    for(let i=0;i<3;i++){ const t=M(CONE(0.04,0.14,4),grey,(i-1)*0.07,0.24,-0.02,head); t.rotation.z=(i-1)*0.6; }
+    for(const s of [-1,1]){ const e=new THREE.Group(); e.position.set(s*0.18,0.18,-0.04); head.add(e);
+      const ear=M(CYL(0.08,0.08,0.03,8),dk,0,0.04,0,e); ear.rotation.x=Math.PI/2; P.ears.push(e); }
+    const tail=new THREE.Group(); tail.position.set(0,0.3,-0.28); B.add(tail);
     let seg=tail; for(let i=0;i<5;i++){ const g=new THREE.Group(); g.position.set(0,0,i?-0.13:0); g.rotation.x=i?-0.45:0.5; seg.add(g);
       M(CYL(0.04-i*0.005,0.045-i*0.005,0.14,6),pink,0,0,-0.065,g).rotation.x=Math.PI/2; seg=g; }
     P.tail=tail;
-    sleeves(pink,0.03); boots();
+    limb(armL,grey,pink); limb(armR,grey,pink);
+    M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legL); M(BOX(0.14,0.08,0.24),pink,0,-0.15,0.04,legR);
   }
   addOutlines(root);
   // fold each rigid body part into a few meshes (parts that animate on their own, like the goose's beak, stay separate)
@@ -1508,20 +1474,91 @@ function buildCharacter(key){
   for(const g of groups) flattenMeshes(g,false,keep);
   return P;
 }
-// Free the one-off merged buffers of a critter built for a portrait or the outfit preview.
+// Free the one-off merged buffers of a critter built for a portrait or the cosmetics preview.
 function disposeMerged(root){ root.traverse(o=>{ if(o.isMesh&&o.userData.merged) o.geometry.dispose(); }); }
-// ---- Outfit colours (the cosmetics): swap the critter's outfit materials for another cloth + trim pair. No parts are
-// added, so every critter keeps one clean silhouette. Returns a list for removeCosmetic (kept for the callers' shape).
-function setOutfit(P,cloth,trim){
-  const c=outfitMat(cloth,'cloth'), t=outfitMat(trim,'trim'), oc=P.cloth, ot=P.trim;
-  if(c===oc&&t===ot) return;
-  P.root.traverse(o=>{ if(!o.isMesh) return; if(o.material===oc) o.material=c; else if(o.material===ot) o.material=t; });
-  P.cloth=c; P.trim=t;
-}
+// ---- Cosmetics: built onto a critter's rig parts so they move with it. Returns [parent, object] pairs to remove later.
+// Per-critter fit: body centre / radius / scale, head radius, and whether ears poke through hats.
+const COS_FIT = {
+  // ey/ez/es/er: where the eyes sit on the head (height, depth, half-spacing, size) for the sunglasses
+  rabbit:{ by:0.48, bz:0,     r:0.3,  s:[1,1.05,0.9],  hr:0.3,  hy:0,    earsOut:true,  ey:0.05,  ez:0.285, es:0.12, er:0.085 },
+  raccoon:{by:0.48, bz:0,     r:0.31, s:[1.05,1,0.95], hr:0.29, hy:0,    earsOut:false, ey:0.045, ez:0.3,   es:0.12, er:0.08 },
+  goose:{  by:0.46, bz:-0.02, r:0.33, s:[1,0.85,1.2],  hr:0.17, hy:0.02, earsOut:true,  ey:0.05,  ez:0.18,  es:0.085,er:0.065 },
+  possum:{ by:0.47, bz:0,     r:0.3,  s:[1,0.95,1.05], hr:0.25, hy:0,    earsOut:false, ey:0.06,  ez:0.275, es:0.11, er:0.08 },
+};
+const COS_COL = { denim:0x4D6A94, denimS:0x37506F, denimL:0x7C95B8, brass:0xE0A93A, pants:0x8A5A34, pantsS:0x5E3A22, belt:0x3A2A1E,
+  straw:0xE6C77A, strawS:0xB8944C, band:0xC23B2E, boot:0xD23A2A, bootS:0x8E2018, sole:0x2E2228, bone:0xEFE6D2, boneS:0xC9BBA0, crack:0x5A4A3E,
+  lens:0x1B1E2B, frame:0x2A2430, glint:0xBFE6FF, cap:0x3E7CC9, capS:0x2A5A99, capL:0x8FC0EE };
 function addCosmetic(P,key,id){
-  const o=COSMETICS[id]&&COSMETICS[id].cols; setOutfit(P,...(o||OUTFIT[key])); return [];
+  const out=[], f=COS_FIT[key], C=COS_COL;
+  if(!id||id==='none'||!COSMETICS[id]) return out;
+  const grp=parent=>{ const g=new THREE.Group(); parent.add(g); out.push([parent,g]); return g; };
+  // the lower half of a slightly larger body shell: shorts/trouser seat that hugs the round body
+  const seat=(g,col,from)=>{ const geo=G('seat'+from,()=>new THREE.SphereGeometry(1,12,6,0,Math.PI*2,Math.PI*from,Math.PI*(1-from)));
+    const m=M(geo,col,0,f.by,f.bz,g); m.scale.set(f.r*f.s[0]*1.07,f.r*f.s[1]*1.07,f.r*f.s[2]*1.07); return m; };
+  const legTubes=(col,cuff)=>{ for(const leg of [P.legL,P.legR]){ const g=grp(leg); M(CYL(0.085,0.08,0.13,8),col,0,-0.03,0,g); if(cuff) M(CYL(0.095,0.095,0.035,8),cuff,0,-0.09,0,g); } };
+  const front=f.r*f.s[2]*0.93+f.bz;
+  if(id==='overalls'){
+    const g=grp(P.B); seat(g,C.denim,0.5);
+    const bib=M(BOX(0.26,0.2,0.04),C.denim,0,f.by+0.07,front,g); bib.rotation.x=-0.18;
+    M(BOX(0.1,0.06,0.02),C.denimS,0,f.by+0.06,front+0.025,g,false); // bib pocket
+    for(const sx of [-1,1]){
+      const st=M(BOX(0.05,0.035,f.r*f.s[2]*1.75),C.denimS,sx*0.1,f.by+f.r*f.s[1]*0.8,f.bz,g); st.rotation.x=0.05;
+      M(ICO(0.03,0),C.brass,sx*0.1,f.by+0.16,front+0.01,g,false); }
+    legTubes(C.denim,C.denimL);
+  } else if(id==='pants'){
+    const g=grp(P.B); seat(g,C.pants,0.55);
+    const belt=M(CYL(1,1,0.05,14),C.belt,0,f.by+0.015,f.bz,g); belt.scale.set(f.r*f.s[0]*1.06,1,f.r*f.s[2]*1.06);
+    M(BOX(0.08,0.06,0.03),C.brass,0,f.by+0.015,front+0.02,g,false);
+    legTubes(C.pants,C.pantsS);
+  } else if(id==='hat'){
+    const g=grp(P.head), hr=f.hr; g.position.set(0,f.hy+hr*0.62,0); g.rotation.set(-0.12,0,0.12);
+    M(CYL(hr*1.75,hr*1.85,0.035,14),C.straw,0,0,0,g);
+    M(CYL(hr*0.78,hr*0.88,hr*0.55,12),C.straw,0,hr*0.28,0,g);
+    M(CYL(hr*0.9,hr*0.9,0.05,12),C.band,0,0.045,0,g,false);
+    M(CYL(hr*0.7,hr*0.78,0.03,12),C.strawS,0,hr*0.56,0,g,false); // crown top weave
+    if(!f.earsOut) for(const e of P.ears) e.visible=false;
+  } else if(id==='boots'){
+    for(const leg of [P.legL,P.legR]){ const g=grp(leg);
+      M(BOX(0.2,0.12,0.32),C.boot,0,-0.13,0.06,g); M(BOX(0.215,0.035,0.34),C.sole,0,-0.195,0.06,g);
+      M(CYL(0.095,0.09,0.15,8),C.boot,0,-0.03,0,g); M(CYL(0.11,0.11,0.04,8),C.bootS,0,0.05,0,g,false);
+      M(ICO(0.05,0),C.boot,0,-0.1,0.2,g).scale.set(1.6,1,1); }
+  } else if(id==='shades'){ // oversized round sunglasses: dark lenses, chunky frame, a sky glint on each lens
+    const g=grp(P.head), lr=f.er*1.55; g.position.set(0,f.ey,f.ez+0.02);
+    for(const sx of [-1,1]){
+      const rim=M(CYL(lr*1.12,lr*1.12,0.03,14),C.frame,sx*f.es*1.08,0,0,g); rim.rotation.x=Math.PI/2;
+      const lens=M(CYL(lr,lr,0.035,14),C.lens,sx*f.es*1.08,0,0.006,g,false); lens.rotation.x=Math.PI/2;
+      const gl=M(BOX(lr*0.5,lr*0.16,0.01),C.glint,sx*f.es*1.08-lr*0.25,lr*0.4,0.026,g,false); gl.rotation.z=0.5;
+      const arm=M(BOX(0.025,0.025,f.ez*0.9),C.frame,sx*(f.es*1.08+lr*1.05),0.01,-f.ez*0.45,g,false); arm.rotation.y=sx*0.12; }
+    M(BOX(f.es*0.55,0.03,0.03),C.frame,0,lr*0.35,0.005,g,false);           // bridge
+  } else if(id==='bluehat'){ // a blue baseball cap with the brim to the front
+    const g=grp(P.head), hr=f.hr; g.position.set(0,f.hy+hr*0.42,0); g.rotation.x=-0.18;
+    const crown=M(G('capcrown',()=>new THREE.SphereGeometry(1,14,7,0,Math.PI*2,0,Math.PI/2)),C.cap,0,0,0,g); crown.scale.set(hr*1.04,hr*0.82,hr*1.06);
+    M(CYL(hr*1.05,hr*1.05,0.04,14),C.capS,0,0.01,0,g,false);                // band
+    const brim=M(BOX(hr*1.2,0.03,hr*0.6),C.capS,0,0.04,hr*1.12,g); brim.rotation.x=-0.3;
+    M(BOX(hr*0.34,hr*0.2,0.02),C.capL,0,hr*0.42,hr*0.92,g,false).rotation.x=-0.5; // little front badge
+    M(ICO(0.035,0),C.capS,0,hr*0.84,0,g,false);                            // top button
+    if(!f.earsOut) for(const e of P.ears) e.visible=false;
+  } else if(id==='skull'){
+    // Original design: a bone mask with deep sockets, a muzzle guard, a crest, curled horns and a crack over one brow.
+    const g=grp(P.head);
+    const shell=M(G('skullshell',()=>new THREE.SphereGeometry(1,14,8,0,Math.PI*2,0,Math.PI*0.66)),C.bone,0,0.02,0,g); shell.scale.set(0.4,0.325,0.365);
+    for(const sx of [-1,1]){
+      const so=M(CYL(0.08,0.072,0.03,10),0x1A1520,sx*0.12,0.05,0.33,g,false); so.rotation.set(Math.PI/2,0,0); so.rotation.y=sx*0.38; so.scale.set(1,1,1.2);
+      M(ICO(0.024,0),0xFFF3C8,sx*0.114,0.064,0.352,g,false);                                   // eye glint inside the socket
+      const horn=new THREE.Group(); horn.position.set(sx*0.21,0.24,-0.04); horn.rotation.set(-0.35,0,-sx*0.85); g.add(horn);
+      M(CONE(0.05,0.13,6),C.boneS,0,0.06,0,horn); const tip=M(CONE(0.03,0.09,5),C.bone,0,0.14,0.03,horn,false); tip.rotation.x=0.7;
+      const fang=M(CONE(0.024,0.065,4),C.bone,sx*0.075,-0.155,0.4,g,false); fang.rotation.x=Math.PI; }
+    const muz=M(CONE(0.14,0.23,7),C.bone,0,-0.05,0.35,g); muz.rotation.x=Math.PI/2; muz.scale.set(1,1,0.8);   // muzzle guard
+    for(const sx of [-1,1]) M(BOX(0.024,0.014,0.05),0x1A1520,sx*0.032,0.0,0.42,g,false).rotation.x=0.4;  // nostril slots
+    M(BOX(0.035,0.06,0.3),C.boneS,0,0.33,-0.02,g).rotation.x=0.1;                               // crest
+    const c1=M(BOX(0.02,0.11,0.02),C.crack,0.09,0.22,0.295,g,false); c1.rotation.set(-0.5,0,0.45);
+    const c2=M(BOX(0.016,0.06,0.02),C.crack,0.125,0.17,0.315,g,false); c2.rotation.set(-0.35,0,-0.5);
+    for(const e of P.ears) e.visible=false;
+  }
+  for(const [,o] of out) addOutlines(o,0.02,0.07);
+  return out;
 }
-function removeCosmetic(P,list){ setOutfit(P,...OUTFIT[P.key]); }
+function removeCosmetic(P,list){ for(const [p,o] of list) p.remove(o); for(const e of P.ears) e.visible=true; }
 const HEDGE_TPL={};
 // Hedges are round storybook topiary: a soft leafy mound (a few overlapping smooth balls on a low dark base) instead of a cube.
 // Player hedges are smaller, sit in a little wooden planter and carry a couple of red berries so you can tell them apart.
@@ -2886,7 +2923,7 @@ class Game {
   renderCosmetics(){
     const k=this.choice, cur=this.cosmetics[k]||'none', box=$('cos-chips'); box.innerHTML='';
     setText($('cos-who'),CHARS[k].name);
-    for(const id of cosmeticsFor(k)){ const b=document.createElement('button'); b.className='chip'+(id===cur?' sel':''); const cc=COSMETICS[id].cols||OUTFIT[k], sw=document.createElement('i'); sw.className='sw'; sw.style.background=`linear-gradient(135deg,#${cc[0].toString(16).padStart(6,'0')} 0 60%,#${cc[1].toString(16).padStart(6,'0')} 60%)`; b.append(sw,COSMETICS[id].name);
+    for(const id of cosmeticsFor(k)){ const b=document.createElement('button'); b.className='chip'+(id===cur?' sel':''); b.textContent=COSMETICS[id].name;
       if(COSMETICS[id].only) b.classList.add('special');
       b.addEventListener('click',e=>{ const kb=!e.detail; if(!kb) e.currentTarget.blur(); audio.init(); audio.play('click'); this.cosmetics[k]=id; this.saveCosmetics();
         const c=this.chars.find(q=>q.key===k); c.setCosmetic(id); this.renderCosmetics(); if(kb){ const sel=box.querySelector('.chip.sel'); if(sel) sel.focus(); } });
@@ -3007,7 +3044,7 @@ class Game {
     this.achOn=!this.autoplay || new URLSearchParams(location.search).has('achtest'); this.ach.startMatch();
     for(const c of this.chars){ c.resetStats(); c.isPlayer=c===this.player; c.hedges=[];
       c.controller=c.isPlayer&&!this.autoplay?new Player(this,c):new AIController(this,c,c.team===this.player.team?'normal':this.difficulty);
-      c.setCosmetic(c.isPlayer?(this.cosmetics[c.key]||'none'):'none'); } // bots wear classic colours
+      const opts=cosmeticsFor(c.key); c.setCosmetic(c.isPlayer?(this.cosmetics[c.key]||'none'):opts[randi(0,opts.length-1)]); }
     this.hud.setup(); this.hud.show(true); this.startRound();
   }
   startRound(){
@@ -3428,7 +3465,7 @@ class Online {
   pushRoom(){ if(this.role==='host'&&this.lobby){ this.send({t:'room',...this.lobby}); this.renderRoom(); } }
   maybeStart(){ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return; clearTimeout(this.startT);
     this.startT=setTimeout(()=>{ const L=this.lobby; if(!L||!L.guest||!L.host.ready||!L.guest.ready||this.inMatch) return;
-      const cos={}; for(const k of CHAR_ORDER){ cos[k]=k===L.host.char?L.host.cos:k===L.guest.char?L.guest.cos:'none'; }
+      const cos={}; for(const k of CHAR_ORDER){ const o=cosmeticsFor(k); cos[k]=k===L.host.char?L.host.cos:k===L.guest.char?L.guest.cos:o[randi(0,o.length-1)]; }
       L.host.ready=L.guest.ready=false; const cfg={host:L.host.char,guest:L.guest.char,cos,fmt:L.fmt,mode:L.mode,diff:L.diff}; this.send({t:'start',cfg}); this.beginMatch(cfg); },700); }
   backToLobby(){ if(this.inMatch) return; this.game.resetScene(); if(!this.t){ this.openMenu(); return; } const me=this.me(); if(me) me.ready=false; this.pushRoom(); this.showRoom(); }
   // ---------- connection events ----------
