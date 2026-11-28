@@ -13,7 +13,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const GAME = path.join(HERE, '..', 'index.html');
+const GAME = process.env.GAME || path.join(HERE, '..', 'index.html'); // GAME=old.html npm run sim compares another version
 const NM = path.join(HERE, '..', 'node_modules');
 const ARGS = process.argv.slice(2);
 const arg = (k, d) => { const a = ARGS.find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : d; };
